@@ -16,8 +16,12 @@ export async function GET(req) {
         if (await Blank.exists({ orgId: site.orgId, active: { $ne: false } })) urls.push(`${origin}/create-your-own`);
     } catch { /* ignore */ }
     try {
-        const products = await PlatformProduct.find({ orgId: site.orgId, active: { $ne: false } }).select("_id").limit(5000).lean();
-        for (const p of products) urls.push(`${origin}/products/${p._id}`);
+        const mode = site.productUrlMode || "slug";
+        const products = await PlatformProduct.find({ orgId: site.orgId, active: { $ne: false } }).select("_id slug sku").limit(5000).lean();
+        for (const p of products) {
+            const seg = mode === "slug" && p.slug ? p.slug : mode === "sku" && p.sku ? encodeURIComponent(p.sku) : p._id;
+            urls.push(`${origin}/products/${seg}`);
+        }
     } catch { /* ignore */ }
     try {
         const pages = await StorefrontPage.find({ orgId: site.orgId, status: "published" }).select("slug").limit(2000).lean();

@@ -7,6 +7,6 @@ export async function POST(req) {
     const orgId = await premierAuthedOrg(req);
     if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const b = await req.json().catch(() => ({}));
-    try { return NextResponse.json({ error: false, ...(await storefront.aiSections(b)) }); }
+    try { return NextResponse.json({ error: false, ...(await storefront.aiSections({ ...b, orgId })) }); }
     catch (e) { return svcError(e); }
 }

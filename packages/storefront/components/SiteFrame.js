@@ -15,6 +15,12 @@ export default function SiteFrame({ site, children }) {
 
     const nav = site.nav ?? {};
     const footer = site.footer ?? {};
+    // Auto-link any written policy pages in the footer (legal links must be reachable — Stripe requires it).
+    const policyLinks = (site.policies ?? [])
+        .filter((p) => p && p.slug && p.body && String(p.body).trim())
+        .map((p) => ({ label: p.title || p.slug, href: `/policies/${p.slug}` }));
+    // Sitemap is always reachable from the footer (helps shoppers and SEO).
+    const footerLinks = [...(footer.links ?? []), ...policyLinks, { label: "Sitemap", href: "/sitemap" }];
     const brand = t.logoUrl
         ? <img src={t.logoUrl} alt={site.name ?? "Store"} style={{ height: 32 }} />
         : <span style={{ fontWeight: 800, fontSize: "1.15rem", fontFamily: "var(--sf-font-heading)" }}>{site.name ?? site.subdomain}</span>;
@@ -36,8 +42,8 @@ export default function SiteFrame({ site, children }) {
             <footer style={{ borderTop: "1px solid rgba(0,0,0,0.08)", marginTop: 40, padding: "32px 0" }}>
                 <div className="sf-container" style={{ display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "space-between", alignItems: "center" }}>
                     <div style={{ fontSize: "0.85rem", opacity: 0.7 }}>{footer.text || `© ${site.name ?? site.subdomain}`}</div>
-                    <nav style={{ display: "flex", gap: 16, fontSize: "0.85rem" }}>
-                        {(footer.links ?? []).map((l, i) => <a key={i} href={l.href || "#"}>{l.label}</a>)}
+                    <nav style={{ display: "flex", flexWrap: "wrap", gap: 16, fontSize: "0.85rem" }}>
+                        {footerLinks.map((l, i) => <a key={i} href={l.href || "#"}>{l.label}</a>)}
                     </nav>
                 </div>
             </footer>

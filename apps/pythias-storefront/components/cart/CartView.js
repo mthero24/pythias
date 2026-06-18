@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useCart } from "@/components/cart/CartProvider";
 import { useI18n } from "@/components/i18n/I18nProvider";
+import ExpressCheckout from "@/components/checkout/ExpressCheckout";
 
 // Free-shipping progress bar — nudges buyers toward the seller's free-shipping threshold.
 function FreeShipBar({ subtotalCents }) {
@@ -83,6 +84,10 @@ export default function CartView() {
             <a href="/checkout" style={{ display: "block", textAlign: "center", marginTop: 24, padding: "14px", borderRadius: 10, background: "var(--sf-accent)", color: "#fff", fontWeight: 700 }}>
                 Checkout
             </a>
+            {/* One-tap express wallets (Apple Pay / Google Pay / Link / PayPal) for the whole cart. */}
+            <div style={{ marginTop: 14 }}>
+                <ExpressCheckout items={items.map((i) => ({ productId: i.productId, sku: i.sku, qty: i.qty }))} amountCents={subtotalCents} />
+            </div>
             <SavedSection saved={savedForLater} moveToCart={moveToCart} removeSaved={removeSaved} lineKey={lineKey} />
         </section>
     );

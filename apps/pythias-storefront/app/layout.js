@@ -1,5 +1,7 @@
 import "./globals.css";
 import { CartProvider } from "@/components/cart/CartProvider";
+import CartModal from "@/components/cart/CartModal";
+import QuickAddModal from "@/components/cart/QuickAddModal";
 import { CustomerProvider } from "@/components/account/CustomerProvider";
 import { FavoritesProvider } from "@/components/favorites/FavoritesProvider";
 import { I18nProvider } from "@/components/i18n/I18nProvider";
@@ -34,6 +36,8 @@ export default function RootLayout({ children }) {
                             <HeaderControls />
                             {children}
                             <SitePopup />
+                            <CartModal />
+                            <QuickAddModal />
                             <AnalyticsTracker />
                         </CartProvider>
                     </FavoritesProvider>

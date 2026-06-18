@@ -46,7 +46,7 @@ export default async function CollectionPage({ params }) {
                 <div className="sf-container">
                     <h1 style={{ fontSize: "1.9rem", margin: "0 0 6px" }}>{collection.title}</h1>
                     {collection.description && <p style={{ opacity: 0.7, margin: "0 0 24px", maxWidth: 640 }}>{collection.description}</p>}
-                    <FilterableProductGrid products={products} emptyText="No products in this collection yet." />
+                    <FilterableProductGrid products={products} urlMode={site.productUrlMode || "slug"} catalog={site.catalog} emptyText="No products in this collection yet." />
                 </div>
             </section>
         </SiteFrame>

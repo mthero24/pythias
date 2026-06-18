@@ -87,6 +87,9 @@ const schema = new mongoose.Schema({
     brand: String,
     sku: { type: String},
     title: String,
+    slug: { type: String, index: true },   // SEO-friendly product URL (/products/:slug); generated from title per org
+    slugAliases: { type: [String], index: true },   // extra lowercased handles that resolve here (old SKU/Shopify handles)
+
     // Multi-vertical: how this product is fulfilled. Default "pod" (print-on-demand) keeps
     // every existing product unchanged. "dropship" ships from a supplier; "warehouse" is
     // picked/packed from Pythias 3PL stock. One cart can mix all three.
@@ -128,5 +131,30 @@ const schema = new mongoose.Schema({
 schema.index({ orgId: 1, _id: -1 });
 // Text index for fast title/sku search across large catalogs
 schema.index({ title: "text", sku: "text" });
+
+// SEO-friendly product URL slug. Generated from the title on creation (every create() path fires this),
+// so new products get a clean /products/<slug> automatically — matching the backfill for existing ones.
+const slugifyTitle = (s) => String(s || "").toLowerCase().trim()
+    .replace(/['’"]/g, "").replace(/&/g, " and ").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
+
+schema.pre("save", async function generateSlug(next) {
+    try {
+        // Always keep the lowercased SKU as an alias so SKU-handle URLs (e.g. Shopify stores that set the
+        // handle to the SKU, like Simply Sage's /products/26708bro_f-tswt) resolve directly.
+        if (this.sku) {
+            const a = String(this.sku).toLowerCase();
+            const aliases = this.slugAliases || [];
+            if (a && !aliases.includes(a)) this.slugAliases = [...aliases, a];
+        }
+        if (this.slug || !this.title) return next();
+        const base = slugifyTitle(this.title) || String(this._id);
+        let slug = base, n = 1;
+        // Ensure it's unique within the org (slugs aren't globally unique; products are org-scoped).
+        const filter = (s) => ({ slug: s, _id: { $ne: this._id }, ...(this.orgId ? { orgId: this.orgId } : {}) });
+        while (await this.constructor.exists(filter(slug))) slug = `${base}-${++n}`;
+        this.slug = slug;
+        next();
+    } catch (e) { next(e); }
+});
 
 export default PremierPrinting.model("Products", schema);

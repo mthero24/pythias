@@ -1,4 +1,4 @@
-import crypto from "crypto";
+import crypto from "node:crypto";
 import NetworkFraudEntry from "../models/NetworkFraudEntry";
 import NetworkSuppression from "../models/NetworkSuppression";
 

@@ -1,52 +1,16 @@
-import { headers } from "next/headers";
-import mongoose from "mongoose";
-import { resolveSite } from "@/lib/resolveSite";
-import { PlatformProduct, StorefrontReviewSummary } from "@pythias/mongo";
-import { SiteFrame, productJsonLd } from "@pythias/storefront";
-import NoSite from "@/components/NoSite";
+import { StorefrontReviewSummary } from "@pythias/mongo";
+import { SiteFrame, SectionRenderer, productJsonLd, productHref } from "@pythias/storefront";
 import BuyBox from "@/components/BuyBox";
 import CustomizableBuyBox from "@/components/customizer/CustomizableBuyBox";
 import ReviewsSection from "@/components/reviews/ReviewsSection";
-import { siteMetadata } from "@/lib/siteMeta";
+import { systemPageSections } from "@/lib/systemSections";
 
-export const dynamic = "force-dynamic";
+// Product detail body (rendered by the unified /products/[[...path]] route when a path resolves to a
+// product). Expects a lean product doc with variantsArray.color populated.
+export default async function ProductDetail({ site, product, host }) {
+    const mode = site.productUrlMode || "slug";
+    const { sections: pageSections, data: pageSectionData } = await systemPageSections(site, "product");
 
-export async function generateMetadata() {
-    // Site-level for now; product-title SEO is a later refinement.
-    return siteMetadata();
-}
-
-export default async function ProductDetailPage({ params }) {
-    const { id } = await params;
-    const h = await headers();
-    const site = await resolveSite(h.get("host"));
-    if (!site) return <NoSite />;
-
-    let product = null;
-    if (mongoose.Types.ObjectId.isValid(id)) {
-        try {
-            // Scoped to the site's org so one storefront can't load another's product.
-            product = await PlatformProduct.findOne({ _id: id, orgId: site.orgId, active: { $ne: false } })
-                .populate("variantsArray.color", "name")
-                .select("title description productImages variantsArray designTemplateId")
-                .lean();
-        } catch { product = null; }
-    }
-
-    if (!product) {
-        return (
-            <SiteFrame site={site}>
-                <section style={{ padding: "80px 0", textAlign: "center" }}>
-                    <div className="sf-container">
-                        <h1>Product not found</h1>
-                        <p style={{ opacity: 0.6 }}><a href="/products" style={{ color: "var(--sf-secondary)" }}>← Back to shop</a></p>
-                    </div>
-                </section>
-            </SiteFrame>
-        );
-    }
-
-    // Serialize to a plain shape for the client BuyBox (no ObjectIds across the boundary).
     const images = [...new Set((product.productImages ?? []).map((i) => i.image).filter(Boolean))];
     const variants = (product.variantsArray ?? []).map((v) => ({
         sku:   v.sku ?? null,
@@ -55,25 +19,20 @@ export default async function ProductDetailPage({ params }) {
         color: v.color?.name ?? v.ids?.colorName ?? "",
         size:  v.ids?.sizeName ?? (typeof v.size === "string" ? v.size : ""),
     }));
-
     const prices = variants.map((v) => v.price).filter((n) => typeof n === "number" && n > 0);
     const minPrice = prices.length ? Math.min(...prices) : undefined;
 
-    // Review summary → aggregateRating in structured data (rich-result stars in search).
     const summary = await StorefrontReviewSummary.findOne({ orgId: site.orgId, productId: product._id }).select("avg count").lean().catch(() => null);
     const jsonLd = productJsonLd({ title: product.title, description: product.description, images, price: minPrice });
-    if (summary?.count > 0) {
-        jsonLd.aggregateRating = { "@type": "AggregateRating", ratingValue: summary.avg, reviewCount: summary.count };
-    }
+    if (summary?.count > 0) jsonLd.aggregateRating = { "@type": "AggregateRating", ratingValue: summary.avg, reviewCount: summary.count };
 
-    // Organization + breadcrumb structured data (richer search results).
-    const origin = `https://${h.get("host")}`;
+    const origin = `https://${host}`;
     const brand = site.businessInfo?.legalName || site.name || "Store";
     const orgLd = { "@context": "https://schema.org", "@type": "Organization", name: brand, url: origin, ...(site.theme?.logoUrl ? { logo: site.theme.logoUrl } : {}) };
     const breadcrumbLd = { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [
         { "@type": "ListItem", position: 1, name: "Home", item: origin },
         { "@type": "ListItem", position: 2, name: "Shop", item: `${origin}/products` },
-        { "@type": "ListItem", position: 3, name: product.title, item: `${origin}/products/${product._id}` },
+        { "@type": "ListItem", position: 3, name: product.title, item: `${origin}${productHref(product, mode)}` },
     ] };
 
     return (
@@ -111,6 +70,7 @@ export default async function ProductDetailPage({ params }) {
                     <ReviewsSection productId={String(product._id)} />
                 </div>
             </section>
+            <SectionRenderer sections={pageSections} site={site} data={pageSectionData} />
         </SiteFrame>
     );
 }

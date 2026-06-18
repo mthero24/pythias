@@ -3,9 +3,13 @@ import ProductCard from "../components/ProductCard";
 // Featured products — PURE: renders products supplied via `data.products`.
 // The app/editor fetches products (see ../server.js resolveSectionData) and passes
 // them in, so this component is client-safe and renders identically in the editor preview.
-export default function FeaturedProducts({ settings = {}, data = {} }) {
+export default function FeaturedProducts({ settings = {}, data = {}, site }) {
     const { heading = "Featured" } = settings;
     const products = data?.products ?? [];
+    const urlMode = site?.productUrlMode || "slug";
+    const showSwatches = site?.catalog?.showSwatches !== false;
+    const showAltView = site?.catalog?.showAltView !== false;
+    const quickAdd = site?.catalog?.quickAdd !== false;
 
     return (
         <section style={{ padding: "56px 0" }}>
@@ -15,7 +19,7 @@ export default function FeaturedProducts({ settings = {}, data = {} }) {
                     <p style={{ opacity: 0.6 }}>No products yet.</p>
                 ) : (
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 24 }}>
-                        {products.map((p) => <ProductCard key={String(p._id)} product={p} />)}
+                        {products.map((p) => <ProductCard key={p.id || String(p._id)} product={p} urlMode={urlMode} showSwatches={showSwatches} showAltView={showAltView} quickAdd={quickAdd} />)}
                     </div>
                 )}
             </div>

@@ -21,7 +21,7 @@ export default function HeaderControls() {
 function SearchBox() {
     const { t } = useI18n();
     const [q, setQ] = useState("");
-    const submit = (e) => { e.preventDefault(); window.location.href = q.trim() ? `/search?q=${encodeURIComponent(q.trim())}` : "/search"; };
+    const submit = (e) => { e.preventDefault(); window.location.href = q.trim() ? `/products?q=${encodeURIComponent(q.trim())}` : "/products"; };
     return (
         <form onSubmit={submit} style={{ display: "flex" }}>
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("nav.search", "Search…")} aria-label="Search products" style={{

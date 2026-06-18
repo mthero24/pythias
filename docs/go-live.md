@@ -47,6 +47,10 @@ Also on the **marketplace** account:
 - **Stripe Connect** (Express) enabled — sellers onboard for payouts (the Payouts page handles it).
 - **Stripe Tax** enabled — checkout computes + records tax (powers the Merchant-of-Record tax report).
 - Set a **statement descriptor** = your MoR entity (so it reads "Pythias…" on buyers' cards).
+- **Express wallets** (one-tap Buy Now on cards/cart/checkout):
+  - **Apple Pay** — register **each live storefront domain** (Stripe → Settings → Payments → Payment methods → Apple Pay → **Add a new domain**). Apple Pay only renders on HTTPS + a registered domain, so do this per custom domain + the `*.<base>` storefront host. Not shown on localhost.
+  - **PayPal** — **enable** it under Payment methods (it then appears in the Express Checkout Element automatically).
+  - **Google Pay + Link** — no setup; they appear automatically on supported browsers.
 
 > Use `sk_test_`/`pk_test_` + Stripe CLI (`stripe listen --forward-to`) in staging; swap to live keys in prod.
 
@@ -61,9 +65,13 @@ Fill these in each app's `.env.local` (see the `.env.example` files for the anno
 `ANTHROPIC_API_KEY`, `PYTHIAS_INTERNAL_KEY`, `PLATFORM_INTERNAL_BASE`, `STOREFRONT_JWT_SECRET`.
 
 **pythias-platform** — platform Stripe (`stripeSecret`, `STRIPE_WEBHOOK_SECRET`), `NEXTAUTH_SECRET`,
-`ANTHROPIC_API_KEY`, `PYTHIAS_INTERNAL_KEY`, `STOREFRONT_BASE_DOMAIN`, optional storefront
-`*_PRICE_ID`s, plus **channel syndication** vars (`CHANNEL_TOKEN_KEY` + the per-channel keys — see
+`ANTHROPIC_API_KEY`, `GEMINI_API_KEY` (AI scene/tile images — fails soft to catalog photos if unset),
+`PYTHIAS_INTERNAL_KEY`, `STOREFRONT_BASE_DOMAIN`, optional storefront `*_PRICE_ID`s, plus
+**channel syndication** vars (`CHANNEL_TOKEN_KEY` + the per-channel keys — see
 `docs/channel-syndication-setup.md`).
+
+**premier-printing** (enterprise / own-DB storefront) — same storefront editor + AI image routes, so it
+also needs `ANTHROPIC_API_KEY` and `GEMINI_API_KEY` for the AI scene/tile image generation.
 
 > `PYTHIAS_INTERNAL_KEY` must be **identical** across apps — it guards every internal cron endpoint.
 
@@ -134,6 +142,7 @@ start them early; you're never blocked because the feed covers every channel mea
 - [ ] Index migration run once (drops the stale `orgId` unique index → multi-store works)
 - [ ] Storefront plan prices set (`storefrontPlans.js` or `*_PRICE_ID`s) — currently $49/$149/$399, included 1/3/5, extras $25/$75/$200
 - [ ] **Marketplace** Stripe: live keys, webhook (3 events), Connect + Tax enabled, statement descriptor
+- [ ] **Apple Pay** domain registered for each live storefront domain; **PayPal** enabled (express wallets)
 - [ ] **Platform** Stripe: live keys, billing webhook (4 events)
 - [ ] Subscribe to a plan end-to-end on a test org → menu unlocks → place a test order → seller payout settles
 - [ ] All `.env.local` filled (both apps); `PYTHIAS_INTERNAL_KEY` matches across apps

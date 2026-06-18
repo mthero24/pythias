@@ -9,6 +9,7 @@ const ROOT = path.resolve(__dirname, "../../..");
 const readEnv = (p) => { try { return dotenv.parse(fs.readFileSync(p)); } catch { return null; } };
 const sf = readEnv(path.join(ROOT, "apps/pythias-storefront/.env.local")) || {};
 const pf = readEnv(path.join(ROOT, "apps/pythias-platform/.env.local")) || {};
+const pr = readEnv(path.join(ROOT, "apps/premier-printing/.env.local")) || {};
 
 const has = (env, ...keys) => keys.some((k) => env[k] && String(env[k]).trim());
 
@@ -42,6 +43,8 @@ const AREAS = {
     "AI features": [
         ["ANTHROPIC_API_KEY (storefront)", has(sf, "ANTHROPIC_API_KEY"), false],
         ["ANTHROPIC_API_KEY (platform)", has(pf, "ANTHROPIC_API_KEY"), false],
+        ["GEMINI_API_KEY (platform — AI scene/tile images)", has(pf, "GEMINI_API_KEY"), false],
+        ["GEMINI_API_KEY (premier — AI scene/tile images)", has(pr, "GEMINI_API_KEY"), false],
     ],
     "Channels (optional at launch — universal feed works without these)": [
         ["CHANNEL_TOKEN_KEY", has(pf, "CHANNEL_TOKEN_KEY"), false],
@@ -79,7 +82,9 @@ if (!keyMatch) missingRequired++;
 console.log(`\n${"─".repeat(60)}`);
 if (missingRequired === 0) {
     console.log(`  ${GREEN}READY${RESET} — all required config present.${missingOptional ? ` ${missingOptional} optional item(s) unset.` : ""}`);
-    console.log(`  ${DIM}Don't forget: run the index migration once, enable Stripe Connect + Tax, register the webhooks, set up DNS, and complete tax registration (see docs/go-live.md).${RESET}`);
+    console.log(`  ${DIM}Don't forget (manual steps, see docs/go-live.md):${RESET}`);
+    console.log(`  ${DIM}  • Run the index migration once · enable Stripe Connect + Tax · register the webhooks · set up DNS · complete tax registration.${RESET}`);
+    console.log(`  ${DIM}  • Express wallets: register each live storefront domain for ${RESET}${YELLOW}Apple Pay${RESET}${DIM} (Stripe → Settings → Payments → Payment methods → Apple Pay → Add domain) and enable ${RESET}${YELLOW}PayPal${RESET}${DIM} in the Stripe dashboard. (Google Pay + Link need no setup.)${RESET}`);
 } else {
     console.log(`  ${RED}NOT READY${RESET} — ${missingRequired} required item(s) missing (see ✗ above).`);
 }

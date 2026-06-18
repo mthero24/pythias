@@ -1,26 +1,12 @@
 import mongoose from "mongoose";
 import { PlatformProduct } from "@pythias/mongo";
+import { productCardData } from "@pythias/storefront";
 
-// Shape a product doc into a card + facet payload for search/collection grids.
-export function shapeProduct(p) {
-    const variants = p.variantsArray ?? [];
-    const prices = variants.map((v) => v.price).filter((n) => typeof n === "number" && n > 0);
-    const colors = [...new Set(variants.map((v) => v.color?.name || v.ids?.colorName).filter(Boolean))];
-    const sizes = [...new Set(variants.map((v) => (typeof v.size === "string" ? v.size : v.ids?.sizeName)).filter(Boolean))];
-    return {
-        id: String(p._id),
-        title: p.title,
-        image: p.productImages?.find((i) => i.image)?.image ?? null,
-        priceCents: prices.length ? Math.round(Math.min(...prices) * 100) : 0,
-        brand: p.brand || "",
-        category: [].concat(p.category || [], p.department || []).filter(Boolean),
-        colors, sizes,
-        designTemplateId: p.designTemplateId ? String(p.designTemplateId) : null,   // customizable?
-    };
-}
+// Card + facet payload for search/collection grids — shared shaper (color swatches + alt views, etc.).
+export const shapeProduct = productCardData;
 
-const SELECT = "title brand productImages variantsArray category department tags designTemplateId";
-const POP = { path: "variantsArray.color", select: "name" };
+const SELECT = "title slug sku brand productImages variantsArray category department tags designTemplateId";
+const POP = { path: "variantsArray.color", select: "name hexcode" };   // name + hex for color swatches
 
 // On-site search: Mongo text index first; if thin, fall back to a tolerant regex across
 // title/brand/tags/category (covers typos/partials the text index misses).

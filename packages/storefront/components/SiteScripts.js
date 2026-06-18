@@ -5,9 +5,15 @@
 export default function SiteScripts({ site }) {
     const a = site?.analytics ?? {};
     const orgLd = organizationLd(site);
+    const stripePk = process.env.STOREFRONT_STRIPE_PUBLISHABLE || "";
+    const currency = (site?.rewards?.currency || "usd").toLowerCase();
 
     return (
         <>
+            {/* Client-readable storefront flags (read by cart/checkout/express-pay components). */}
+            <script dangerouslySetInnerHTML={{ __html:
+                `window.__SF__=Object.assign(window.__SF__||{},{cartModal:${site?.catalog?.addToCartModal === true},stripePk:${JSON.stringify(stripePk)},currency:${JSON.stringify(currency)}});` }} />
+
             {a.ga4Id && (
                 <>
                     <script async src={`https://www.googletagmanager.com/gtag/js?id=${a.ga4Id}`} />

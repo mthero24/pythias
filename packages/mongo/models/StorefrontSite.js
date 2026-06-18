@@ -94,6 +94,51 @@ const schema = new mongoose.Schema({
         text:    { type: String },
     },
 
+    // ── Legal/policy pages (built-ins: terms/returns/privacy/shipping + custom). Rendered at
+    //    /policies/:slug and auto-linked in the footer. ─────────────────────────────────────
+    policies: [{ slug: String, title: String, body: String, builtin: Boolean }],
+
+    // ── Customizable system pages (404 + runtime error). ─────────────────────────────────────
+    system: {
+        notFound: { title: String, message: String, ctaText: String, ctaLink: String },
+        error:    { title: String, message: String, ctaText: String, ctaLink: String },
+    },
+
+    // How product URLs are formed: "slug" (SEO name, default), "sku", or "id" (Mongo _id).
+    productUrlMode: { type: String, enum: ["slug", "sku", "id"], default: "slug" },
+
+    // Catalog display: filters (which + how they show, per device) and product-card options.
+    catalog: {
+        filterDisplay: {
+            desktop: { type: String, enum: ["sidebar", "menu"], default: "sidebar" },   // sidebar = live; menu = button → drawer
+            mobile:  { type: String, enum: ["sidebar", "menu"], default: "menu" },
+        },
+        drawerSide: { type: String, enum: ["left", "right", "top", "bottom"], default: "left" },   // where the filter drawer slides from
+        filters: {
+            department: { type: Boolean, default: true },
+            category:   { type: Boolean, default: true },
+            color: { type: Boolean, default: true },
+            size:  { type: Boolean, default: true },
+            brand: { type: Boolean, default: true },
+            price: { type: Boolean, default: true },
+        },
+        showSwatches: { type: Boolean, default: true },   // color swatches on cards
+        showAltView:  { type: Boolean, default: true },   // back/sleeve "more views" badge on cards
+        quickAdd:     { type: Boolean, default: true },   // hover "+" quick-add button on cards
+        addToCartModal: { type: Boolean, default: false },   // pop a confirmation modal on add-to-cart
+    },
+
+    // Old-path → new-path 301 redirects (built by the AI link migrator). ────────────────────
+    redirects: [{ from: String, to: String }],
+
+    // Curated search/category terms that ARE allowed to be indexed as /products/<term> landing pages.
+    // Everything else under /products renders for users but is noindex (avoids infinite search-page crawl).
+    indexableTerms: [String],
+
+    // Pre-generated SEO copy for the curated terms above (so it's server-rendered in the HTML for crawlers,
+    // never generated on the page-load path). term = slugified; h1 + description.
+    termContent: [{ term: String, h1: String, description: String }],
+
     // ── Analytics / tracking (IDs only; scripts injected by the storefront) ──
     analytics: {
         ga4Id:         { type: String },   // Google tag / GA4  "G-XXXXXXX"

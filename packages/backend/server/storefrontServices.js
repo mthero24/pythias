@@ -17,12 +17,16 @@ import {
     StorefrontChannelConnection, StorefrontChannelListing, StorefrontAdSpend,
 } from "@pythias/mongo";
 import { generateArticle, generateArticleIdeas } from "../functions/contentGenerator.js";
+import { generateSceneImage, generateImageDataUrl, sceneGenAvailable } from "../functions/sceneImage.js";
 const randomCode = (prefix = "") => `${prefix}${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
 
 // Throw this for HTTP-mappable errors; route wrappers read err.status.
 export function httpError(status, message) { const e = new Error(message); e.status = status; return e; }
 
-const LIVE_FIELDS = ["theme", "pages", "nav", "footer", "analytics", "businessInfo", "seo"];
+// Fields the editor's draft → publish flow manages. NOTE: `redirects` and `termContent` are intentionally
+// excluded — they're written straight to the live site by their services (migrator / term generator) and
+// must not be round-tripped through the draft (a stale autosave would clobber them).
+const LIVE_FIELDS = ["theme", "pages", "nav", "footer", "policies", "system", "productUrlMode", "catalog", "indexableTerms", "analytics", "businessInfo", "seo"];
 const STOREFRONT_BASE = () => process.env.STOREFRONT_INTERNAL_BASE || "http://127.0.0.1:3020";
 const INTERNAL_KEY = () => process.env.PYTHIAS_INTERNAL_KEY;
 const slugify = (s) => String(s || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
@@ -326,23 +330,423 @@ export async function aiPage({ keyword, brand = "our store" }) {
 
 // AI section suggestions for the storefront EDITOR — returns the editor's {type, settings} shape,
 // constrained to the section types the renderer + manifest actually support.
-export async function aiSections({ brand = "our store", pageTitle = "Home", prompt = "" } = {}) {
+export async function aiSections({ brand = "our store", pageTitle = "Home", prompt = "", orgId } = {}) {
     const client = await anthropic();
-    const ask = `You are designing the "${pageTitle}" page for the online store "${brand}".${prompt ? ` The merchant's goal: "${prompt}".` : ""}
+    // Give the model real catalog context (categories/tags it can target) so collage tiles map to products.
+    const catalog = orgId ? await catalogHints(orgId) : null;
+    const catalogNote = catalog
+        ? `\nThis store's catalog includes categories: ${catalog.categories.join(", ") || "(various)"}. Common product keywords: ${catalog.keywords.join(", ") || "(various)"}. Prefer tile "query" values that match these so each tile lands on real products.`
+        : "";
+
+    const ask = `You are designing the "${pageTitle}" page for the online store "${brand}".${prompt ? ` The merchant's request: "${prompt}".` : ""}${catalogNote}
 Compose an ordered list of page sections using ONLY these section types:
 - "hero" — settings: { "headline", "subheadline", "ctaText", "ctaLink" (default "/products"), "align": "left"|"center"|"right" }
-- "featuredProducts" — settings: { "heading", "limit" (integer 4-12) }
+- "featuredProducts" — settings: { "heading", "query" (optional search to curate the grid, e.g. "4th of july"), "limit" (integer 4-12) }
 - "richText" — settings: { "heading", "body" (use \\n\\n between paragraphs), "align": "left"|"center"|"right" }
-Write compelling, on-brand copy — no lorem/placeholder text, no keyword stuffing. Choose 2-5 sections that fit THIS page and lead with a hero.
-Respond with STRICT JSON only: {"sections":[{"type":"hero","settings":{...}}, ...]}`;
-    const msg = await client.messages.create({ model: "claude-opus-4-8", max_tokens: 1500, thinking: { type: "adaptive" }, messages: [{ role: "user", content: ask }] });
+- "imageCollage" — a grid of clickable image tiles for merchandising a theme or collection. settings:
+  { "heading", "subheading",
+    "rows": [ { "height": 220-420, "tiles": [ { "width": 1-3, "cells": [ { "label", "sublabel", "query", "scene"? } ] } ] } ] }
+  Each cell becomes a button that links to a search for its "query". A "tiles" entry is a COLUMN that can hold one cell or several STACKED cells (the "cells" array). Vary layouts for visual interest (e.g. one wide tile beside two stacked narrow ones, or a 3-up row). Give EVERY cell a concrete "query" that a shopper would search and that matches real products (e.g. for a July 4th theme: "men's patriotic t-shirt", "women's american flag tank", "kids 4th of july shirt", "stars and stripes hat"). Provide short punchy "label" and optional "sublabel".
+  For the 1-2 LARGEST / feature tiles (width 2-3, single cell), also add a "scene": a short lifestyle-photo description of people enjoying the moment while WEARING the product (e.g. "a family sitting on a blanket watching fireworks on a warm summer evening, smiling, wearing matching tees"). The system will render that scene as a real photo featuring the client's actual shirt design. Only add "scene" to big feature tiles, not small ones.
+  Do NOT include any image URLs — the system fills tile images automatically from the store's catalog and AI scene renders.
+
+Rules: Honor the merchant's request exactly — if they ask for an image collage on a theme, make the first section an "imageCollage" built around that theme with 3-6 tiles. Write compelling, on-brand copy — no lorem/placeholder text. Otherwise choose 2-5 sections that fit THIS page.
+Respond with STRICT JSON only: {"sections":[{"type":"...","settings":{...}}, ...]}`;
+
+    const msg = await client.messages.create({ model: "claude-opus-4-8", max_tokens: 3500, thinking: { type: "adaptive" }, messages: [{ role: "user", content: ask }] });
     const out = parseJson(textOf(msg));
-    const allowed = new Set(["hero", "featuredProducts", "richText"]);
+    const allowed = new Set(["hero", "featuredProducts", "richText", "imageCollage"]);
     const sections = (Array.isArray(out?.sections) ? out.sections : [])
         .filter((s) => s && allowed.has(s.type))
         .map((s) => ({ type: s.type, settings: (s.settings && typeof s.settings === "object") ? s.settings : {} }));
     if (!sections.length) throw httpError(502, "AI returned no usable sections");
+
+    // Fill collage tile images from the catalog (the model only supplies search "query"s).
+    if (orgId) {
+        for (const s of sections) {
+            if (s.type === "imageCollage") await hydrateCollageImages(orgId, s.settings);
+        }
+    }
     return { sections };
+}
+
+const escapeRegex = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const firstImage = (p) => p?.productImages?.find?.((i) => i?.image)?.image || null;
+// The client's actual printable artwork (Design.images is keyed by side; values are art URLs).
+const designArtOf = (p) => {
+    const imgs = p?.design?.images;
+    if (!imgs || typeof imgs !== "object") return null;
+    return imgs.front || imgs.Front || Object.values(imgs).find((v) => typeof v === "string" && v.startsWith("http")) || null;
+};
+
+// Lightweight catalog summary so the AI targets queries that exist (categories + frequent keywords).
+async function catalogHints(orgId) {
+    const products = await PlatformProduct.find({ orgId, active: { $ne: false } })
+        .select("category tags").limit(400).lean().catch(() => []);
+    const cats = new Map(), kw = new Map();
+    for (const p of products) {
+        if (p.category) cats.set(p.category, (cats.get(p.category) || 0) + 1);
+        for (const t of (p.tags || [])) if (t) kw.set(t, (kw.get(t) || 0) + 1);
+    }
+    const top = (m, n) => [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, n).map(([k]) => k);
+    return { categories: top(cats, 12), keywords: top(kw, 20) };
+}
+
+// For each collage cell: set its search link, pick the best-matching catalog product, and use either a
+// plain product photo or — for "feature" tiles the model marked with a "scene" — an AI-rendered
+// lifestyle photo that composites the client's real design onto the shirt.
+const MAX_SCENES_PER_COLLAGE = 3;   // bound cost/latency of image generation per AI run
+async function hydrateCollageImages(orgId, settings) {
+    const rows = Array.isArray(settings?.rows) ? settings.rows : [];
+    const used = new Set();
+    const canScene = sceneGenAvailable();
+    let scenes = 0;
+    for (const r of rows) {
+        for (const col of (r?.tiles || [])) {
+            for (const cell of (col?.cells || [])) {
+                const q = (cell.query || cell.label || "").trim();
+                if (!cell.link && q) cell.link = `/products?q=${encodeURIComponent(q)}`;
+                if (!cell.image && q) {
+                    const product = await pickCatalogProduct(orgId, q, used);
+                    let img = null;
+                    if (cell.scene && canScene && scenes < MAX_SCENES_PER_COLLAGE) {
+                        scenes++;
+                        let arts = await designArtsForQuery(orgId, q, 4);
+                        if (!arts.length) arts = [designArtOf(product)].filter(Boolean);   // fall back to the tile's product
+                        img = await generateSceneImage({ scene: cell.scene, designArtUrls: arts, theme: settings.heading || "", orgId });
+                    }
+                    cell.image = img || firstImage(product);
+                }
+                delete cell.query;
+                delete cell.scene;
+            }
+        }
+    }
+    return settings;
+}
+
+// Find the product that best matches the tile's search terms (by keyword overlap). Returns the doc so
+// callers can use both its photo (firstImage) and its design art (designArtOf) for scene rendering.
+async function pickCatalogProduct(orgId, query, used, { allowFallback = true } = {}) {
+    const base = { orgId, active: { $ne: false } };
+    const words = (query.toLowerCase().match(/[a-z0-9]+/g) || []).filter((w) => w.length > 2);
+    let chosen = null;
+    if (words.length) {
+        const or = [];
+        for (const w of words) { const rx = new RegExp(escapeRegex(w), "i"); or.push({ title: rx }, { tags: rx }, { category: rx }, { brand: rx }); }
+        const candidates = await PlatformProduct.find({ ...base, $or: or })
+            .select("title category brand tags productImages design").populate("design", "images").limit(80).lean().catch(() => []);
+        const score = (p) => {
+            const hay = [p.title, p.category, p.brand, ...(p.tags || [])].join(" ").toLowerCase();
+            return words.reduce((n, w) => n + (hay.includes(w) ? 1 : 0), 0);
+        };
+        candidates.sort((a, b) => score(b) - score(a));
+        chosen = candidates.find((p) => firstImage(p) && !used.has(String(p._id))) || candidates.find((p) => firstImage(p));
+    }
+    if (!chosen && allowFallback) {
+        // Nothing matched the theme — fall back to any product with an image so the tile isn't blank.
+        chosen = await PlatformProduct.findOne({ ...base, "productImages.0": { $exists: true } })
+            .select("productImages design").populate("design", "images").sort({ _id: -1 }).lean().catch(() => null);
+    }
+    if (chosen) used.add(String(chosen._id));
+    return chosen;
+}
+
+// ── AI link migrator ─────────────────────────────────────────────────────────
+// Onboarding a client from an old site: discover their old URLs, map them to the new structure (so we
+// can 301 them and keep their SEO), and rewrite any old links pasted into the new store's content.
+
+// Pull candidate paths from the old site: homepage links + its sitemap.xml.
+async function crawlOldSite(base) {
+    const origin = new URL(base).origin;
+    const paths = new Set();
+    const add = (href) => { try { const u = new URL(href, origin); if (u.origin === origin) paths.add((u.pathname.replace(/\/+$/, "") || "/")); } catch { /* skip */ } };
+    try {
+        const html = await (await fetch(base, { redirect: "follow", headers: { "User-Agent": "PythiasMigrator/1.0" } })).text();
+        for (const m of html.matchAll(/href=["']([^"'#?]+)/gi)) add(m[1]);
+    } catch { /* ignore */ }
+    try {
+        const xml = await (await fetch(origin + "/sitemap.xml")).text();
+        for (const m of xml.matchAll(/<loc>([^<]+)<\/loc>/gi)) add(m[1].trim());
+    } catch { /* ignore */ }
+    return [...paths].filter((p) => p && p !== "/").slice(0, 300);
+}
+
+// Ask Claude to map each old path → a new-structure path using the store's real catalog/pages.
+async function aiMapPaths(oldPaths, ctx) {
+    if (!oldPaths.length) return [];
+    const client = await anthropic();
+    const lines = [
+        `Map each OLD path from a store's previous website to the BEST new path on the new store. New URL structure:`,
+        `- Products: /products/<slug>`,
+        `- Shop / search: /products  (search is /products?q=…)`,
+        `- Collections: /collections/<slug>`,
+        `- Category/landing: /products/<term> or /products/<dept>/<category>`,
+        `- Policies: /policies/terms | /policies/returns | /policies/privacy | /policies/shipping`,
+        `- Home: /`,
+        ``,
+        `New store data:`,
+        `Product slugs: ${(ctx.products || []).slice(0, 120).map((p) => p.slug).filter(Boolean).join(", ") || "(none yet)"}`,
+        `Collection slugs: ${(ctx.collections || []).map((c) => c.slug).join(", ") || "(none)"}`,
+        `Published page slugs: ${(ctx.pages || []).map((p) => p.slug).join(", ") || "(none)"}`,
+        ``,
+        `OLD paths to map:\n${oldPaths.map((p) => "- " + p).join("\n")}`,
+        ``,
+        `For each old path, pick the closest new path. Map common platform patterns sensibly: /pages/about→/about, /pages/{x}→ a policy if it's terms/privacy/returns/shipping else /{x}; /collections/all→/products; /collections/{x}→/collections/{x}; /search→/products; product pages → /products/<matching slug> (only if a real slug matches), else /products?q=<keywords>. Skip a path only if there is truly no sensible target. Respond with STRICT JSON only: {"redirects":[{"from":"/old","to":"/new"}, …]}`,
+    ].join("\n");
+    const msg = await client.messages.create({ model: "claude-opus-4-8", max_tokens: 4000, thinking: { type: "adaptive" }, messages: [{ role: "user", content: lines }] });
+    const out = parseJson(textOf(msg));
+    return (Array.isArray(out?.redirects) ? out.redirects : [])
+        .filter((r) => r && typeof r.from === "string" && typeof r.to === "string" && r.from.startsWith("/") && r.to.startsWith("/") && r.from !== r.to)
+        .map((r) => ({ from: r.from.replace(/\/+$/, "") || "/", to: r.to }));
+}
+
+// Find links in the new store's own draft content that still point at the OLD domain.
+function scanInternalLinks(draft, oldOrigin) {
+    const found = [];
+    const host = (() => { try { return new URL(oldOrigin).host; } catch { return ""; } })();
+    if (!host) return found;
+    const seen = new Set();
+    const consider = (href) => {
+        if (typeof href !== "string" || !href.includes(host) || seen.has(href)) return;
+        seen.add(href);
+        try { found.push({ from: href, to: new URL(href).pathname || "/" }); } catch { /* skip */ }
+    };
+    for (const l of (draft?.nav?.links || [])) consider(l?.href);
+    for (const l of (draft?.footer?.links || [])) consider(l?.href);
+    for (const pg of (draft?.pages || [])) for (const s of (pg?.sections || [])) {
+        const st = s?.settings || {};
+        consider(st.ctaLink);
+        for (const row of (st.rows || [])) for (const col of (row?.tiles || [])) for (const c of (col?.cells || [])) consider(c?.link);
+    }
+    return found;
+}
+
+export async function migrateLinks(orgId, { oldUrl } = {}) {
+    const url = (oldUrl || "").trim();
+    if (!/^https?:\/\//i.test(url)) throw httpError(400, "Enter the old site's full URL, including https://");
+
+    const oldPaths = await crawlOldSite(url);
+    const site = await StorefrontSite.findOne({ orgId }).lean().catch(() => null);
+    const [products, collections, pages] = await Promise.all([
+        PlatformProduct.find({ orgId, active: { $ne: false } }).select("slug title").limit(200).lean().catch(() => []),
+        StorefrontCollection.find({ orgId, status: "published" }).select("slug title").limit(200).lean().catch(() => []),
+        StorefrontPage.find({ orgId, status: "published" }).select("slug title").limit(200).lean().catch(() => []),
+    ]);
+
+    // Old product URLs that ALREADY resolve on the new store (by slug or sku) need no redirect — the
+    // catch-all resolves /products/<slug|sku|_id> directly (with a canonical tag to avoid duplicates).
+    const rawSegs = oldPaths.map((p) => { const m = p.match(/^\/products\/([^/]+)$/); return m ? decodeURIComponent(m[1]) : null; }).filter(Boolean);
+    const autoResolved = new Set();
+    if (rawSegs.length) {
+        const lc = rawSegs.map((s) => s.toLowerCase());
+        const hits = await PlatformProduct.find({ orgId, active: { $ne: false }, $or: [{ slug: { $in: lc } }, { sku: { $in: [...new Set([...rawSegs, ...lc])] } }] }).select("slug sku").lean().catch(() => []);
+        const have = new Set();
+        for (const h of hits) { if (h.slug) have.add(String(h.slug).toLowerCase()); if (h.sku) have.add(String(h.sku).toLowerCase()); }
+        for (const p of oldPaths) { const m = p.match(/^\/products\/([^/]+)$/); if (m && have.has(decodeURIComponent(m[1]).toLowerCase())) autoResolved.add(p); }
+    }
+    const toMap = oldPaths.filter((p) => !autoResolved.has(p));
+
+    const redirects = await aiMapPaths(toMap, { products, collections, pages });
+    const internal = scanInternalLinks(site?.draft || site, url);
+    return { redirects, internal, crawled: oldPaths.length, autoResolved: autoResolved.size };
+}
+
+// Persist the chosen redirects (live + draft, so 301s work immediately and the editor keeps them) and
+// rewrite any old-domain links found in the draft content.
+export async function applyMigration(orgId, { redirects = [], internal = [] } = {}) {
+    const site = await StorefrontSite.findOne({ orgId });
+    if (!site) throw httpError(404, "Store not found");
+
+    // Merge redirects (dedupe by `from`).
+    const map = new Map((site.redirects || []).map((r) => [r.from, r.to]));
+    let aliases = 0;
+    for (const r of redirects) {
+        if (!r?.from || !r?.to) continue;
+        const from = r.from.replace(/\/+$/, "") || "/";
+        // If an old PRODUCT handle maps to a new PRODUCT page, store the handle as an alias on that product
+        // instead of a 301 — the catch-all then resolves it directly (canonical dedupes). Saves a redirect.
+        const mFrom = from.match(/^\/products\/([^/]+)$/);
+        const mTo = r.to.match(/^\/products\/([^/]+)$/);
+        if (mFrom && mTo) {
+            const handle = decodeURIComponent(mFrom[1]).toLowerCase();
+            const target = decodeURIComponent(mTo[1]);
+            const lcT = target.toLowerCase();
+            const prod = await PlatformProduct.findOne({ orgId, $or: [{ slug: lcT }, { sku: target }, { sku: lcT }, { slugAliases: lcT }] }).select("_id").lean().catch(() => null);
+            if (prod) { await PlatformProduct.updateOne({ _id: prod._id }, { $addToSet: { slugAliases: handle } }); aliases++; continue; }
+        }
+        map.set(from, r.to);
+    }
+    for (const r of internal) if (r?.from && r?.to) map.set(r.from, r.to);   // also redirect the old absolute URLs' paths
+    site.redirects = [...map.entries()].map(([from, to]) => ({ from, to }));
+
+    // Rewrite old-domain links sitting in the draft content (blunt full-string replace is safe for URLs).
+    if (internal.length && site.draft) {
+        let json = JSON.stringify(site.draft);
+        for (const r of internal) if (r?.from && r?.to) json = json.split(r.from).join(r.to);
+        try { site.draft = JSON.parse(json); } catch { /* keep original on parse failure */ }
+    }
+    await site.save();
+    return { redirects: site.redirects.length, aliases };
+}
+
+// Up to `n` DISTINCT design artworks for products matching the query (best matches first). Used to give
+// each person in a generated scene a different real design. Returns [] when nothing genuinely matches.
+async function designArtsForQuery(orgId, query, n = 4) {
+    const words = ((query || "").toLowerCase().match(/[a-z0-9]+/g) || []).filter((w) => w.length > 2);
+    if (!words.length) return [];
+    const or = [];
+    for (const w of words) { const rx = new RegExp(escapeRegex(w), "i"); or.push({ title: rx }, { tags: rx }, { category: rx }, { brand: rx }); }
+    const candidates = await PlatformProduct.find({ orgId, active: { $ne: false }, $or: or })
+        .select("title category brand tags design").populate("design", "images").limit(80).lean().catch(() => []);
+    const score = (p) => {
+        const hay = [p.title, p.category, p.brand, ...(p.tags || [])].join(" ").toLowerCase();
+        return words.reduce((acc, w) => acc + (hay.includes(w) ? 1 : 0), 0);
+    };
+    candidates.sort((a, b) => score(b) - score(a));
+    const arts = [], seen = new Set();
+    for (const p of candidates) {
+        const art = designArtOf(p);
+        const id = p.design?._id ? String(p.design._id) : art;
+        if (art && id && !seen.has(id)) { seen.add(id); arts.push(art); if (arts.length >= n) break; }
+    }
+    return arts;
+}
+
+// Manual per-tile generator: the seller describes the image for ONE collage cell. We (1) draft a punchy
+// label/sublabel + a shopper search query from the description, (2) find a matching product to borrow its
+// design art so the shirt shows the client's real design, (3) render the image at the tile's aspect.
+// Returns { url, label, sublabel, link } so the editor can fill the whole cell at once.
+export async function generateTileImage(orgId, { prompt, aspect } = {}) {
+    const p = (prompt || "").trim();
+    if (!p) throw httpError(400, "Describe the image you want");
+    if (!sceneGenAvailable()) throw httpError(503, "AI image generation isn't configured yet (missing GEMINI_API_KEY).");
+
+    // 1. Copy + search query from the description.
+    let meta = { label: "", sublabel: "", query: p };
+    try {
+        const client = await anthropic();
+        const msg = await client.messages.create({
+            model: "claude-opus-4-8", max_tokens: 400,
+            messages: [{ role: "user", content:
+                `An online store image tile is described as: "${p}". Respond with STRICT JSON only: {"label":"punchy title, <=4 words","sublabel":"supporting line, <=6 words or empty","query":"product search terms a shopper would type to find matching products"}.` }],
+        });
+        const out = parseJson(textOf(msg));
+        if (out && typeof out === "object") meta = { label: out.label || "", sublabel: out.sublabel || "", query: out.query || p };
+    } catch { /* fall back to description as query, no copy */ }
+
+    // 2. Borrow several matching designs (so a multi-person scene can wear a DIFFERENT real design each) —
+    //    genuine matches only, so a scenery description doesn't get unrelated designs forced onto it.
+    let referenceUrls = [];
+    try { referenceUrls = await designArtsForQuery(orgId, meta.query, 4); } catch {}
+
+    // 3. Render at the requested aspect → data URL (editor loads it into the cropper, then uploads the crop).
+    const dataUrl = await generateImageDataUrl({ prompt: p, referenceUrls, aspect });
+    if (!dataUrl) throw httpError(502, "Image generation failed — please try again.");
+
+    return { dataUrl, label: meta.label, sublabel: meta.sublabel, link: meta.query ? `/products?q=${encodeURIComponent(meta.query)}` : "" };
+}
+
+// Generate SEO slugs for products that don't have one (per-org unique). Powers the "slug" URL mode.
+const slugifyProduct = (s) => String(s || "").toLowerCase().trim()
+    .replace(/['’"]/g, "").replace(/&/g, " and ").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
+
+export async function generateProductSlugs(orgId) {
+    const taken = new Set();
+    const withSlug = await PlatformProduct.find({ orgId, slug: { $nin: [null, ""] } }).select("slug").lean().catch(() => []);
+    for (const p of withSlug) if (p.slug) taken.add(p.slug);
+
+    const missing = await PlatformProduct.find({ orgId, $or: [{ slug: { $exists: false } }, { slug: null }, { slug: "" }] }).select("title sku").lean().catch(() => []);
+    let updated = 0;
+    for (const p of missing) {
+        const base = slugifyProduct(p.title) || String(p._id);
+        let s = base, n = 1;
+        while (taken.has(s)) s = `${base}-${++n}`;
+        taken.add(s);
+        const update = { $set: { slug: s } };
+        if (p.sku) update.$addToSet = { slugAliases: String(p.sku).toLowerCase() };   // SKU-handle URLs resolve
+        await PlatformProduct.updateOne({ _id: p._id }, update);
+        updated++;
+    }
+    return { updated, remaining: 0, total: withSlug.length + updated };
+}
+
+// Pre-generate SEO copy (h1 + description) for the curated indexable terms, so the /products/<term>
+// landing pages serve it SERVER-SIDE in the HTML (crawlers see it) with zero AI on the page-load path.
+// Bounded to the curated set; run from the SEO tab. Prunes content for terms no longer curated.
+export async function generateTermDescriptions(orgId, { regenerate = false } = {}) {
+    const site = await StorefrontSite.findOne({ orgId });
+    if (!site) throw httpError(404, "Store not found");
+    // Use the freshest curated terms (draft, since the seller may not have published yet).
+    const src = (site.draft?.indexableTerms ?? site.indexableTerms) || [];
+    const terms = [...new Set(src.map((t) => String(t).trim()).filter(Boolean))];
+    if (!terms.length) { site.termContent = []; await site.save(); return { generated: 0 }; }
+
+    const org = await Organization.findById(orgId).select("name").lean().catch(() => null);
+    const brand = site.businessInfo?.legalName || site.name || org?.name || "our store";
+    const existing = new Map((site.termContent || []).map((t) => [t.term, t]));
+    const client = await anthropic();
+    const out = [];
+    let generated = 0;
+
+    for (const term of terms) {
+        const key = slugifyProduct(term);
+        if (!regenerate && existing.get(key)?.description) { out.push(existing.get(key)); continue; }
+        const rx = new RegExp(escapeRegex(term), "i");
+        const sample = await PlatformProduct.find({ orgId, active: { $ne: false }, $or: [{ title: rx }, { tags: rx }, { category: rx }] })
+            .select("title").limit(12).lean().catch(() => []);
+        try {
+            const msg = await client.messages.create({
+                model: "claude-opus-4-8", max_tokens: 600,
+                messages: [{ role: "user", content:
+                    `Write SEO copy for the "${term}" collection/search landing page on the online store "${brand}". Example products: ${sample.map((p) => p.title).slice(0, 10).join("; ") || "various items"}. Return STRICT JSON only: {"h1":"page heading, <=8 words, includes the term naturally","description":"2-3 sentences, ~45-75 words, friendly and specific, uses the keyword naturally, no fluff or fake claims"}.` }],
+            });
+            const j = parseJson(textOf(msg));
+            out.push({ term: key, h1: j?.h1 || "", description: j?.description || "" });
+            generated++;
+        } catch { out.push(existing.get(key) || { term: key, h1: "", description: "" }); }
+    }
+    site.termContent = out;
+    await site.save();
+    return { generated, total: terms.length };
+}
+
+// AI drafter for the built-in legal pages. Grounds the copy in the store's real business info; returns
+// a starting draft the seller must review (we don't claim it's legal advice).
+const POLICY_PROMPTS = {
+    terms:    { title: "Terms of Service",   guide: "the rules for using the site and purchasing — accounts, orders & acceptance, pricing & payment, intellectual property, acceptable use, disclaimers, limitation of liability, and governing law" },
+    returns:  { title: "Returns & Refunds",  guide: "the return window, item condition requirements, how to start a return, refund timing & method, exchanges, and that custom/personalized print-on-demand items are generally non-returnable unless defective or damaged" },
+    privacy:  { title: "Privacy Policy",      guide: "what personal data is collected (contact, order, payment handled by the processor, analytics cookies), how it is used, who it is shared with (payment processors, shipping carriers, analytics), cookies, customer data rights, and how to contact the store about privacy" },
+    shipping: { title: "Shipping Policy",     guide: "production/processing time for made-to-order items, shipping methods & delivery estimates, shipping costs, international shipping & customs/duties, order tracking, and lost or delayed packages" },
+};
+
+export async function generatePolicy(orgId, { slug } = {}) {
+    const def = POLICY_PROMPTS[slug];
+    if (!def) throw httpError(400, "Unknown policy type");
+
+    const site = await StorefrontSite.findOne({ orgId }).lean().catch(() => null);
+    const org = await Organization.findById(orgId).select("name").lean().catch(() => null);
+    const b = site?.businessInfo || {};
+    const name = b.legalName || site?.name || org?.name || "the Company";
+
+    const facts = [`Business name: ${name}.`];
+    if (b.email) facts.push(`Customer contact email: ${b.email}.`);
+    if (b.phone) facts.push(`Customer contact phone: ${b.phone}.`);
+    if (b.address?.city) facts.push(`Based in ${[b.address.city, b.address.state, b.address.country].filter(Boolean).join(", ")}.`);
+    if (site?.shipping?.freeShipping) facts.push("Offers free shipping on all orders.");
+    else if (site?.shipping?.freeOverCents > 0) facts.push(`Offers free shipping on orders over $${(site.shipping.freeOverCents / 100).toFixed(2)}.`);
+    facts.push("Products are custom / made-to-order print-on-demand apparel and goods.");
+
+    const client = await anthropic();
+    const ask = `Write a clear, professional ${def.title} for an e-commerce store. Cover ${def.guide}.
+Known facts (use them — do NOT invent specifics that aren't given; where a needed detail is missing use a [bracketed placeholder] the owner can fill in):
+${facts.map((f) => "- " + f).join("\n")}
+Format as plain text: a short intro paragraph, then "## " section headings with paragraphs and "- " bullet lists where helpful. Friendly but professional tone. Do NOT include a title line (it's shown separately) and do NOT add "this is not legal advice" disclaimers. Keep it specific to a print-on-demand apparel store.`;
+
+    const msg = await client.messages.create({ model: "claude-opus-4-8", max_tokens: 2000, thinking: { type: "adaptive" }, messages: [{ role: "user", content: ask }] });
+    const body = textOf(msg).trim();
+    if (!body) throw httpError(502, "Could not generate the policy — please try again.");
+    return { title: def.title, body };
 }
 
 // ── AI blog/article generator (paid add-on, gated by site.aiEnabled) ──────────

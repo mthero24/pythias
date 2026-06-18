@@ -28,6 +28,7 @@ export function CartProvider({ children }) {
     const [items, setItems] = useState([]);
     const [savedForLater, setSaved] = useState([]);
     const [ready, setReady] = useState(false);
+    const [modal, setModal] = useState(null);   // last-added item for the optional add-to-cart modal
     const mergedFor = useRef(null);   // customer id we've merged the server cart for
 
     // Load local state on mount.
@@ -70,7 +71,7 @@ export function CartProvider({ children }) {
         return () => clearTimeout(id);
     }, [items, savedForLater, ready, customer]);
 
-    const add = useCallback((item, qty = 1) => {
+    const add = useCallback((item, qty = 1, opts = {}) => {
         setItems((prev) => {
             const k = lineKey(item);
             const found = prev.find((p) => lineKey(p) === k);
@@ -78,7 +79,19 @@ export function CartProvider({ children }) {
             return [...prev, { ...item, qty: Math.min(99, qty) }];
         });
         track("add_to_cart", { productId: item.productId });
+        // Confirmation modal on EVERY add (product page + card quick-add), unless silenced (Buy now).
+        if (!opts.silent && typeof window !== "undefined" && window.__SF__?.cartModal) setModal({ ...item, qty });
     }, []);
+
+    // Cards in @pythias/storefront dispatch window events to add/buy without importing this app-only
+    // context across the package boundary. "buy-now" adds silently then jumps straight to checkout.
+    useEffect(() => {
+        const onAdd = (e) => { if (e?.detail?.productId) add(e.detail, e.detail.qty || 1); };
+        const onBuyNow = (e) => { if (e?.detail?.productId) { add(e.detail, e.detail.qty || 1, { silent: true }); setTimeout(() => { window.location.href = "/checkout"; }, 50); } };
+        window.addEventListener("sf:add-to-cart", onAdd);
+        window.addEventListener("sf:buy-now", onBuyNow);
+        return () => { window.removeEventListener("sf:add-to-cart", onAdd); window.removeEventListener("sf:buy-now", onBuyNow); };
+    }, [add]);
     const setQty = useCallback((k, qty) => {
         setItems((prev) => prev.flatMap((p) => (lineKey(p) === k ? (qty <= 0 ? [] : [{ ...p, qty: Math.min(99, qty) }]) : [p])));
     }, []);
@@ -113,6 +126,7 @@ export function CartProvider({ children }) {
             items, savedForLater, ready, add, setQty, remove, clear,
             saveForLater, moveToCart, removeSaved,
             count, subtotalCents, lineKey,
+            modal, closeModal: () => setModal(null),
         }}>
             {children}
         </CartCtx.Provider>
