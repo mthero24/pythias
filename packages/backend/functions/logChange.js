@@ -19,6 +19,7 @@ const TRACKED = {
         "name", "sku", "title", "brand", "productDescription",
         "description", "price", "gender", "season",
     ],
+    inventory: ["quantity"],   // blank stock — records quantity before→after (e.g. return-to-queue / return-to-inventory)
 };
 
 // Field-specific serializers — consistent whether data is populated or just ObjectIds

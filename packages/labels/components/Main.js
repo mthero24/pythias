@@ -373,6 +373,20 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source, printe
 
     const totalLabels = Object.values(useLabels).reduce((sum, arr) => sum + arr.length, 0);
 
+    // Find the scanned "return to queue" piece in the loaded list so the confirm dialog can show WHAT
+    // it's about to zero (product + current count) — makes a wrong scan obvious before it commits.
+    const qPiece = (() => {
+        const pid = returnToQue.trim();
+        if (!pid) return null;
+        for (const arr of Object.values(useLabels)) {
+            const m = (arr || []).find((l) => l.pieceId === pid);
+            if (m) return m;
+        }
+        return null;
+    })();
+    const qDesc = qPiece ? [qPiece.styleCode, qPiece.colorName, qPiece.sizeName].filter(Boolean).join(" · ") : "";
+    const qQty = qPiece?.inventory?.quantity;
+
     return (
         <>
             <Box sx={{ backgroundColor: "background.default", minHeight: "100vh" }}>
@@ -1027,9 +1041,26 @@ export function Main({ labels, rePulls, giftLabels = [], batches, source, printe
                     <Typography variant="body2" color="text.secondary">
                         Return piece <strong style={{ color: "#111827" }}>"{returnToQue}"</strong> to the print queue?
                     </Typography>
-                    <Typography variant="body2" color="error" sx={{ mt: 1, fontWeight: 600 }}>
-                        This will reset its inventory to zero.
-                    </Typography>
+                    {qPiece ? (
+                        <Box sx={{ mt: 1, p: 1.25, borderRadius: 1, bgcolor: "grey.100" }}>
+                            {qDesc && <Typography variant="body2" sx={{ fontWeight: 700 }}>{qDesc}</Typography>}
+                            <Typography variant="body2" color="text.secondary">
+                                Inventory: <strong style={{ color: "#111827" }}>{qQty ?? "—"}</strong> → <strong style={{ color: "#b91c1c" }}>0</strong>
+                            </Typography>
+                        </Box>
+                    ) : (
+                        <Typography variant="caption" sx={{ display: "block", mt: 1, color: "warning.dark", fontWeight: 600 }}>
+                            ⚠ This piece isn't in the current list — double-check you scanned the right one.
+                        </Typography>
+                    )}
+                    <Box sx={{ mt: 1.5, p: 1.25, borderRadius: 1, border: "1px solid", borderColor: "error.light", bgcolor: "#fef2f2" }}>
+                        <Typography variant="body2" color="error" sx={{ fontWeight: 700 }}>
+                            ⚠ This RESETS its inventory to ZERO (use this only when the system shows stock but there is none).
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+                            To put a canceled blank <em>back</em> into stock, use <strong>Return product to inventory</strong> instead.
+                        </Typography>
+                    </Box>
                 </DialogContent>
                 <DialogActions sx={{ px: 3, py: 2 }}>
                     <Button onClick={() => setConfirmReturnToQue(false)}>Cancel</Button>
