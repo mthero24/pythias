@@ -1,4 +1,4 @@
-import crypto from "crypto";
+import crypto from "node:crypto";
 import { ErrorLog } from "@pythias/mongo";
 
 // Keys whose values must never be written to the error log.

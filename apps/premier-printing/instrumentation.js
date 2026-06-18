@@ -1,8 +1,11 @@
 // Global server-error capture. Next calls this for every uncaught error in a route/render, so we
 // record it (route, method, stack, digest) without wrapping each handler. Never throws.
 export async function onRequestError(error, request, context) {
+    // logError pulls Mongo + crypto (node-only). NEXT_RUNTIME is inlined per bundle, so this early return
+    // dead-code-eliminates the import from the edge bundle; the lightweight path avoids the pdfkit barrel.
+    if (process.env.NEXT_RUNTIME !== "nodejs") return;
     try {
-        const { logError } = await import("@pythias/backend/server");
+        const { logError } = await import("@pythias/backend/logError");
         await logError({
             error,
             app: "premier",

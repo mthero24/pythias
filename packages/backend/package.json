@@ -6,6 +6,7 @@
     "exports": {
         ".": "./exports",
         "./server": "./server",
+        "./logError": "./functions/logError.js",
         "./storefront": "./components/storefront/index.js",
         "./functions": "./functions/index.js",
         "./lib/labelConstants.js": "./lib/labelConstants.js"
