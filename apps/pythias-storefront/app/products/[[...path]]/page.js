@@ -21,7 +21,7 @@ const titleCase = (s) => String(s || "").replace(/\b\w/g, (c) => c.toUpperCase()
 
 async function resolveProductDoc(orgId, token) {
     const base = { orgId, active: { $ne: false } };
-    const SELECT = "title description productImages variantsArray design designTemplateId slug sku blanks defaultColor";
+    const SELECT = "title description productImages variantsArray design designTemplateId slug sku blanks defaultColor category department salePercent";
     const pop = (qy) => qy.populate("variantsArray.color", "name hexcode").populate("variantsArray.blank", "sizes").populate("blanks", "bulletPoints sizeGuide images extraLocationPriceCents name code").populate("defaultColor", "name").select(SELECT);
     if (mongoose.Types.ObjectId.isValid(token)) {
         const byId = await pop(PlatformProduct.findOne({ ...base, _id: token })).lean().catch(() => null);
@@ -96,10 +96,12 @@ export async function generateMetadata({ params, searchParams }) {
     const host = (await headers()).get("host");
     const r = await resolvePath(host, keyOf((await params).path), sp?.q, previewAllowed(sp));
     if (r.kind === "product") {
-        const base = await siteMetadata({ title: r.product.title, description: r.product.description });
+        const pimg = r.product.productImages?.[0] || (r.product.variantsArray || []).map((v) => v.image).find(Boolean) || "";
+        const image = /^https?:\/\//.test(pimg) ? pimg : undefined;   // absolute only → else falls back to logo
+        const path = productHref(r.product, r.site.productUrlMode || "slug");
+        const base = await siteMetadata({ title: r.product.title, description: r.product.description, image, path });
         // Canonical = the slug form, so reaching the product by sku/_id/old-handle doesn't create duplicates.
-        const canonical = `https://${host}${productHref(r.product, r.site.productUrlMode || "slug")}`;
-        return { ...base, alternates: { canonical } };
+        return { ...base, alternates: { canonical: `https://${host}${path}` } };
     }
     if (r.kind === "landing") return siteMetadata({ title: r.landing.seo?.title || r.landing.title, description: r.landing.seo?.description || r.landing.description });
     if (r.kind === "search") {

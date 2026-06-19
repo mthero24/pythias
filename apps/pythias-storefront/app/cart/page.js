@@ -14,9 +14,10 @@ export default async function CartPage({ searchParams }) {
     if (!live) return <NoSite />;
     const site = withDraft(live, preview);
     const { sections, data } = await systemPageSections(site, "cart");
+    const addOns = (site.cartAddOns || []).filter((a) => a.enabled !== false && a.label);
     return (
         <SiteFrame site={site}>
-            <CartView />
+            <CartView addOns={addOns} />
             <SectionRenderer sections={sections} site={site} data={data} />
         </SiteFrame>
     );

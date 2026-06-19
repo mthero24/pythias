@@ -15,8 +15,9 @@ export default function ProductCard({ product, rating, urlMode = "slug", preferC
     // Reflect filter changes on the card; a swatch click still overrides locally until the filter changes.
     useEffect(() => { if (preferColor) { const ci = colorImageOf(preferColor); if (ci) setImg(ci); } }, [preferColor]);
     const from = typeof product.priceCents === "number" && product.priceCents > 0 ? product.priceCents / 100 : null;
+    const compareAt = product.onSale && product.compareAtCents > product.priceCents ? product.compareAtCents / 100 : null;
+    const savePct = compareAt ? Math.round((1 - product.priceCents / product.compareAtCents) * 100) : 0;
     const r = rating?.count > 0 ? Math.round(rating.avg) : 0;
-    const showAlt = showAltView && product.altImage && product.altImage !== img;
     const swap = (e, src) => { e.preventDefault(); if (src) setImg(src); };
 
     // Reveal the quick-add on hover; on touch devices (no hover) keep it visible so it's reachable.
@@ -50,51 +51,75 @@ export default function ProductCard({ product, rating, urlMode = "slug", preferC
         }
     };
 
+    // Hover shows the back/alt view (desktop); the displayed image still respects swatch clicks.
+    const displayed = (hovering && showAltView && product.altImage && product.altImage !== img) ? product.altImage : img;
+
     return (
         <>
         <a href={productHref(product, urlMode)} onMouseEnter={() => setHovering(true)} onMouseLeave={() => setHovering(false)}
-            style={{ display: "block", textDecoration: "none", color: "inherit" }}>
-            <div style={{ position: "relative", aspectRatio: "1/1", background: "#f3f4f6", borderRadius: 10, overflow: "hidden" }}>
-                {img && <img src={img} alt={product.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
-                {showAlt && (
-                    <span title="More views" onClick={(e) => swap(e, product.altImage)}
-                        style={{ position: "absolute", left: 8, bottom: 8, width: 44, height: 44, borderRadius: 8, cursor: "pointer",
+            style={{ display: "block", textDecoration: "none", color: "inherit", transition: "transform 200ms ease", transform: hovering ? "translateY(-4px)" : "none" }}>
+            <div style={{ position: "relative", aspectRatio: "1/1", background: "#f3f4f6", borderRadius: 12, overflow: "hidden",
+                boxShadow: hovering ? "0 14px 30px rgba(16,24,40,0.16)" : "0 1px 3px rgba(16,24,40,0.06)", transition: "box-shadow 200ms ease" }}>
+                {displayed && <img src={displayed} alt={product.title}
+                    style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 450ms ease", transform: hovering ? "scale(1.06)" : "scale(1)" }} />}
+
+                {/* Top-left badges: Sale / New / styles (one priority badge + styles) */}
+                <div style={{ position: "absolute", left: 8, top: 8, display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-start" }}>
+                    {compareAt && savePct > 0 && (
+                        <span style={{ padding: "3px 9px", borderRadius: 999, fontSize: "0.7rem", fontWeight: 800, letterSpacing: "0.02em", background: "#dc2626", color: "#fff", boxShadow: "0 1px 6px rgba(0,0,0,0.25)" }}>SAVE {savePct}%</span>
+                    )}
+                    {!compareAt && product.isNew && (
+                        <span style={{ padding: "3px 9px", borderRadius: 999, fontSize: "0.7rem", fontWeight: 800, letterSpacing: "0.02em", background: "#0f172a", color: "#fff", boxShadow: "0 1px 6px rgba(0,0,0,0.25)" }}>NEW</span>
+                    )}
+                    {product.styleCount > 1 && (
+                        <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setStylesOpen(true); }} title={`See all ${product.styleCount} styles`}
+                            style={{ border: "none", padding: "3px 9px", borderRadius: 999, fontSize: "0.72rem", cursor: "pointer", fontWeight: 600, background: "rgba(17,24,39,0.82)", color: "#fff", boxShadow: "0 1px 6px rgba(0,0,0,0.3)" }}>
+                            +{product.styleCount - 1} styles
+                        </button>
+                    )}
+                </div>
+
+                {/* Touch devices (no hover): keep a "more views" tap badge */}
+                {!hoverCapable && showAltView && product.altImage && product.altImage !== img && (
+                    <button type="button" title="More views" onClick={(e) => swap(e, product.altImage)}
+                        style={{ position: "absolute", left: 8, bottom: quickAdd ? 56 : 8, width: 44, height: 44, borderRadius: 8, cursor: "pointer", padding: 0,
                             border: "2px solid #fff", boxShadow: "0 1px 6px rgba(0,0,0,0.3)", background: `#fff url(${product.altImage}) center/cover no-repeat` }} />
                 )}
+
+                {/* Quick-add: full-width CTA bar that slides up on hover (always visible on touch) */}
                 {quickAdd && (
-                    <button onClick={quickAddToCart} aria-label="Add to cart" title="Add to cart"
-                        style={{ position: "absolute", right: 8, bottom: 8, width: 40, height: 40, borderRadius: "50%", border: "none",
-                            cursor: "pointer", background: "var(--sf-accent,#f59e0b)", color: "#fff", fontSize: "1.5rem", lineHeight: 1,
-                            display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 10px rgba(0,0,0,0.28)",
-                            opacity: showQuick ? 1 : 0, transform: showQuick ? "scale(1)" : "scale(0.7)", pointerEvents: showQuick ? "auto" : "none",
-                            transition: "opacity 150ms, transform 150ms" }}>+</button>
-                )}
-                {product.styleCount > 1 && (
-                    <span onClick={(e) => { e.preventDefault(); e.stopPropagation(); setStylesOpen(true); }}
-                        title={`See all ${product.styleCount} styles`}
-                        style={{ position: "absolute", left: 8, top: 8, padding: "3px 9px", borderRadius: 999, fontSize: "0.72rem", cursor: "pointer",
-                            fontWeight: 600, background: "rgba(17,24,39,0.82)", color: "#fff", boxShadow: "0 1px 6px rgba(0,0,0,0.3)" }}>
-                        +{product.styleCount - 1} styles
-                    </span>
+                    <button onClick={quickAddToCart} aria-label="Add to cart"
+                        style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "12px 0", border: "none", cursor: "pointer",
+                            background: "rgba(17,24,39,0.92)", color: "#fff", fontWeight: 700, fontSize: "0.9rem", letterSpacing: "0.01em",
+                            transform: showQuick ? "translateY(0)" : "translateY(100%)", transition: "transform 200ms ease" }}>
+                        {needsPicker ? "Quick add +" : "Add to cart +"}
+                    </button>
                 )}
             </div>
 
             {colorImages.length > 1 && (
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
                     {colorImages.slice(0, 6).map((c, i) => (
-                        <span key={i} title={c.name} onClick={(e) => swap(e, c.image)}
-                            style={{ width: 18, height: 18, borderRadius: "50%", cursor: "pointer", flexShrink: 0,
+                        <button type="button" key={i} title={c.name} aria-label={c.name}
+                            onClick={(e) => swap(e, c.image)} onMouseEnter={() => c.image && setImg(c.image)}
+                            style={{ width: 20, height: 20, borderRadius: "50%", cursor: "pointer", flexShrink: 0, padding: 0,
                                 border: "1px solid rgba(0,0,0,0.2)",
                                 boxShadow: img && img === c.image ? "0 0 0 2px var(--sf-accent,#f59e0b)" : "none",
                                 background: c.hex ? c.hex : (c.image ? `#fff url(${c.image}) center/cover no-repeat` : "#ddd") }} />
                     ))}
-                    {colorImages.length > 6 && <span style={{ fontSize: "0.72rem", color: "#94a3b8" }}>+{colorImages.length - 6}</span>}
+                    {colorImages.length > 6 && <span style={{ fontSize: "0.72rem", color: "#94a3b8" }}>+{colorImages.length - 6} more</span>}
                 </div>
             )}
 
-            <div style={{ marginTop: 8, fontWeight: 600, fontSize: "0.95rem" }}>{product.title}</div>
-            {rating?.count > 0 && <div style={{ fontSize: "0.8rem" }}><span style={{ color: "#f59e0b" }}>{"★★★★★".slice(0, r)}{"☆☆☆☆☆".slice(0, 5 - r)}</span> <span style={{ color: "#94a3b8", fontSize: "0.75rem" }}>({rating.count})</span></div>}
-            {from != null && <div style={{ color: "var(--sf-secondary)", fontWeight: 700, marginTop: 2 }}>${from.toFixed(2)}</div>}
+            <div style={{ marginTop: 10, fontWeight: 650, fontSize: "0.98rem", lineHeight: 1.3, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{product.title}</div>
+            {rating?.count > 0 && <div style={{ fontSize: "0.8rem", marginTop: 3 }}><span style={{ color: "#f59e0b" }}>{"★★★★★".slice(0, r)}{"☆☆☆☆☆".slice(0, 5 - r)}</span> <span style={{ color: "#94a3b8", fontSize: "0.75rem" }}>({rating.count})</span></div>}
+            {from != null && (
+                <div style={{ marginTop: 4, display: "flex", alignItems: "baseline", gap: 7 }}>
+                    {product.priceVaries && <span style={{ fontSize: "0.78rem", color: "#94a3b8" }}>From</span>}
+                    <span style={{ color: compareAt ? "#dc2626" : "var(--sf-secondary)", fontWeight: 800, fontSize: "1.02rem" }}>${from.toFixed(2)}</span>
+                    {compareAt && <span style={{ color: "#94a3b8", textDecoration: "line-through", fontSize: "0.85rem" }}>${compareAt.toFixed(2)}</span>}
+                </div>
+            )}
         </a>
 
         {stylesOpen && typeof document !== "undefined" && createPortal(

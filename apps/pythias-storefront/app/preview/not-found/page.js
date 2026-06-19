@@ -16,7 +16,7 @@ export default async function NotFoundPreview({ searchParams }) {
     const c = site.system?.notFound || {};
     return (
         <SiteFrame site={site}>
-            <SpecialPage code="404" title={c.title || d.title} message={c.message || d.message} ctaText={c.ctaText || d.ctaText} ctaLink={c.ctaLink || d.ctaLink} />
+            <SpecialPage code="404" title={c.title || d.title} message={c.message || d.message} ctaText={c.ctaText || d.ctaText} ctaLink={c.ctaLink || d.ctaLink} backgroundImage={c.backgroundImage} />
         </SiteFrame>
     );
 }

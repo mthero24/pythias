@@ -237,7 +237,8 @@ export default function FilterableProductGrid({ products = [], emptyText = "No p
     );
 
     const resultsJsx = shown.length === 0 ? <p style={{ opacity: 0.6 }}>{loading ? "Loading…" : emptyText}</p> : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 22, opacity: loading ? 0.55 : 1, transition: "opacity 150ms" }}>
+        <div className="sf-product-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 22, opacity: loading ? 0.55 : 1, transition: "opacity 150ms" }}>
+            <style>{`@media(max-width:560px){.sf-product-grid{grid-template-columns:repeat(2,1fr) !important;gap:14px !important}.sf-sidebar-layout{grid-template-columns:1fr !important}}`}</style>
             {shown.map((p) => (
                 <div key={p.id} style={{ position: "relative" }}>
                     <FavoriteHeart overlay product={{ productId: p.id, title: p.title, image: p.image, priceCents: p.priceCents }} />
@@ -254,7 +255,7 @@ export default function FilterableProductGrid({ products = [], emptyText = "No p
         return (
             <>
                 {tagBarJsx}
-                <div style={{ display: "grid", gridTemplateColumns: "200px 1fr", gap: 28, alignItems: "start" }}>
+                <div className="sf-sidebar-layout" style={{ display: "grid", gridTemplateColumns: "200px 1fr", gap: 28, alignItems: "start" }}>
                     <aside>{filtersJsx}</aside>
                     <div>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>

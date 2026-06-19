@@ -778,6 +778,14 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                                                 setBlank(bla);
                                                 debouncedUpdate({blank: bla});
                                             }} />
+                                            <TextField label="Compare-at Price" size="small" fullWidth value={s.compareAtPrice ?? ""}
+                                                helperText="Shown struck-through on the storefront when higher than retail"
+                                                onChange={(e) => {
+                                                    let bla = {...blank};
+                                                    bla.sizes[i].compareAtPrice = e.target.value;
+                                                    setBlank(bla);
+                                                    debouncedUpdate({blank: bla});
+                                                }} />
                                             <TextField label="Wholesale Cost" size="small" fullWidth value={s.wholesaleCost} onChange={(e) => {
                                                 let bla = {...blank};
                                                 bla.sizes[i].wholesaleCost = e.target.value;

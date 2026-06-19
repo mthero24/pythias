@@ -23,8 +23,10 @@ export async function POST(req) {
 
     // Subscribe & save (logged-in buyers only — we need a saved card for recurring billing).
     const subEnabled = !!(ctx.site?.subscriptions?.enabled && body?.subscribe?.intervalDays && customer);
-    const q = await quoteCart({ orgId: ctx.orgId, site: ctx.site, customer, items: body?.items ?? [], redeemCents: body?.redeemCents, promoCode: body?.promoCode, giftCardCode: body?.giftCardCode, subscribe: subEnabled });
+    const addOns = body?.addOns || {};
+    const q = await quoteCart({ orgId: ctx.orgId, site: ctx.site, customer, items: body?.items ?? [], redeemCents: body?.redeemCents, promoCode: body?.promoCode, giftCardCode: body?.giftCardCode, subscribe: subEnabled, addOns, shippingCountry: body?.shippingAddress?.country, shippingMethod: body?.shippingMethod });
     if (!q.lines.length) return NextResponse.json({ error: "Cart is empty or unavailable" }, { status: 400 });
+    if (!q.shipsTo) return NextResponse.json({ error: "This store doesn't ship to your country." }, { status: 400 });
 
     // Sales tax (Stripe Tax) on items + shipping, at the buyer's address. Rewards + promo
     // discounts reduce the total after tax; the gift card then applies last (like a payment).
@@ -43,10 +45,12 @@ export async function POST(req) {
     }
 
     const session = await StorefrontCheckoutSession.create({
-        orgId: ctx.orgId, customerId: customer?._id, items: body?.items ?? [],
+        orgId: ctx.orgId, customerId: customer?._id, items: body?.items ?? [], addOns,
         shippingAddress: body?.shippingAddress, email, redeemCents: q.rewardsApplied, promoCode: q.discountCode, giftCardCode: q.giftCardCode,
         subscribe: subEnabled ? { intervalDays: body.subscribe.intervalDays, intervalLabel: body.subscribe.intervalLabel, discountPercent: ctx.site.subscriptions.discountPercent || 0 } : undefined,
         analyticsSessionId: body?.analyticsSessionId,
+        shippingMethod: q.shippingMethod || undefined,
+        notifyOptIn: !!body?.notifyOptIn, marketingOptIn: !!body?.marketingOptIn, consentText: body?.consentText,
         taxCents, taxCalcId: calcId, amountCents: totalCents,
     });
 
@@ -54,7 +58,7 @@ export async function POST(req) {
 
     // Fully covered (rewards/discount/gift card) — no payment needed; place immediately.
     if (totalCents <= 0) {
-        const result = await placeOrder({ orgId: ctx.orgId, site: ctx.site, customer, items: body?.items ?? [], shippingAddress: body?.shippingAddress, email, redeemCents: q.rewardsApplied, promoCode: q.discountCode, giftCardCode: q.giftCardCode, taxCents, paymentRef: `free_${session._id}`, analyticsSessionId: body?.analyticsSessionId });
+        const result = await placeOrder({ orgId: ctx.orgId, site: ctx.site, customer, items: body?.items ?? [], shippingAddress: body?.shippingAddress, email, redeemCents: q.rewardsApplied, promoCode: q.discountCode, giftCardCode: q.giftCardCode, taxCents, paymentRef: `free_${session._id}`, analyticsSessionId: body?.analyticsSessionId, addOns, shippingMethod: q.shippingMethod, notifyOptIn: !!body?.notifyOptIn, marketingOptIn: !!body?.marketingOptIn, consentText: body?.consentText });
         await StorefrontCheckoutSession.updateOne({ _id: session._id }, { $set: { status: "completed", orderId: result.orderId } });
         return NextResponse.json({ error: false, free: true, orderId: result.orderId, totals });
     }

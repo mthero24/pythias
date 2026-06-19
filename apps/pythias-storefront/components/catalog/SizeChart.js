@@ -16,7 +16,7 @@ export default function SizeChart({ guide }) {
     const head = { ...cell, fontSize: "0.72rem", letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--sf-muted, #64748b)", fontWeight: 600 };
 
     return (
-        <section style={{ marginTop: 44, borderTop: "1px solid var(--sf-border, #e5e7eb)", paddingTop: 28 }}>
+        <section id="size-chart" style={{ marginTop: 44, borderTop: "1px solid var(--sf-border, #e5e7eb)", paddingTop: 28, scrollMarginTop: 80 }}>
             <button onClick={() => setOpen((o) => !o)} aria-expanded={open}
                 style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", background: "none", border: "none", cursor: "pointer", padding: 0, color: "var(--sf-text)" }}>
                 <h2 style={{ fontSize: "1.15rem", fontWeight: 700, margin: 0 }}>Size Chart</h2>

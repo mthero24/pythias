@@ -760,6 +760,16 @@ export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, set
                                                     setProduct({ ...prod })
                                                 }} />
                                             </Grid2>
+                                            <Grid2 size={{ xs: 12, sm: 6 }}>
+                                                <TextField fullWidth type="number" label="Sale (% off)" variant="outlined"
+                                                    value={product.salePercent ?? 0}
+                                                    helperText="Per-product discount on the storefront (overrides blank compare-at). 0 = no sale."
+                                                    onChange={(e) => {
+                                                        let prod = { ...product }
+                                                        prod.salePercent = Math.max(0, Math.min(100, Number(e.target.value) || 0))
+                                                        setProduct({ ...prod })
+                                                    }} />
+                                            </Grid2>
                                             <Grid2 size={12}>
                                                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 0.5 }}>
                                                     <Typography variant="caption">Tags</Typography>

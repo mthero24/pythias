@@ -4,7 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 // A/B testing: fetch running experiments, bucket the visitor into a sticky variant per
 // experiment, report exposure once, and expose the assigned variant's config so surfaces (e.g.
 // the signup popup) can render it. Purchase conversions are attributed via the tracker.
-const ExpCtx = createContext({ ready: false, configFor: () => ({}) });
+const ExpCtx = createContext({ ready: false, configFor: () => ({}), variantForId: () => "A" });
 
 function beacon(payload) {
     try {
@@ -26,13 +26,14 @@ function assign(exp) {
 }
 
 export function ExperimentProvider({ children }) {
-    const [byType, setByType] = useState({});   // type → assigned variant config
+    const [byType, setByType] = useState({});   // type → assigned variant config (first running exp of a type)
+    const [byId, setById] = useState({});       // experiment id → assigned variant key (for section tests)
     const [ready, setReady] = useState(false);
 
     useEffect(() => {
         fetch("/api/experiments/active").then((r) => r.json()).then((d) => {
             const exps = d.experiments || [];
-            const types = {}, assignments = [];
+            const types = {}, ids = {}, assignments = [];
             const seenKey = "sf_exp_seen";
             let seen = {};
             try { seen = JSON.parse(sessionStorage.getItem(seenKey) || "{}"); } catch { /* ignore */ }
@@ -42,16 +43,17 @@ export function ExperimentProvider({ children }) {
                 const variant = assign(exp);
                 const cfg = exp.variants.find((v) => v.key === variant)?.config || {};
                 if (!(exp.type in types)) types[exp.type] = cfg;   // first running exp of a type wins
+                ids[exp.id] = variant;
                 assignments.push({ id: exp.id, variant });
                 if (!seen[exp.id]) { beacon({ type: "experiment_exposure", sessionId: "exp", experimentId: exp.id, variant }); seen[exp.id] = 1; }
             }
             try { sessionStorage.setItem(seenKey, JSON.stringify(seen)); } catch { /* ignore */ }
             try { localStorage.setItem("sf_experiments", JSON.stringify(assignments)); } catch { /* ignore */ }
-            setByType(types);
+            setByType(types); setById(ids);
         }).catch(() => {}).finally(() => setReady(true));
     }, []);
 
-    return <ExpCtx.Provider value={{ ready, configFor: (type) => byType[type] || {} }}>{children}</ExpCtx.Provider>;
+    return <ExpCtx.Provider value={{ ready, configFor: (type) => byType[type] || {}, variantForId: (id) => byId[id] || "A" }}>{children}</ExpCtx.Provider>;
 }
 
 export function useExperiment() { return useContext(ExpCtx); }

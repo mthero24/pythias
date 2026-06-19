@@ -13,15 +13,16 @@ export async function GET(req, { params }) {
     const base = { orgId: site.orgId, active: { $ne: false } };
     let product = null;
     try {
-        const pop = (qy) => qy.populate("variantsArray.color", "name hexcode").populate("variantsArray.blank", "sizes").select("title description productImages variantsArray");
+        const pop = (qy) => qy.populate("variantsArray.color", "name hexcode").populate("variantsArray.blank", "sizes").select("title description productImages variantsArray salePercent");
         if (mongoose.Types.ObjectId.isValid(id)) product = await pop(PlatformProduct.findOne({ ...base, _id: id })).lean();
         if (!product) { const lc = String(id).toLowerCase(); product = await pop(PlatformProduct.findOne({ ...base, $or: [{ slug: lc }, { sku: id }, { slugAliases: lc }] })).lean(); }
     } catch { product = null; }
     if (!product) return Response.json({ error: "Not found" }, { status: 404 });
 
+    const salePct = Math.max(0, Math.min(100, Number(product.salePercent) || 0));
     const variants = (product.variantsArray || []).map((v) => ({
         sku: v.sku || null,
-        priceCents: typeof v.price === "number" && v.price > 0 ? Math.round(v.price * 100) : 0,
+        priceCents: typeof v.price === "number" && v.price > 0 ? Math.round(v.price * 100 * (1 - salePct / 100)) : 0,
         image: v.image || null,
         color: v.color?.name || v.ids?.colorName || "",
         hex: v.color?.hexcode || null,

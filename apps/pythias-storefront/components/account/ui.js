@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useCustomer } from "./CustomerProvider";
 import ConciergeWidget from "./ConciergeWidget";
 
@@ -45,7 +45,7 @@ export function AccountShell({ active, children }) {
     }, [ready, customer]);
 
     if (!ready || !customer) {
-        return <div className="sf-container" style={{ padding: "80px 0", textAlign: "center", color: "#64748b" }}>Loading…</div>;
+        return <div className="sf-container" style={{ paddingTop: 80, paddingBottom: 80, textAlign: "center", color: "#64748b" }}>Loading…</div>;
     }
 
     return (
@@ -58,18 +58,69 @@ export function AccountShell({ active, children }) {
                 <button onClick={logout} style={ghostBtn}>Sign out</button>
             </div>
 
-            <nav style={{ display: "flex", gap: 6, borderBottom: "1px solid rgba(0,0,0,0.08)", marginBottom: 22 }}>
-                {TABS.map((t) => (
-                    <a key={t.href} href={t.href} style={{
-                        padding: "10px 14px", textDecoration: "none", fontWeight: 600, fontSize: "0.92rem",
-                        color: active === t.href ? "var(--sf-accent, #f59e0b)" : "#475569",
-                        borderBottom: active === t.href ? "2px solid var(--sf-accent, #f59e0b)" : "2px solid transparent",
-                    }}>{t.label}</a>
-                ))}
-            </nav>
+            <AccountNav active={active} />
 
             {children}
             <ConciergeWidget />
         </section>
+    );
+}
+
+// Account section nav — horizontal tabs on desktop, a tap-to-open dropdown menu on mobile (so the
+// 7 tabs never overflow / get cut off on a phone).
+function AccountNav({ active }) {
+    const [mobile, setMobile] = useState(false);
+    const [open, setOpen] = useState(false);
+    const ref = useRef(null);
+    useEffect(() => {
+        const mq = window.matchMedia("(max-width: 640px)");
+        const on = () => setMobile(mq.matches);
+        on(); mq.addEventListener("change", on);
+        return () => mq.removeEventListener("change", on);
+    }, []);
+    useEffect(() => {
+        const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+        document.addEventListener("mousedown", onDoc);
+        return () => document.removeEventListener("mousedown", onDoc);
+    }, []);
+
+    const tabColor = (t) => (active === t.href ? "var(--sf-accent, #f59e0b)" : "#475569");
+
+    if (mobile) {
+        const current = TABS.find((t) => t.href === active) || TABS[0];
+        return (
+            <div ref={ref} style={{ position: "relative", marginBottom: 22 }}>
+                <button onClick={() => setOpen((o) => !o)} aria-expanded={open} style={{
+                    width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center",
+                    padding: "12px 14px", borderRadius: 10, border: "1px solid rgba(0,0,0,0.14)",
+                    background: "#fff", color: "var(--sf-text, #111)", fontWeight: 700, fontSize: "0.95rem", cursor: "pointer",
+                }}>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><span style={{ fontSize: "1.05rem" }}>☰</span>{current.label}</span>
+                    <span style={{ opacity: 0.6, transform: open ? "rotate(180deg)" : "none", transition: "transform 150ms" }}>▾</span>
+                </button>
+                {open && (
+                    <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, background: "#fff", border: "1px solid rgba(0,0,0,0.12)", borderRadius: 10, boxShadow: "0 12px 32px rgba(0,0,0,0.18)", zIndex: 30, overflow: "hidden" }}>
+                        {TABS.map((t) => (
+                            <a key={t.href} href={t.href} style={{
+                                display: "block", padding: "12px 16px", textDecoration: "none", fontWeight: 600, fontSize: "0.92rem",
+                                color: tabColor(t), background: active === t.href ? "rgba(0,0,0,0.04)" : "transparent",
+                                borderLeft: active === t.href ? "3px solid var(--sf-accent, #f59e0b)" : "3px solid transparent",
+                            }}>{t.label}</a>
+                        ))}
+                    </div>
+                )}
+            </div>
+        );
+    }
+
+    return (
+        <nav style={{ display: "flex", gap: 6, borderBottom: "1px solid rgba(0,0,0,0.08)", marginBottom: 22, flexWrap: "wrap" }}>
+            {TABS.map((t) => (
+                <a key={t.href} href={t.href} style={{
+                    padding: "10px 14px", textDecoration: "none", fontWeight: 600, fontSize: "0.92rem", whiteSpace: "nowrap",
+                    color: tabColor(t), borderBottom: active === t.href ? "2px solid var(--sf-accent, #f59e0b)" : "2px solid transparent",
+                }}>{t.label}</a>
+            ))}
+        </nav>
     );
 }

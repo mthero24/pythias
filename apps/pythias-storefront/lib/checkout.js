@@ -4,20 +4,37 @@ import { enrollFlows } from "@/lib/flows";
 import { computeRedeemable, redeemForOrder, earnForOrder } from "@/lib/rewards";
 import { validateDiscount, bestAutomaticDiscount, consumeDiscount, validateGiftCard, redeemGiftCard } from "@/lib/discounts";
 import { enqueueOrderConfirmation } from "@/lib/emailFlows";
+import { shippingOptions, shippingRate } from "@/lib/shipping";
 
-// Seller-controlled shipping: free (promo), free over a threshold, else a flat rate.
-export function computeShipping(site, subtotalCents) {
-    const s = site?.shipping;
-    if (!s) return 0;
-    if (s.freeShipping) return 0;
-    if (s.freeOverCents > 0 && subtotalCents >= s.freeOverCents) return 0;
-    return Math.max(0, s.flatRateCents || 0);
+// Legacy single-number helper (domestic standard). The full engine is in lib/shipping.js.
+export function computeShipping(site, subtotalCents, itemCount = 1) {
+    return shippingRate(site, { subtotalCents, itemCount, country: site?.shipping?.homeCountry }).amountCents || 0;
+}
+
+// Seller-configured cart add-ons (gift bag, gift message, branding…) — priced authoritatively from the
+// site config (never trust the client). Returns the added cost + the chosen add-on lines (for the order).
+export function resolveAddOns(site, selected = {}) {
+    const config = site?.cartAddOns || [];
+    let addOnsCents = 0; const addOnLines = [];
+    for (const a of config) {
+        if (a.enabled === false || !a.id) continue;
+        const val = selected[a.id];
+        const isMessage = a.type === "message";
+        const chosen = isMessage ? (typeof val === "string" && val.trim().length > 0) : !!val;
+        if (!chosen) continue;
+        addOnsCents += a.priceCents || 0;
+        addOnLines.push({ id: a.id, label: a.label || a.id, priceCents: a.priceCents || 0, ...(isMessage ? { message: String(val).trim().slice(0, 500) } : {}) });
+    }
+    return { addOnsCents, addOnLines };
 }
 
 // Single source of truth for cart totals — used by summary, payment intent, and placement.
 // taxCents is 0 in the cart/summary and the real Stripe Tax amount at the payment step.
-export async function quoteCart({ orgId, site, customer, items, redeemCents, promoCode, giftCardCode, subscribe, taxCents = 0 }) {
-    const { lines, subtotalCents, wholesaleTotalCents, errors } = await validateCart(orgId, items);
+export async function quoteCart({ orgId, site, customer, items, redeemCents, promoCode, giftCardCode, subscribe, taxCents = 0, addOns = {}, shippingCountry, shippingMethod }) {
+    const { lines, subtotalCents: productSubtotal, wholesaleTotalCents, errors } = await validateCart(orgId, items);
+    const { addOnsCents, addOnLines } = resolveAddOns(site, addOns);
+    const subtotalCents = productSubtotal + addOnsCents;   // add-ons count toward the order total
+    const itemCount = lines.reduce((n, l) => n + (l.qty || 1), 0);
 
     // Subscribe & save replaces other code/automatic discounts; otherwise an explicit code wins,
     // else the best AUTOMATIC (codeless) discount applies.
@@ -32,7 +49,12 @@ export async function quoteCart({ orgId, site, customer, items, redeemCents, pro
     }
 
     const rewardsApplied = customer ? computeRedeemable(site, customer.rewardsBalance || 0, subtotalCents, redeemCents) : 0;
-    const shippingCents = freeShipping ? 0 : computeShipping(site, subtotalCents);
+
+    // Shipping: the available methods for the buyer's country + the rate for the one they picked. A
+    // country the seller doesn't ship to yields no options → shipsTo:false (checkout is blocked upstream).
+    const ship = shippingOptions(site, { subtotalCents, itemCount, country: shippingCountry });
+    const chosen = ship.options.find((o) => o.id === shippingMethod) || ship.options[0] || null;
+    const shippingCents = freeShipping ? 0 : (chosen?.amountCents || 0);
 
     // Discounts + rewards reduce the total after tax; the gift card then applies last, like a payment.
     let totalCents = Math.max(0, subtotalCents + shippingCents + taxCents - rewardsApplied - discountCents);
@@ -45,6 +67,9 @@ export async function quoteCart({ orgId, site, customer, items, redeemCents, pro
 
     return {
         lines, subtotalCents, wholesaleTotalCents, shippingCents, taxCents, rewardsApplied,
+        itemCount,
+        shipsTo: ship.shipsTo, shippingOptions: ship.options, shippingMethod: chosen?.id || null, shippingMethodLabel: chosen?.label || null,
+        addOnsCents, addOnLines,
         discountCents, discountCode: promo.ok ? (promo.code || null) : null,
         discountTitle: subscribeDiscount ? "Subscribe & save" : (promo.ok && promo.automatic ? (promo.title || "Discount") : null),
         freeShipping, discountError: promoCode && !promo.ok ? promo.reason : null,
@@ -59,7 +84,7 @@ export async function quoteCart({ orgId, site, customer, items, redeemCents, pro
 //
 // NOTE: payment must be confirmed BEFORE calling this (next increment: Stripe webhook
 // gates it). It's idempotent-friendly via `paymentRef` (skips if an order already exists).
-export async function placeOrder({ orgId, site, customer, items, shippingAddress, email, redeemCents, promoCode, giftCardCode, subscribe, taxCents = 0, stripeFeeCents = 0, paymentRef, ip, analyticsSessionId }) {
+export async function placeOrder({ orgId, site, customer, items, shippingAddress, email, redeemCents, promoCode, giftCardCode, subscribe, taxCents = 0, stripeFeeCents = 0, paymentRef, ip, analyticsSessionId, addOns = {}, shippingMethod, notifyOptIn = false, marketingOptIn = false, consentText }) {
     // Network fraud screening — a bad actor flagged by ANY store on the network is blocked here.
     const screen = await screenOrder({ email: email || customer?.email, phone: shippingAddress?.phone, shippingAddress, ip }).catch(() => null);
     if (screen?.level === "block") { const err = new Error("This order couldn't be completed. Please contact support."); err.code = "fraud_block"; throw err; }
@@ -69,9 +94,10 @@ export async function placeOrder({ orgId, site, customer, items, shippingAddress
         if (existing) return { orderId: String(existing._id), poNumber: existing.poNumber, duplicate: true };
     }
 
-    const { lines, subtotalCents, wholesaleTotalCents, shippingCents, rewardsApplied: redeemApplied, discountCents, discountCode, giftCardApplied, giftCardCode: gcCode, totalCents } =
-        await quoteCart({ orgId, site, customer, items, redeemCents, promoCode, giftCardCode, subscribe, taxCents });
+    const { lines, subtotalCents, wholesaleTotalCents, shippingCents, rewardsApplied: redeemApplied, discountCents, discountCode, giftCardApplied, giftCardCode: gcCode, totalCents, addOnLines, shipsTo, shippingMethodLabel } =
+        await quoteCart({ orgId, site, customer, items, redeemCents, promoCode, giftCardCode, subscribe, taxCents, addOns, shippingCountry: shippingAddress?.country, shippingMethod });
     if (!lines.length) throw new Error("Cart is empty or unavailable");
+    if (!shipsTo) { const err = new Error("This store doesn't ship to your country."); err.code = "ships_to"; throw err; }
 
     // Normalize the shipping address to the Order schema (required: name, address1, city, country).
     const sa = shippingAddress || {};
@@ -103,7 +129,10 @@ export async function placeOrder({ orgId, site, customer, items, shippingAddress
         paid: true,
         customerEmail: email || customer?.email,
         shippingAddress: addr,
+        ...(addOnLines?.length ? { giftAddOns: addOnLines } : {}),
+        ...((notifyOptIn || marketingOptIn) ? { consent: { orderUpdates: !!notifyOptIn, marketing: !!marketingOptIn, phone: addr.phone || undefined, text: consentText, at: new Date() } } : {}),
         shippingCost: shippingCents / 100,
+        ...(shippingMethodLabel ? { shippingMethod: shippingMethodLabel } : {}),
         taxRate: subtotalCents > 0 ? taxCents / subtotalCents : 0,
         taxAmountCents: taxCents,
         total: totalCents / 100,
@@ -157,6 +186,18 @@ export async function placeOrder({ orgId, site, customer, items, shippingAddress
             });
         }
     }
+    // Gift add-ons become their OWN items so production handles them (add a gift bag, print the message,
+    // brand the package). One per add-on (not per unit); no blank/design so routing leaves them in-house.
+    for (const a of (addOnLines || [])) {
+        itemDocs.push({
+            pieceId: `${poNumber}-${idx++}`, status: "awaiting_shipment", quantity: "1",
+            order: order._id, orgId, marketplace: "Commerce Cloud", poNumber, orderId: poNumber,
+            name: a.label, price: (a.priceCents || 0) / 100,
+            addOn: true, addOnType: a.id,
+            ...(a.message ? { giftMessage: a.message } : {}),
+            vertical: "pod",
+        });
+    }
     if (itemDocs.length) await PlatformItem.insertMany(itemDocs);
 
     let earned = 0, wasFirstOrder = false;
@@ -166,6 +207,30 @@ export async function placeOrder({ orgId, site, customer, items, shippingAddress
         wasFirstOrder = !(customer.ordersCount > 0);
         await StorefrontCustomer.updateOne({ _id: customer._id }, { $inc: { ordersCount: 1, totalSpentCents: totalCents }, $set: { lastOrderAt: new Date(), winBackSentAt: undefined } }).catch(() => {});
     }
+    // Record communication consent so the marketing + transactional channels honor it. A guest who
+    // opts into marketing becomes a lead (claimable later by signup); order updates just persist the phone.
+    const consentEmail = (email || customer?.email || "").toLowerCase();
+    const wantCustomerWrite = marketingOptIn || (notifyOptIn && addr.phone);
+    if (wantCustomerWrite && consentEmail) {
+        const now = new Date();
+        const set = {};
+        if (addr.phone) set.phone = addr.phone;
+        if (marketingOptIn) {
+            Object.assign(set, {
+                "marketingConsent.email.optedIn": true,
+                "marketingConsent.email.at": now,
+                "marketingConsent.email.source": "checkout",
+                ...(consentText ? { "marketingConsent.email.text": consentText } : {}),
+                ...(ip ? { "marketingConsent.email.ip": ip } : {}),
+            });
+        }
+        await StorefrontCustomer.updateOne(
+            { orgId, email: consentEmail },
+            { $set: set, $setOnInsert: { isLead: !customer } },
+            { upsert: true },
+        ).catch(() => { /* consent is best-effort; never block the order */ });
+    }
+
     if (discountCode) await consumeDiscount(orgId, discountCode).catch(() => {});
     if (gcCode && giftCardApplied > 0) await redeemGiftCard(orgId, gcCode, giftCardApplied, order._id).catch(() => {});
 

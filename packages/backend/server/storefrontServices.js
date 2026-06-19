@@ -17,7 +17,7 @@ import {
     StorefrontChannelConnection, StorefrontChannelListing, StorefrontAdSpend,
 } from "@pythias/mongo";
 import { generateArticle, generateArticleIdeas } from "../functions/contentGenerator.js";
-import { generateSceneImage, generateImageDataUrl, sceneGenAvailable } from "../functions/sceneImage.js";
+import { generateSceneImage, generateImage, generateImageDataUrl, sceneGenAvailable } from "../functions/sceneImage.js";
 const randomCode = (prefix = "") => `${prefix}${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
 
 // Throw this for HTTP-mappable errors; route wrappers read err.status.
@@ -26,7 +26,7 @@ export function httpError(status, message) { const e = new Error(message); e.sta
 // Fields the editor's draft → publish flow manages. NOTE: `redirects` and `termContent` are intentionally
 // excluded — they're written straight to the live site by their services (migrator / term generator) and
 // must not be round-tripped through the draft (a stale autosave would clobber them).
-const LIVE_FIELDS = ["theme", "pages", "nav", "footer", "policies", "system", "productUrlMode", "catalog", "indexableTerms", "analytics", "businessInfo", "seo"];
+const LIVE_FIELDS = ["name", "theme", "pages", "nav", "footer", "policies", "system", "productUrlMode", "catalog", "indexableTerms", "analytics", "businessInfo", "seo", "reviews", "cartAddOns", "shipping", "announcement"];
 const STOREFRONT_BASE = () => process.env.STOREFRONT_INTERNAL_BASE || "http://127.0.0.1:3020";
 const INTERNAL_KEY = () => process.env.PYTHIAS_INTERNAL_KEY;
 const slugify = (s) => String(s || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
@@ -181,6 +181,408 @@ export async function aiDraft({ channel = "email", prompt, brand = "our store", 
         : `Write a marketing email for "${brand}" in a ${tone} tone. Goal: ${prompt}. Return a short subject and an HTML body (inline-styled inner content, no <html>/<body>). STRICT JSON: {"subject":"...","html":"..."} only.`;
     const msg = await client.messages.create({ model: "claude-opus-4-8", max_tokens: 2000, thinking: { type: "adaptive" }, messages: [{ role: "user", content: instruction }] });
     return parseJson(textOf(msg));
+}
+
+// AI header-menu designer: builds a header menu (sections + links + emoji icons) from the store's
+// real catalog taxonomy + business info. Returns { links } the editor drops into nav.links.
+export async function generateMenu(orgIdStr, { style = "links", target = "header" } = {}) {
+    const orgId = new mongoose.Types.ObjectId(orgIdStr);
+    const [site, cats, depts, collections, pages] = await Promise.all([
+        StorefrontSite.findOne({ orgId }).select("name businessInfo policies").lean(),
+        PlatformProduct.distinct("category", { orgId, active: { $ne: false } }),
+        PlatformProduct.distinct("department", { orgId, active: { $ne: false } }),
+        StorefrontCollection.find({ orgId, status: "published" }).select("slug title").limit(40).lean(),
+        StorefrontPage.find({ orgId, status: "published" }).select("slug title").limit(40).lean(),
+    ]);
+    const taxonomy = [...new Set([...(depts || []), ...(cats || [])].flat().filter(Boolean).map(String))].slice(0, 40);
+    const collectionList = (collections || []).map((c) => `"${c.title}" → /collections/${c.slug}`);
+    const pageList = (pages || []).map((p) => `"${p.title}" → /${p.slug}`);
+    const policyList = (site?.policies || []).filter((p) => p?.slug && p?.body).map((p) => `"${p.title || p.slug}" → /policies/${p.slug}`);
+    const client = await anthropic();
+    const bio = site?.businessInfo?.description || site?.businessInfo?.tagline || "";
+
+    const isFooter = target === "footer";
+    const prompt = isFooter
+        ? `Design a clean storefront FOOTER as JSON — a few columns of links.
+Store name: "${site?.name || "the store"}". About: ${bio || "(not provided)"}.
+Product categories/departments: ${taxonomy.join(", ") || "(none)"}.
+Published collections (use exact hrefs): ${collectionList.length ? collectionList.join("; ") : "(none)"}.
+Published landing pages (About/Contact/etc — use exact hrefs): ${pageList.length ? pageList.join("; ") : "(none)"}.
+Legal/policy pages (use exact hrefs): ${policyList.length ? policyList.join("; ") : "(none)"}.
+Rules:
+- 2 to 4 COLUMNS. Each column is a top item with a "label" heading and a "children" array of links. Typical columns: "Shop" (categories/collections), "Company" (About/landing pages), "Support"/"Help" (Contact + policy pages).
+- Put the legal/policy pages under a Support/Legal column. Include an "All products" ("/products") link under Shop.
+- Use the given exact hrefs for collections/landing/policy pages; otherwise category links use "/products/<slug>" (category lowercased, spaces as hyphens).
+- Columns themselves have no href. Keep labels short. Emoji "icon" is OPTIONAL for footer (omit unless it clearly helps).
+STRICT JSON only: {"links":[{"label":"","icon":"","children":[{"label":"","href":"","icon":""}]}]}.`
+        : `Design a clean storefront header menu as JSON for a ${style === "drawer" ? "slide-out drawer" : "horizontal links"} menu.
+Store name: "${site?.name || "the store"}". About: ${bio || "(not provided)"}.
+Product categories/departments: ${taxonomy.join(", ") || "(none yet — use generic apparel/shop sections)"}.
+Published collections (prefer these for curated sections — use their exact hrefs): ${collectionList.length ? collectionList.join("; ") : "(none)"}.
+Published landing pages (link to relevant ones, e.g. About/lookbooks — use their exact hrefs): ${pageList.length ? pageList.join("; ") : "(none)"}.
+Rules:
+- 4 to 6 top-level items. Include Home ("/") first and an "All products" link ("/products").
+- Group related items under dropdown sections (a top item with a "children" array). Favor real collections and landing pages over inventing categories.
+- Collection links use their given "/collections/<slug>"; landing-page links use their given "/<slug>"; otherwise category links use "/products/<slug>" (category lowercased, spaces as hyphens).
+- Give every item and child ONE relevant emoji as "icon". Keep labels short (1-2 words).
+STRICT JSON only: {"links":[{"label":"","href":"","icon":"","children":[{"label":"","href":"","icon":""}]}]}. Omit "children" for plain links.`;
+    const msg = await client.messages.create({ model: "claude-opus-4-8", max_tokens: 1500, thinking: { type: "adaptive" }, messages: [{ role: "user", content: prompt }] });
+    const out = parseJson(textOf(msg));
+    const trim = (s, n) => String(s || "").slice(0, n);
+    const links = (Array.isArray(out.links) ? out.links : []).slice(0, 8).map((l) => ({
+        label: trim(l.label, 40), href: trim(l.href, 200), icon: trim(l.icon, 4),
+        ...(Array.isArray(l.children) && l.children.length
+            ? { children: l.children.slice(0, 12).map((c) => ({ label: trim(c.label, 40), href: trim(c.href, 200), icon: trim(c.icon, 4) })).filter((c) => c.label) }
+            : {}),
+    })).filter((l) => l.label);
+    return { links };
+}
+
+// AI copy for the customizable system pages (404 / error). On-brand, friendly, grounded in the
+// store's name + business info. Returns { title, message, ctaText, ctaLink? }.
+export async function generateSystemPage(orgIdStr, { kind = "notFound", withImage = true } = {}) {
+    const orgId = new mongoose.Types.ObjectId(orgIdStr);
+    const site = await StorefrontSite.findOne({ orgId }).select("name businessInfo").lean();
+    const client = await anthropic();
+    const bio = site?.businessInfo?.description || site?.businessInfo?.tagline || "";
+    const isError = kind === "error";
+    const prompt = isError
+        ? `Write warm, reassuring copy for an online store's ERROR page (shown when something goes wrong). Store: "${site?.name || "the store"}".${bio ? ` About: ${bio}.` : ""} On-brand, human, not technical — reassure them and invite them to retry. Also include "imagePrompt": a short description of a tasteful, TEXT-FREE background image that fits the brand (soft/atmospheric so overlaid white text stays readable). STRICT JSON only: {"title":"short heading","message":"1-2 sentence reassurance","ctaText":"button label, e.g. Try again","imagePrompt":"..."}.`
+        : `Write friendly, on-brand copy for an online store's 404 NOT-FOUND page. Store: "${site?.name || "the store"}".${bio ? ` About: ${bio}.` : ""} Playful but helpful — acknowledge the page is missing and nudge them back to shopping. Also include "imagePrompt": a short description of a tasteful, TEXT-FREE background image that fits the brand (soft/atmospheric so overlaid white text stays readable). STRICT JSON only: {"title":"short heading","message":"1-2 sentence helpful note","ctaText":"button label, e.g. Shop all","ctaLink":"/products","imagePrompt":"..."}.`;
+    const msg = await client.messages.create({ model: "claude-opus-4-8", max_tokens: 700, thinking: { type: "adaptive" }, messages: [{ role: "user", content: prompt }] });
+    const out = parseJson(textOf(msg));
+    const trim = (s, n) => String(s || "").slice(0, n);
+
+    // Optionally generate an on-brand background image (Gemini → Wasabi URL). Best-effort.
+    let backgroundImage;
+    if (withImage && out.imagePrompt && sceneGenAvailable()) {
+        try {
+            backgroundImage = await generateImage({ prompt: `${out.imagePrompt}. No text, no words, no letters. Atmospheric, soft, slightly darkened so white text reads on top.`, aspect: 1.6, orgId: orgIdStr });
+        } catch { /* keep copy-only */ }
+    }
+
+    return {
+        title: trim(out.title, 80),
+        message: trim(out.message, 280),
+        ctaText: trim(out.ctaText, 40),
+        ...(isError ? {} : { ctaLink: trim(out.ctaLink || "/products", 200) }),
+        ...(backgroundImage ? { backgroundImage } : {}),
+    };
+}
+
+// AI builder for a custom-HTML homepage section. Generates a self-contained, theme-matched HTML block
+// from a description; when `currentHtml` is supplied, applies the change and returns the FULL updated
+// HTML (so sellers can iterate). Returns { html } (sanitized again at render time).
+export async function generateSection(orgIdStr, { prompt, currentHtml } = {}) {
+    if (!prompt) throw httpError(400, "prompt is required");
+    const orgId = new mongoose.Types.ObjectId(orgIdStr);
+    const [site, ctx] = await Promise.all([
+        StorefrontSite.findOne({ orgId }).select("name businessInfo theme").lean(),
+        catalogContext(orgId),
+    ]);
+    const client = await anthropic();
+    const bio = site?.businessInfo?.description || site?.businessInfo?.tagline || "";
+    const editing = !!(currentHtml && currentHtml.trim());
+    const system = `You build ONE self-contained HTML section for an online store's homepage.
+Output rules (STRICT):
+- Output ONLY raw HTML for the single section. No <html>/<head>/<body>, no <script>, no markdown code fences, no commentary.
+- Inline styles only (no <style> or <script> — scripts are stripped on render).
+- Match the store theme via CSS variables: var(--sf-accent), var(--sf-secondary), var(--sf-primary), var(--sf-text), var(--sf-bg), and fonts var(--sf-font-heading) / var(--sf-font-body).
+- Be responsive: flex/grid with wrap, %/max-width, sensible padding. Wrap inner content in <div class="sf-container"> for aligned page width unless a full-bleed background band is intended.
+- Tasteful, modern, accessible. Use real placeholder copy relevant to the store.
+- IMAGES: when a photo helps, use <img> with src="IMG[<vivid scene description>]" — these become AI-generated photorealistic product/lifestyle photos (no text in the image). Style each <img> with width:100%/height/object-fit:cover. Keep existing https image URLs as-is when editing. For multiple images, prefer an IMAGE COLLAGE — a responsive CSS-grid mosaic of varied-size tiles (small gaps, rounded corners, lookbook-style) that collapses to 1-2 columns on mobile.
+- HERO / banner blocks: give the band a real BACKGROUND — either a solid theme color (background:var(--sf-primary) or var(--sf-accent) with readable text) OR a full-bleed background image (position the band relative; an absolutely-positioned inset IMG[...] with object-fit:cover behind a semi-transparent overlay for legibility). Then LAYER 1-3 foreground product images ON TOP of that background (IMG[<product cut-out on a plain/transparent background>]) arranged as an overlapping showcase row with drop-shadows, sitting above the headline/CTA. Background + overlay-on-top is the preferred hero treatment.
+Store: "${site?.name || "the store"}".${bio ? ` About: ${bio}.` : ""}${themeBlock(site?.theme)}${groundingBlock(ctx)}`;
+    const userMsg = editing
+        ? `Current section HTML:\n\n${currentHtml}\n\nApply this change and return the FULL updated HTML:\n${prompt}`
+        : `Create this section:\n${prompt}`;
+    const msg = await client.messages.create({ model: "claude-opus-4-8", max_tokens: 3000, thinking: { type: "adaptive" }, system, messages: [{ role: "user", content: userMsg }] });
+    let html = textOf(msg).trim();
+    html = html.replace(/^```(?:html)?\s*/i, "").replace(/\s*```$/i, "").trim();   // strip accidental fences
+    html = await substituteAiImages(html, orgIdStr);   // resolve any IMG[...] placeholders → real photos
+    return { html };
+}
+
+// AI collage designer: build a full image-collage layout (rows → columns → stacked cells) from a
+// description, with AI-generated photos per tile. Returns { rows } in the ImageCollage settings.rows
+// shape: [{ height, tiles:[{ width, cells:[{ image, label, sublabel, link }] }] }].
+export async function generateCollage(orgIdStr, { prompt, current } = {}) {
+    if (!prompt) throw httpError(400, "prompt is required");
+    const orgId = new mongoose.Types.ObjectId(orgIdStr);
+    const [site, ctx, links] = await Promise.all([
+        StorefrontSite.findOne({ orgId }).select("name businessInfo theme").lean(),
+        catalogContext(orgId),
+        siteLinksContext(orgId),
+    ]);
+    const client = await anthropic();
+    const editing = Array.isArray(current) && current.length > 0;
+    const system = `You design an IMAGE COLLAGE (lookbook mosaic) for an online store homepage section. Return STRICT JSON ONLY, no prose, no code fences:
+{"rows":[{"height":<px 200-420>,"tiles":[{"width":<relative 1-3>,"cells":[{"imageDesc":"<vivid photo description>","label":"<short overlay caption or empty>","sublabel":"<optional small line or empty>","link":"<real path>"}]}]}]}
+RULES:
+- 1-3 rows; each row has 2-4 tiles (columns). For visual variety, some columns may STACK 1-2 cells vertically ("cells" with 2 entries) — most columns have a single cell. Vary tile widths (e.g. a width:2 feature beside two width:1 tiles) and row heights for a dynamic, editorial mosaic.
+- imageDesc: photorealistic product/lifestyle photography of the store's REAL product types — specific (worn/used, the people, the setting, the season/mood). NEVER any text/words in the image.
+- label/sublabel: SHORT merchandising captions ("New Arrivals", "Shop Tees") — optional; many tiles should have NO label. NEVER invent product names, prices, or sales.
+- link: real paths only (default "/products"; use /collections/<slug> when relevant).
+Store: "${site?.name || "the store"}".${themeBlock(site?.theme)}${groundingBlock(ctx)}${linksBlock(links)}`;
+    const currentForAi = editing ? current.map((r) => ({ height: r?.height, tiles: (r?.tiles || []).map((t) => ({ width: t?.width, cells: (t?.cells || []).map((c) => ({ label: c?.label || "", sublabel: c?.sublabel || "", link: c?.link || "", hasImage: !!c?.image })) })) })) : null;
+    const userMsg = editing
+        ? `Current collage JSON (images shown as hasImage; keep good ones, change what's asked):\n${JSON.stringify(currentForAi)}\n\nApply this change and return the FULL updated collage JSON:\n${prompt}`
+        : `Design this collage:\n${prompt}`;
+    const msg = await client.messages.create({ model: "claude-opus-4-8", max_tokens: 2500, thinking: { type: "adaptive" }, system, messages: [{ role: "user", content: userMsg }] });
+    const parsed = parseJson(textOf(msg)) || {};
+    const rowsRaw = Array.isArray(parsed.rows) ? parsed.rows : [];
+
+    // Generate a real photo per unique imageDesc (parallel, capped). Empty if image gen is off → cells
+    // fall back to a colored tile + label (layout still builds).
+    const descs = [];
+    for (const r of rowsRaw) for (const t of (r?.tiles || [])) for (const c of (t?.cells || [])) { const d = String(c?.imageDesc || "").trim(); if (d && !descs.includes(d) && descs.length < 8) descs.push(d); }
+    const urls = {};
+    if (sceneGenAvailable()) {
+        await Promise.all(descs.map(async (d) => {
+            try { urls[d] = await generateImage({ prompt: `${d}. Photorealistic product/lifestyle photography, on-brand, natural lighting, no text, no words, no watermark.`, aspect: 1, orgId: orgIdStr }); } catch { /* skip on failure */ }
+        }));
+    }
+    const rows = rowsRaw.map((r) => ({
+        height: Math.min(600, Math.max(140, Number(r?.height) || 240)),
+        tiles: (r?.tiles || []).map((t) => ({
+            width: Math.min(4, Math.max(1, Number(t?.width) || 1)),
+            cells: (t?.cells || []).slice(0, 2).map((c) => ({
+                image: urls[String(c?.imageDesc || "").trim()] || "",
+                label: String(c?.label || "").slice(0, 40),
+                sublabel: String(c?.sublabel || "").slice(0, 60),
+                link: String(c?.link || "/products").slice(0, 200),
+            })).filter((c) => c.image || c.label),
+        })).filter((t) => t.cells.length),
+    })).filter((r) => r.tiles.length);
+    return { rows };
+}
+
+// Per-section AI copywriter: which settings fields each section type lets AI rewrite, with a hint.
+const SECTION_AI_FIELDS = {
+    hero:             { headline: "main headline (short, punchy)", subheadline: "1 supporting sentence", ctaText: "button label", ctaLink: "button link path e.g. /products", backgroundColor: "hex background color e.g. #0f172a — ONLY if a solid color suits; omit otherwise" },
+    featuredProducts: { heading: "grid heading", query: "a search term that matches REAL catalog items, or omit" },
+    collection:       { heading: "section heading" },
+    richText:         { heading: "heading", body: "1-3 sentences of body copy" },
+    imageCollage:     { heading: "heading", subheading: "subheading" },
+};
+
+// Rewrite ONE section's text/style settings from a natural-language request (grounded in catalog + theme).
+// Returns { fields } — a partial settings patch (only changed keys). Used by the per-section "Edit with AI".
+export async function generateSectionFields(orgIdStr, { type, settings = {}, prompt } = {}) {
+    if (!prompt) throw httpError(400, "prompt is required");
+    const spec = SECTION_AI_FIELDS[type];
+    if (!spec) return { fields: {} };          // e.g. customHtml uses its own HTML AI
+    const orgId = new mongoose.Types.ObjectId(orgIdStr);
+    const [site, ctx] = await Promise.all([
+        StorefrontSite.findOne({ orgId }).select("name businessInfo theme").lean(),
+        catalogContext(orgId),
+    ]);
+    const client = await anthropic();
+    const keys = Object.entries(spec).map(([k, h]) => `"${k}": <${h}>`).join(", ");
+    const current = Object.fromEntries(Object.keys(spec).map((k) => [k, settings?.[k] ?? ""]));
+    const system = `You write copy for ONE section of an online store. Return STRICT JSON only, including ONLY the fields you are changing: { ${keys} }. Omit fields you leave as-is. Keep it concise, on-brand, and consistent with the real catalog. Links must be real paths (e.g. /products, /collections/<slug>). Colors are hex.${themeBlock(site?.theme)}${groundingBlock(ctx)}`;
+    const userMsg = `Section type: ${type}. Current values: ${JSON.stringify(current)}.\nChange request: ${prompt}`;
+    const msg = await client.messages.create({ model: "claude-opus-4-8", max_tokens: 800, thinking: { type: "adaptive" }, system, messages: [{ role: "user", content: userMsg }] });
+    const parsed = parseJson(textOf(msg)) || {};
+    const fields = {};
+    for (const k of Object.keys(spec)) if (parsed[k] != null && parsed[k] !== "") fields[k] = parsed[k];
+    return { fields };
+}
+
+// AI-write an SEO meta title + description for the site homepage or a landing page. Grounded in the real
+// catalog/business so it never promises products the store doesn't sell. Returns { title, description }.
+export async function generateSeoMeta(orgIdStr, { title = "", hint = "", kind = "site" } = {}) {
+    const orgId = new mongoose.Types.ObjectId(orgIdStr);
+    const [site, ctx] = await Promise.all([
+        StorefrontSite.findOne({ orgId }).select("name businessInfo").lean(),
+        catalogContext(orgId),
+    ]);
+    const bio = site?.businessInfo?.description || site?.businessInfo?.tagline || "";
+    const subject = kind === "page"
+        ? `a landing/campaign page titled "${title || "this page"}" on the online store "${site?.name || "the store"}".${hint ? ` Page content: ${String(hint).slice(0, 600)}.` : ""}`
+        : `the homepage of the online store "${site?.name || "the store"}".${bio ? ` About: ${bio}.` : ""}`;
+    const client = await anthropic();
+    const system = `You write SEO metadata for an online store. Return STRICT JSON ONLY: {"title":"<meta title, MAX 60 chars>","description":"<meta description, MAX 155 chars>"}. Make it compelling and keyword-rich but honest — reflect the REAL catalog, no clickbait, no invented products/prices/claims. Include the store/brand name in the title where it fits.${groundingBlock(ctx)}`;
+    const msg = await client.messages.create({ model: "claude-opus-4-8", max_tokens: 400, thinking: { type: "adaptive" }, system, messages: [{ role: "user", content: `Write the SEO title and meta description for ${subject}` }] });
+    const out = parseJson(textOf(msg)) || {};
+    return { title: String(out.title || "").slice(0, 70), description: String(out.description || "").slice(0, 170) };
+}
+
+// Grounding context so AI builders only reference products the store ACTUALLY sells (no invented items).
+async function catalogContext(orgId) {
+    const [products, cats, depts] = await Promise.all([
+        PlatformProduct.find({ orgId, active: { $ne: false } }).select("title variantsArray").sort({ _id: -1 }).limit(60).lean(),
+        PlatformProduct.distinct("category", { orgId, active: { $ne: false } }),
+        PlatformProduct.distinct("department", { orgId, active: { $ne: false } }),
+    ]);
+    const titles = [...new Set(products.map((p) => p.title).filter(Boolean))].slice(0, 40);
+    const prices = products.flatMap((p) => (p.variantsArray || []).map((v) => v.price).filter((n) => n > 0));
+    const priceRange = prices.length ? { min: Math.min(...prices), max: Math.max(...prices) } : null;
+    const categories = [...new Set([...(depts || []), ...(cats || [])].flat().filter(Boolean).map(String))].slice(0, 30);
+    return { titles, categories, priceRange };
+}
+
+// Builds the "only sell what we sell" grounding block for AI section/page prompts.
+function groundingBlock({ titles, categories, priceRange }) {
+    if (!titles.length && !categories.length) return "";
+    return `\nGROUNDING — this store ONLY sells the items below. NEVER invent products, product names, prices, sales, brands, categories, or claims. If something doesn't fit the catalog, leave it out.
+${categories.length ? `Product types sold: ${categories.join(", ")}.` : ""}
+${titles.length ? `Actual products (CONTEXT ONLY — keep copy consistent with these; do not introduce anything the store doesn't sell): ${titles.join("; ")}.` : ""}
+Imagery (IMG[...]) must depict the store's REAL product types (e.g. apparel/tees) in the theme's context — never a product the store doesn't carry (e.g. no soccer jerseys if not sold). CTAs link to /products.`;
+}
+
+// Existing published landing pages + collections — used to (a) keep new pages on a DISTINCT angle (no
+// near-duplicate/doorway pages) and (b) add contextual INTERNAL LINKS for SEO + crawlability.
+async function siteLinksContext(orgId) {
+    const [pages, collections] = await Promise.all([
+        StorefrontPage.find({ orgId, status: "published" }).select("title slug").limit(40).lean(),
+        StorefrontCollection.find({ orgId, status: "published" }).select("title slug").limit(40).lean(),
+    ]);
+    return {
+        pages: (pages || []).map((p) => ({ title: p.title || p.slug, href: `/${p.slug}` })),
+        collections: (collections || []).map((c) => ({ title: c.title || c.slug, href: `/collections/${c.slug}` })),
+    };
+}
+function linksBlock({ pages = [], collections = [] }) {
+    const all = [...pages, ...collections];
+    const parts = [];
+    if (pages.length) parts.push(`\nUNIQUE ANGLE — target a DISTINCT topic/keyword from the store's existing pages; do NOT duplicate or closely mirror these: ${pages.map((p) => `"${p.title}"`).join(", ")}.`);
+    if (all.length) parts.push(`\nINTERNAL LINKS — where it reads naturally, add 1-2 contextual links to related destinations (use these EXACT hrefs): ${all.map((x) => `"${x.title}" → ${x.href}`).join("; ")}.`);
+    return parts.join("");
+}
+
+// Tells the AI the store's ACTUAL palette/fonts so it can design for them (contrast, which color goes
+// where) while still emitting the var(--sf-*) variables so the output stays themeable.
+function themeBlock(theme = {}) {
+    const c = theme?.colors || {}, f = theme?.fonts || {};
+    const cols = [
+        c.primary && `primary ${c.primary} → var(--sf-primary)`,
+        c.secondary && `secondary ${c.secondary} → var(--sf-secondary)`,
+        c.accent && `accent ${c.accent} → var(--sf-accent)`,
+        c.background && `background ${c.background} → var(--sf-bg)`,
+        c.text && `text ${c.text} → var(--sf-text)`,
+    ].filter(Boolean);
+    if (!cols.length) return "";
+    return `\nTHEME — design for this real palette (always OUTPUT the matching var(--sf-*) variable, not the hex). Pick combinations with strong contrast/readability (e.g. dark text on light backgrounds, white text on the accent): ${cols.join("; ")}.${(f.heading || f.body) ? ` Fonts: headings var(--sf-font-heading) (${f.heading || "Inter"}), body var(--sf-font-body) (${f.body || "Inter"}).` : ""}`;
+}
+
+// Replace AI image placeholders `IMG[<description>]` in generated HTML with real AI-generated photos
+// (Gemini → Wasabi URL). Up to 4, generated in parallel. If image gen is off or a generation fails,
+// the <img> referencing the unresolved placeholder is removed so there are no broken images.
+async function substituteAiImages(html, orgIdStr, maxImages = 4) {
+    if (!html) return html;
+    let out = html;
+    const urls = {};
+    if (sceneGenAvailable()) {
+        const descs = [];
+        const re = /IMG\[([^\]]+)\]/g; let m;
+        while ((m = re.exec(out)) !== null) { const d = m[1].trim(); if (d && !descs.includes(d) && descs.length < maxImages) descs.push(d); }
+        await Promise.all(descs.map(async (d) => {
+            try { urls[d] = await generateImage({ prompt: `${d}. Photorealistic product/lifestyle photography, on-brand, natural lighting, no text, no words, no watermark.`, aspect: 1.5, orgId: orgIdStr }); } catch { /* skip on failure */ }
+        }));
+    }
+    // Rewrite each <img> whose src is an IMG[...] placeholder: swap to the real URL AND set descriptive
+    // alt text (SEO + accessibility). Drop the <img> entirely if the image couldn't be generated.
+    const altOf = (d) => d.replace(/\s+/g, " ").replace(/"/g, "").trim().slice(0, 120);
+    out = out.replace(/<img\b[^>]*?>/gi, (tag) => {
+        const m = tag.match(/IMG\[([^\]]+)\]/);
+        if (!m) return tag;                       // a normal <img> (e.g. real product URL) — leave it
+        const d = m[1].trim();
+        const url = urls[d];
+        if (!url) return "";                      // unresolved placeholder → remove the img
+        let t = tag.replace(/IMG\[[^\]]*\]/, url);
+        const alt = altOf(d);
+        t = /\salt\s*=/.test(t)
+            ? t.replace(/\salt\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/i, ` alt="${alt}"`)
+            : t.replace(/<img\b/i, `<img alt="${alt}"`);
+        return t;
+    });
+    out = out.replace(/IMG\[[^\]]*\]/g, "");        // strip any stray markers outside <img>
+    return out;
+}
+
+// Prompt builder: turn a seller's rough idea into a clear, vivid brief for the page/section AI builder —
+// grounded in the real catalog so it never suggests products the store doesn't sell. Returns { prompt }.
+export async function improvePrompt(orgIdStr, { idea, kind = "landing" } = {}) {
+    if (!idea || !String(idea).trim()) throw httpError(400, "idea is required");
+    const orgId = new mongoose.Types.ObjectId(orgIdStr);
+    const [site, ctx] = await Promise.all([
+        StorefrontSite.findOne({ orgId }).select("name businessInfo").lean(),
+        catalogContext(orgId),
+    ]);
+    const client = await anthropic();
+    // kind "image" → expand a rough image idea into a vivid photo brief for the image generator.
+    if (kind === "image") {
+        const system = `You turn a store owner's rough idea into a vivid PHOTO brief for an AI image generator producing a single product/lifestyle photo for their online store.
+Output ONLY the improved description as 1-2 natural sentences — no preamble, no quotes, no labels. Be specific about: the subject (a real product TYPE the store sells, worn/used), the people, the setting/background, the lighting, the mood/season, and the composition. Photorealistic. NEVER put text/words in the image, and never invent a specific named product the store doesn't carry.
+Store: "${site?.name || "the store"}".${groundingBlock(ctx)}`;
+        const msg = await client.messages.create({ model: "claude-opus-4-8", max_tokens: 400, thinking: { type: "adaptive" }, system, messages: [{ role: "user", content: `Rough image idea: ${String(idea).trim()}` }] });
+        return { prompt: textOf(msg).trim().replace(/^["']|["']$/g, "").slice(0, 600) };
+    }
+    const target = kind === "section" ? "a single homepage section" : "a landing / campaign page";
+    const system = `You turn a store owner's rough idea into a clear, vivid BRIEF for an AI that builds ${target} for their online store.
+Output ONLY the improved brief as 2-4 natural sentences — no preamble, no bullet points, no quotes, no labels. Make it specific and actionable: the angle/hook, who it's for, the structure (hero, value props, lifestyle imagery, closing CTA), the tone/mood, and the call to action. Reference only product TYPES the store actually sells; never invent specific products, prices, or claims.
+Store: "${site?.name || "the store"}".${site?.businessInfo?.description ? ` About: ${site.businessInfo.description}.` : ""}${groundingBlock(ctx)}`;
+    const msg = await client.messages.create({ model: "claude-opus-4-8", max_tokens: 600, thinking: { type: "adaptive" }, system, messages: [{ role: "user", content: `Rough idea: ${String(idea).trim()}` }] });
+    return { prompt: textOf(msg).trim().replace(/^["']|["']$/g, "").slice(0, 1200) };
+}
+
+// AI builder for a whole landing/campaign page: returns title + slug + SEO meta + an ARRAY of section
+// HTML blocks (each becomes its own custom-HTML section so the seller can reorder/edit/delete them).
+// Marker format (not JSON) so the HTML's quotes don't break parsing.
+export async function generateLandingPage(orgIdStr, { prompt } = {}) {
+    if (!prompt) throw httpError(400, "prompt is required");
+    const orgId = new mongoose.Types.ObjectId(orgIdStr);
+    const [site, ctx, links] = await Promise.all([
+        StorefrontSite.findOne({ orgId }).select("name businessInfo theme").lean(),
+        catalogContext(orgId),
+        siteLinksContext(orgId),
+    ]);
+    const client = await anthropic();
+    const bio = site?.businessInfo?.description || site?.businessInfo?.tagline || "";
+    const system = `You build a complete landing/campaign page for an online store. Return EXACTLY this format and nothing else (no markdown fences, no commentary):
+TITLE: <page title, max 70 chars>
+SLUG: <url-safe slug, lowercase words separated by hyphens, e.g. summer-sale>
+SEO_TITLE: <meta title, max 60 chars>
+SEO_DESCRIPTION: <meta description, max 155 chars>
+PRODUCT_QUERY: <a short search query (1-3 words) that surfaces the most RELEVANT products for this page from the real catalog, e.g. "fathers day" or "grilling bbq" — pick terms that appear in the products/categories above. Leave blank only if nothing in the catalog is relevant.>
+PRODUCT_HEADING: <heading for that products grid, e.g. "Shop Father's Day">
+---SECTIONS---
+<section 1 HTML>
+---SECTION---
+<section 2 HTML>
+---SECTION---
+<section 3 HTML>
+
+STRUCTURE: build the page as 3-6 SEPARATE sections so each can be edited/reordered/removed on its own. Separate each with a line containing only ---SECTION--- . A typical flow: (1) hero with headline + CTA, (2) value props / benefits, (3) an image-collage / lookbook block, (4) story or social proof, (5) a closing CTA band. Each section is its own self-contained block (its own <section> with its own padding and, where it helps, its own background).
+HTML rules (per section): inline styles only; NO <script> or <style>; responsive (flex/grid wrap, %/max-width); match the theme via CSS vars var(--sf-accent), var(--sf-secondary), var(--sf-primary), var(--sf-text), var(--sf-bg), fonts var(--sf-font-heading)/var(--sf-font-body); wrap inner content in <div class="sf-container"> for aligned width; include at least one clear call-to-action button linking to /products (or a relevant path). Tasteful, modern, on-brand.
+NO INVENTED PRODUCTS (critical): do NOT name a specific product, show any price or sale price ("$.."), or build product cards / a "featured product" in your sections. Real products are shown ONLY by a live grid added automatically below. Your sections are EDITORIAL — theme, hero, lifestyle/collage imagery, value props, brand story, and CTA buttons (text like "Shop the Collection" → /products). Reference product TYPES generally (e.g. "tees", "apparel"), never a made-up named item.
+IMAGES (important): LEAN ON REAL IMAGERY, not flat color blocks. Use <img> with src="IMG[<vivid scene description>]" — these become AI-generated photorealistic product/lifestyle photos. Include a hero image plus 1-3 supporting product/lifestyle shots (2-4 images total). Describe each specifically: the product being worn/used, the people, the setting, the mood/season. Style every <img> with width:100%; height matching its slot; object-fit:cover; border-radius where it fits. Never put text inside an image.
+USE AN IMAGE COLLAGE for the supporting imagery where it fits — a responsive CSS-grid mosaic of 2-4 tiles with varied sizes (e.g. one tall tile beside two stacked, or a 2x2), small gaps, rounded corners, lookbook-style. Each tile is its own IMG[...] image; on mobile it should collapse to 1-2 columns.
+HERO SECTION: give it a real BACKGROUND — a solid theme color (background:var(--sf-primary) or var(--sf-accent), readable text) OR a full-bleed background image (relative band + an absolutely-positioned inset IMG[...] with object-fit:cover behind a semi-transparent dark overlay for legibility). Then LAYER 1-3 foreground product images ON TOP of that background (IMG[<product cut-out, plain/transparent background>]) as an overlapping showcase row with drop-shadows, above the headline + CTA. Background + images-on-top is the preferred hero treatment (don't make the hero a plain flat color with no imagery).
+Store: "${site?.name || "the store"}".${bio ? ` About: ${bio}.` : ""}${themeBlock(site?.theme)}${groundingBlock(ctx)}${linksBlock(links)}`;
+    const msg = await client.messages.create({ model: "claude-opus-4-8", max_tokens: 4000, thinking: { type: "adaptive" }, system, messages: [{ role: "user", content: `Build this landing page:\n${prompt}` }] });
+    const text = textOf(msg);
+    const grab = (re) => { const m = text.match(re); return m ? m[1].trim() : ""; };
+    const mark = "---SECTIONS---";
+    const idx = text.indexOf(mark);
+    let body = idx >= 0 ? text.slice(idx + mark.length).trim() : text;
+    body = body.replace(/^```(?:html)?\s*/i, "").replace(/\s*```$/i, "").trim();
+    body = await substituteAiImages(body, orgIdStr, 6);   // swap IMG[...] placeholders for AI photos (whole page budget)
+    const ogImage = (body.match(/<img\b[^>]*\bsrc\s*=\s*["'](https?:\/\/[^"']+)["']/i) || [])[1] || "";   // first photo → social share image
+    const sections = body.split(/\n?\s*-{2,}\s*SECTION\s*-{2,}\s*\n?/i).map((h) => h.trim()).filter(Boolean);
+    const slugify = (s) => String(s || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
+    const title = grab(/TITLE:\s*(.+)/) || "New landing page";
+    return {
+        title: title.slice(0, 80),
+        slug: slugify(grab(/SLUG:\s*(.+)/) || title),
+        seoTitle: grab(/SEO_TITLE:\s*(.+)/).slice(0, 70),
+        seoDescription: grab(/SEO_DESCRIPTION:\s*(.+)/).slice(0, 170),
+        productQuery: grab(/PRODUCT_QUERY:\s*(.+)/).slice(0, 60),
+        productHeading: grab(/PRODUCT_HEADING:\s*(.+)/).slice(0, 60) || "Shop the collection",
+        ogImage,
+        sections: sections.length ? sections : [body],
+    };
 }
 
 // ── Analytics ────────────────────────────────────────────────────────────────
@@ -2598,7 +3000,36 @@ export async function listExperiments(orgId) {
 }
 export async function createExperiment(orgId, b) {
     if (!b?.name || !b?.variants?.length) throw httpError(400, "name and variants are required");
-    return StorefrontExperiment.create({ orgId, name: b.name, type: b.type || "popup", status: "running", variants: b.variants });
+    const type = b.type || "popup";
+    if (type === "section" && (!b.target?.pageSlug || !b.target?.sectionId)) throw httpError(400, "section tests require a target page + section");
+    return StorefrontExperiment.create({ orgId, name: b.name, type, status: "running", target: type === "section" ? b.target : undefined, variants: b.variants });
+}
+
+// The text-editable fields per section type — what a "section" A/B test can vary (copy/links/styling,
+// not product queries). Drives the experiment composer's per-section override form.
+const SECTION_TEST_FIELDS = {
+    hero:             [["headline", "Headline"], ["subheadline", "Subheadline"], ["ctaText", "Button text"], ["ctaLink", "Button link"]],
+    featuredProducts: [["heading", "Heading"]],
+    collection:       [["heading", "Heading"]],
+    richText:         [["heading", "Heading"], ["body", "Body"]],
+    imageCollage:     [["heading", "Heading"], ["subheading", "Subheading"]],
+};
+
+// Sections in the store that can be A/B tested, grouped by page — for the experiment composer's picker.
+export async function experimentTargets(orgId) {
+    const site = await StorefrontSite.findOne({ orgId }).select("pages draft").lean();
+    const pages = (site?.draft?.pages?.length ? site.draft.pages : site?.pages) || [];
+    return pages.map((p) => ({
+        slug: p.slug, title: p.title || p.slug,
+        sections: (p.sections || []).map((s) => {
+            const defs = SECTION_TEST_FIELDS[s.type];
+            if (!defs) return null;
+            return {
+                id: String(s._id), type: s.type,
+                fields: defs.map(([key, label]) => ({ key, label, value: s.settings?.[key] || "" })),
+            };
+        }).filter(Boolean),
+    })).filter((p) => p.sections.length);
 }
 export async function updateExperiment(orgId, id, b) {
     const set = {};
@@ -2611,24 +3042,51 @@ export async function deleteExperiment(orgId, id) {
     await StorefrontExperiment.deleteOne({ _id: id, orgId });
     await StorefrontExperimentStat.deleteMany({ orgId, experimentId: id });
 }
-// Promote a variant to the winner: stop the test and, for popup tests, apply the winning copy live.
+// Promote a variant to the winner: stop the test and apply the winning config live for the surfaces
+// that persist (popup copy, the tested section's settings, the sale/announcement bar).
 export async function promoteExperimentWinner(orgId, id, variantKey) {
     const exp = await StorefrontExperiment.findOne({ _id: id, orgId });
     if (!exp) throw httpError(404, "Not found");
     const win = exp.variants.find((v) => v.key === variantKey);
     if (!win) throw httpError(400, "Unknown variant");
     exp.winner = variantKey; exp.status = "stopped"; await exp.save();
-    if (exp.type === "popup" && win.config) {
+    const cfg = win.config || {};
+    let applied = false;
+
+    if (exp.type === "popup") {
         const set = {};
-        for (const k of ["headline", "body", "buttonText"]) if (win.config[k] != null) set[`popup.${k}`] = win.config[k];
-        if (Object.keys(set).length) await StorefrontSite.updateOne({ orgId }, { $set: set });
+        for (const k of ["headline", "body", "buttonText"]) if (cfg[k] != null) set[`popup.${k}`] = cfg[k];
+        if (Object.keys(set).length) { await StorefrontSite.updateOne({ orgId }, { $set: set }); applied = true; }
+    } else if (exp.type === "sale") {
+        // Persist the winning offer to the always-on announcement bar.
+        await StorefrontSite.updateOne({ orgId }, { $set: { announcement: { enabled: !!cfg.message, message: cfg.message, code: cfg.code, link: cfg.link, bg: cfg.bg, fg: cfg.fg } } });
+        applied = true;
+    } else if (exp.type === "section" && exp.target?.sectionId) {
+        // Merge the winning overrides into the live (and draft) section settings.
+        const site = await StorefrontSite.findOne({ orgId });
+        if (site) {
+            const apply = (pages) => {
+                const page = (pages || []).find((p) => p.slug === exp.target.pageSlug);
+                const sec = page?.sections?.find((s) => String(s._id) === String(exp.target.sectionId));
+                if (sec) { sec.settings = { ...(sec.settings || {}), ...cfg }; return true; }
+                return false;
+            };
+            const a = apply(site.pages); site.markModified("pages");
+            if (site.draft?.pages) { apply(site.draft.pages); site.markModified("draft"); }
+            if (a) { await site.save(); applied = true; }
+        }
     }
-    return { winner: variantKey, applied: exp.type === "popup" };
+    return { winner: variantKey, applied };
 }
+// AI-suggest a variant to test. Field shape depends on the surface under test.
 export async function aiVariant({ type = "popup", goal = "more signups" }) {
     const client = await anthropic();
-    const fields = type === "popup" ? `{"headline":"...","body":"...","buttonText":"..."}` : `{"headline":"...","subheadline":"..."}`;
-    const msg = await client.messages.create({ model: "claude-opus-4-8", max_tokens: 500, thinking: { type: "adaptive" }, messages: [{ role: "user", content: `Write a punchy alternative ${type} variant to A/B test for "${goal}". STRICT JSON only: ${fields}` }] });
+    const fields = type === "popup" ? `{"headline":"...","body":"...","buttonText":"..."}`
+        : type === "sale" ? `{"message":"<short sale bar line, e.g. 'Summer Sale — 20% off everything'>","code":"<short promo code or empty>"}`
+        : type === "section" ? `{"headline":"...","subheadline":"...","ctaText":"...","heading":"...","body":"..."}  (include ONLY the fields relevant to the section)`
+        : `{"headline":"...","subheadline":"..."}`;
+    const guide = type === "sale" ? "an enticing storewide sale/offer bar message" : `a punchy alternative ${type} variant`;
+    const msg = await client.messages.create({ model: "claude-opus-4-8", max_tokens: 500, thinking: { type: "adaptive" }, messages: [{ role: "user", content: `Write ${guide} to A/B test for "${goal}". STRICT JSON only: ${fields}` }] });
     return parseJson(textOf(msg));
 }
 

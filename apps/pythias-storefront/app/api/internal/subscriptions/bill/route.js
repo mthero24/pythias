@@ -30,7 +30,7 @@ export async function POST(req) {
             const customer = await StorefrontCustomer.findById(sub.customerId).lean();
 
             // Quote the cycle (subscribe discount; no rewards/gift on recurring) + tax.
-            const q = await quoteCart({ orgId, site, customer: null, items: sub.items, subscribe: true });
+            const q = await quoteCart({ orgId, site, customer: null, items: sub.items, subscribe: true, shippingCountry: sub.shippingAddress?.country });
             if (!q.lines.length) { await advance(sub, { skip: true }); continue; }
             const currency = (site?.rewards?.currency || "usd").toLowerCase();
             const { taxCents } = await computeTax(stripe, { currency, lines: q.lines, shippingCents: q.shippingCents, address: sub.shippingAddress });

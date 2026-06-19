@@ -1,20 +1,16 @@
 "use client";
-import { useState } from "react";
 import { useFavorites } from "@/components/favorites/FavoritesProvider";
-import { useCart } from "@/components/cart/CartProvider";
 import { useI18n } from "@/components/i18n/I18nProvider";
 
 export default function FavoritesView() {
     const { favorites, ready, remove } = useFavorites();
-    const { add } = useCart();
     const { price: money } = useI18n();
-    const [added, setAdded] = useState(null);
 
     if (!ready) return null;
 
     if (!favorites.length) {
         return (
-            <section className="sf-container" style={{ padding: "64px 0", textAlign: "center" }}>
+            <section className="sf-container" style={{ paddingTop: 64, paddingBottom: 64, textAlign: "center" }}>
                 <h1 style={{ marginBottom: 8 }}>No favorites yet</h1>
                 <p style={{ opacity: 0.6, marginBottom: 12 }}>Tap the ♥ on any product to save it here.</p>
                 <a href="/products" style={{ color: "var(--sf-secondary)", fontWeight: 600 }}>← Browse products</a>
@@ -22,17 +18,13 @@ export default function FavoritesView() {
         );
     }
 
+    // Open the quick-add modal so the buyer picks color/size (favorites are product-level).
     const addToCart = (f) => {
-        add({
-            productId: f.productId, sku: f.sku || "", title: f.title,
-            priceCents: f.priceCents || 0, color: f.color || "", size: f.size || "", image: f.image || null,
-        });
-        setAdded(f.productId);
-        setTimeout(() => setAdded((cur) => (cur === f.productId ? null : cur)), 2000);
+        if (f.productId && typeof window !== "undefined") window.dispatchEvent(new CustomEvent("sf:quick-add-open", { detail: { productId: f.productId } }));
     };
 
     return (
-        <section className="sf-container" style={{ padding: "40px 0", maxWidth: 900 }}>
+        <section className="sf-container" style={{ paddingTop: 40, paddingBottom: 40, maxWidth: 900 }}>
             <h1 style={{ marginBottom: 24 }}>Favorites ({favorites.length})</h1>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 24 }}>
                 {favorites.map((f) => (
@@ -49,7 +41,7 @@ export default function FavoritesView() {
                                 flex: 1, padding: "9px", borderRadius: 8, border: "none", cursor: "pointer",
                                 background: "var(--sf-accent, #f59e0b)", color: "#fff", fontWeight: 700, fontSize: "0.85rem",
                             }}>
-                                {added === f.productId ? "Added ✓" : "Add to cart"}
+                                Add to cart
                             </button>
                             <button onClick={() => remove(f.productId)} aria-label="Remove favorite" style={{
                                 padding: "9px 12px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.15)",

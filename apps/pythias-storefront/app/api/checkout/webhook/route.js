@@ -46,10 +46,13 @@ export async function POST(req) {
                     orgId: session.orgId, site, customer,
                     items: session.items, shippingAddress: session.shippingAddress,
                     email: session.email, redeemCents: session.redeemCents, promoCode: session.promoCode, giftCardCode: session.giftCardCode,
+                    addOns: session.addOns || {},
                     taxCents: session.taxCents || 0,
                     stripeFeeCents,
                     paymentRef: pi.id,   // idempotency key
                     analyticsSessionId: session.analyticsSessionId,
+                    shippingMethod: session.shippingMethod,
+                    notifyOptIn: !!session.notifyOptIn, marketingOptIn: !!session.marketingOptIn, consentText: session.consentText,
                 });
                 // Record the Stripe Tax transaction for filing (best-effort).
                 if (session.taxCalcId) {

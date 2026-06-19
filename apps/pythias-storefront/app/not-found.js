@@ -16,7 +16,8 @@ export default async function NotFound() {
             title={c.title || d.title}
             message={c.message || d.message}
             ctaText={c.ctaText || d.ctaText}
-            ctaLink={c.ctaLink || d.ctaLink} />
+            ctaLink={c.ctaLink || d.ctaLink}
+            backgroundImage={c.backgroundImage} />
     );
 
     if (!site) {

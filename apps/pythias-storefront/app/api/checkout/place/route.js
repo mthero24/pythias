@@ -28,6 +28,7 @@ export async function POST(req) {
             shippingAddress: body.shippingAddress,
             email: body.email,
             redeemCents: body.redeemCents,
+            addOns: body.addOns || {},
             ip,
         });
         return NextResponse.json({ error: false, ...result }, { status: 201 });

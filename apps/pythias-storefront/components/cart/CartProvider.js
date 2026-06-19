@@ -8,6 +8,7 @@ import { track } from "@/components/analytics/tracker";
 const CartCtx = createContext(null);
 const KEY = "sf_cart_v1";
 const SAVED_KEY = "sf_saved_v1";
+const ADDONS_KEY = "sf_addons_v1";   // selected cart add-ons: { [addOnId]: true (toggle) | "text" (message) }
 const lineKey = (i) => `${i.productId || i.blankId || ""}::${i.sku || ""}::${i.customKey || ""}`;
 
 // Union two line lists by lineKey; for cart overlaps take the larger qty (avoids runaway
@@ -27,20 +28,31 @@ export function CartProvider({ children }) {
     const { customer, ready: customerReady } = useCustomer();
     const [items, setItems] = useState([]);
     const [savedForLater, setSaved] = useState([]);
+    const [addOns, setAddOnsState] = useState({});   // { addOnId: true | "message text" }
     const [ready, setReady] = useState(false);
     const [modal, setModal] = useState(null);   // last-added item for the optional add-to-cart modal
+    const [drawerOpen, setDrawerOpen] = useState(false);   // slide-out cart drawer
     const mergedFor = useRef(null);   // customer id we've merged the server cart for
 
     // Load local state on mount.
     useEffect(() => {
         try { setItems(JSON.parse(localStorage.getItem(KEY) || "[]")); } catch { /* ignore */ }
         try { setSaved(JSON.parse(localStorage.getItem(SAVED_KEY) || "[]")); } catch { /* ignore */ }
+        try { setAddOnsState(JSON.parse(localStorage.getItem(ADDONS_KEY) || "{}")); } catch { /* ignore */ }
         setReady(true);
     }, []);
 
     // Persist to localStorage.
     useEffect(() => { if (ready) localStorage.setItem(KEY, JSON.stringify(items)); }, [items, ready]);
     useEffect(() => { if (ready) localStorage.setItem(SAVED_KEY, JSON.stringify(savedForLater)); }, [savedForLater, ready]);
+    useEffect(() => { if (ready) localStorage.setItem(ADDONS_KEY, JSON.stringify(addOns)); }, [addOns, ready]);
+
+    // Set/clear a cart add-on (toggle → true/false, message → string/"").
+    const setAddOn = useCallback((id, value) => setAddOnsState((p) => {
+        const next = { ...p };
+        if (value === false || value === "" || value == null) delete next[id]; else next[id] = value;
+        return next;
+    }), []);
 
     // On sign-in: merge the server-stored cart into the local one (cross-device restore).
     useEffect(() => {
@@ -96,7 +108,7 @@ export function CartProvider({ children }) {
         setItems((prev) => prev.flatMap((p) => (lineKey(p) === k ? (qty <= 0 ? [] : [{ ...p, qty: Math.min(99, qty) }]) : [p])));
     }, []);
     const remove = useCallback((k) => setItems((prev) => prev.filter((p) => lineKey(p) !== k)), []);
-    const clear = useCallback(() => setItems([]), []);
+    const clear = useCallback(() => { setItems([]); setAddOnsState({}); }, []);
 
     // Save for later: move a line from the cart into the saved list (and back).
     const saveForLater = useCallback((k) => {
@@ -125,8 +137,10 @@ export function CartProvider({ children }) {
         <CartCtx.Provider value={{
             items, savedForLater, ready, add, setQty, remove, clear,
             saveForLater, moveToCart, removeSaved,
+            addOns, setAddOn,
             count, subtotalCents, lineKey,
             modal, closeModal: () => setModal(null),
+            drawerOpen, openDrawer: () => setDrawerOpen(true), closeDrawer: () => setDrawerOpen(false),
         }}>
             {children}
         </CartCtx.Provider>

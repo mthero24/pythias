@@ -80,11 +80,27 @@ function OrderDetail({ id }) {
                 ))}
                 <div style={{ borderTop: "1px solid rgba(0,0,0,0.12)", marginTop: 10, paddingTop: 10, display: "grid", gap: 4, fontSize: "0.9rem" }}>
                     <Row label="Subtotal" value={money((t.subtotal || 0) * 100)} />
-                    <Row label="Shipping" value={t.shipping ? money(t.shipping * 100) : "Free"} />
+                    {t.addOns > 0 && <Row label="Gift add-ons" value={money(t.addOns * 100)} />}
+                    <Row label={order.shippingMethod ? `Shipping (${order.shippingMethod})` : "Shipping"} value={t.shipping ? money(t.shipping * 100) : "Free"} />
                     {t.tax > 0 && <Row label="Tax" value={money(t.tax * 100)} />}
                     <Row label={<b>Total</b>} value={<b>{money((t.total || 0) * 100)}</b>} />
                 </div>
             </div>
+
+            {order.giftAddOns?.length > 0 && (
+                <div style={card}>
+                    <h3 style={{ margin: "0 0 10px", fontSize: "1rem" }}>🎁 Gift options</h3>
+                    {order.giftAddOns.map((g, i) => (
+                        <div key={i} style={{ padding: "8px 0", borderTop: i ? "1px solid rgba(0,0,0,0.06)" : "none" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.92rem" }}>
+                                <span style={{ fontWeight: 600 }}>{g.label}</span>
+                                <span style={{ color: "#64748b" }}>{g.priceCents > 0 ? money(g.priceCents) : "Free"}</span>
+                            </div>
+                            {g.message && <div style={{ marginTop: 4, padding: "8px 10px", background: "#f8fafc", borderRadius: 8, fontSize: "0.86rem", color: "#475569", fontStyle: "italic" }}>“{g.message}”</div>}
+                        </div>
+                    ))}
+                </div>
+            )}
 
             {order.shippingAddress && (
                 <div style={card}>

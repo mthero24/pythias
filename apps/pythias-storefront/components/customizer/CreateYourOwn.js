@@ -107,6 +107,7 @@ export default function CreateYourOwn({ blanks = [] }) {
     const [msg, setMsg] = useState("");
     const [added, setAdded] = useState(false);
     const [ready, setReady] = useState(false);
+    const [pendingArt, setPendingArt] = useState(null);   // design art to drop once the canvas/side is mounted
     const [tool, setTool] = useState(null);   // active tool panel: null (product specs) | text | products | upload | ai
     const [qty, setQty] = useState(1);
     const [aiStyle, setAiStyle] = useState("");
@@ -230,6 +231,31 @@ export default function CreateYourOwn({ blanks = [] }) {
         const id = new URLSearchParams(window.location.search).get("design");
         if (id) { loadedRef.current = true; loadDesignById(id); }
     }, [ready, customerReady, customer]); // eslint-disable-line
+
+    // Preload from a product's "Customize this design" deep-link: ?blank=&color=&art= → preselect the
+    // blank + color, then queue the design art to drop onto the canvas (dropped by the effect below once
+    // the side has mounted). Distinct params from the saved-design `?design=` loader above.
+    const presetRef = useRef(false);
+    useEffect(() => {
+        if (!ready || presetRef.current) return;
+        const sp = new URLSearchParams(window.location.search);
+        const blankId = sp.get("blank"), colorName = sp.get("color"), art = sp.get("art");
+        if (!blankId && !art) return;
+        presetRef.current = true;
+        let b = blank;
+        if (blankId) { const found = blanks.find((x) => x.id === blankId); if (found) { b = found; setBlank(found); setSize(found.sizes?.[0] || null); } }
+        if (b) setColor((colorName && (b.colors || []).find((cc) => cc.color === colorName)) || b.colors?.[0] || null);
+        setSideIdx(0);
+        if (art) setPendingArt(art);
+    }, [ready]); // eslint-disable-line
+
+    // Drop the queued design art once the canvas + the active side are mounted (re-runs on color/side so
+    // it uses the live addArt closure + the mounted print zone). Clears itself after dropping.
+    useEffect(() => {
+        if (!ready || !pendingArt) return;
+        const t = setTimeout(() => { addArt(pendingArt); addToLibrary(pendingArt); setPendingArt(null); }, 350);
+        return () => clearTimeout(t);
+    }, [ready, pendingArt, color, sideIdx]); // eslint-disable-line
 
     // Pull in the Google fonts once so the canvas can render text in them.
     useEffect(() => {

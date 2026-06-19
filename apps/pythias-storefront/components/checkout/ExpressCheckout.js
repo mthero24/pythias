@@ -2,6 +2,8 @@
 import { useMemo } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements, ExpressCheckoutElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import { useCart } from "@/components/cart/CartProvider";
+import { track } from "@/components/analytics/tracker";
 
 // One-tap express wallets (Apple Pay / Google Pay / Link / PayPal) via Stripe's Express Checkout Element.
 // Deferred-intent mode: no PaymentIntent is created until the buyer taps a wallet, so it works for a
@@ -11,7 +13,7 @@ import { Elements, ExpressCheckoutElement, useStripe, useElements } from "@strip
 let _stripe;
 function getStripe(pk) { if (!pk) return null; if (!_stripe) _stripe = loadStripe(pk); return _stripe; }
 
-export default function ExpressCheckout({ items, amountCents }) {
+export default function ExpressCheckout({ items, amountCents, addOns = {} }) {
     const pk = typeof window !== "undefined" ? window.__SF__?.stripePk : null;
     const currency = (typeof window !== "undefined" && window.__SF__?.currency) || "usd";
     const stripePromise = useMemo(() => getStripe(pk), [pk]);
@@ -19,32 +21,55 @@ export default function ExpressCheckout({ items, amountCents }) {
 
     return (
         <Elements stripe={stripePromise} options={{ mode: "payment", amount: amountCents, currency }}>
-            <Inner items={items} amountCents={amountCents} />
+            <Inner items={items} amountCents={amountCents} addOns={addOns} />
         </Elements>
     );
 }
 
-function Inner({ items, amountCents }) {
+function Inner({ items, amountCents, addOns = {} }) {
     const stripe = useStripe();
     const elements = useElements();
+    const { clear } = useCart();
+    const done = (pi) => {
+        track("purchase", { revenueCents: amountCents, items });
+        clear();
+        window.location.href = `/checkout/success${pi ? `?payment_intent=${pi}` : ""}`;
+    };
+
+    // Re-quote for an address (+ optional chosen method) and resolve the wallet sheet with the seller's
+    // shipping options. Rejects when the seller doesn't ship to that country.
+    const requote = async (a, methodId) => fetch("/api/checkout/quote", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items, addOns, shippingMethod: methodId, shippingAddress: { city: a.city, state: a.state, zip: a.postal_code, country: a.country } }),
+    }).then((r) => r.json());
+
+    const resolveWith = (event, d) => {
+        elements.update({ amount: d.totalCents });
+        const rates = (d.shippingOptions || []).map((o) => ({ id: o.id, displayName: o.label, amount: o.amountCents || 0 }));
+        event.resolve({
+            shippingRates: rates.length ? rates : [{ id: "standard", displayName: "Standard shipping", amount: d.shippingCents || 0 }],
+            lineItems: [
+                { name: "Subtotal", amount: d.subtotalCents },
+                ...(d.shippingCents ? [{ name: "Shipping", amount: d.shippingCents }] : []),
+                ...(d.taxCents ? [{ name: "Tax", amount: d.taxCents }] : []),
+            ],
+        });
+    };
 
     const onShippingAddressChange = async (event) => {
         try {
-            const a = event.address || {};
-            const d = await fetch("/api/checkout/quote", {
-                method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ items, shippingAddress: { city: a.city, state: a.state, zip: a.postal_code, country: a.country } }),
-            }).then((r) => r.json());
-            if (d.error) return event.reject();
-            elements.update({ amount: d.totalCents });
-            event.resolve({
-                shippingRates: [{ id: "standard", displayName: "Standard shipping", amount: d.shippingCents || 0 }],
-                lineItems: [
-                    { name: "Subtotal", amount: d.subtotalCents },
-                    ...(d.shippingCents ? [{ name: "Shipping", amount: d.shippingCents }] : []),
-                    ...(d.taxCents ? [{ name: "Tax", amount: d.taxCents }] : []),
-                ],
-            });
+            const d = await requote(event.address || {});
+            if (d.error || d.shipsTo === false) return event.reject();   // can't ship there
+            resolveWith(event, d);
+        } catch { event.reject(); }
+    };
+
+    // Buyer switched shipping speed in the wallet sheet — re-price with that method.
+    const onShippingRateChange = async (event) => {
+        try {
+            const d = await requote(event.address || {}, event.shippingRate?.id);
+            if (d.error || d.shipsTo === false) return event.reject();
+            resolveWith(event, d);
         } catch { event.reject(); }
     };
 
@@ -63,23 +88,25 @@ function Inner({ items, amountCents }) {
 
         const d = await fetch("/api/checkout/intent", {
             method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ items, shippingAddress, email }),
+            body: JSON.stringify({ items, addOns, shippingAddress, shippingMethod: event.shippingRate?.id, email }),
         }).then((r) => r.json()).catch(() => null);
         if (!d || d.error) return;
 
-        if (d.free && d.orderId) { window.location.href = "/account/orders"; return; }   // fully covered by rewards/gift card
+        if (d.free && d.orderId) { done(null); return; }   // fully covered by rewards/gift card
         elements.update({ amount: d.amountCents || amountCents });   // match the authoritative intent amount
+        const piId = (d.clientSecret || "").split("_secret")[0];
         const { error } = await stripe.confirmPayment({
             elements, clientSecret: d.clientSecret,
-            confirmParams: { return_url: `${window.location.origin}/account/orders` }, redirect: "if_required",
+            confirmParams: { return_url: `${window.location.origin}/checkout/success${piId ? `?payment_intent=${piId}` : ""}` }, redirect: "if_required",
         });
-        if (!error) window.location.href = "/account/orders";
+        if (!error) done(piId);
     };
 
     return (
         <ExpressCheckoutElement
             onConfirm={onConfirm}
             onShippingAddressChange={onShippingAddressChange}
+            onShippingRateChange={onShippingRateChange}
             options={{ shippingAddressRequired: true, emailRequired: true, shippingRates: [{ id: "standard", displayName: "Standard shipping", amount: 0 }] }}
         />
     );

@@ -2,10 +2,10 @@
 // pure components). Returns an array aligned to `sections` — data[i] is the resolved
 // data for sections[i], or null. The public app calls this server-side; the editor
 // can call it behind an API route so its preview uses the exact same data shape.
-import { PlatformProduct, StorefrontProductStat } from "@pythias/mongo";
+import { PlatformProduct, StorefrontProductStat, StorefrontCollection } from "@pythias/mongo";
 import { productCardData, dedupeByDesign } from "./lib/card";
 
-const PRODUCT_SELECT = "title slug sku productImages variantsArray brand category tags design designTemplateId";
+const PRODUCT_SELECT = "title slug sku productImages variantsArray brand category tags design designTemplateId createdAt salePercent";
 // color swatches + blank sizes ([{_id,name}]) so resolveVariantSize maps size _ids → names
 const COLOR_POP = [{ path: "variantsArray.color", select: "name hexcode" }, { path: "variantsArray.blank", select: "sizes" }];
 const cards = (docs) => (docs || []).map(productCardData);
@@ -66,8 +66,51 @@ async function featuredProducts(settings, ctx) {
     return { products: pick(products) };
 }
 
+// Collection grid — embeds a real, curated StorefrontCollection (manual picks or smart rules) in a page,
+// so the section stays in sync with the collection. Mirrors lib/catalog.js resolveCollectionProducts.
+async function collection(settings, ctx) {
+    const id = settings?.collectionId;
+    if (!id) return { products: [], title: settings?.heading || "" };
+    const col = await StorefrontCollection.findOne({ _id: id, orgId: ctx.orgId }).lean().catch(() => null);
+    if (!col) return { products: [], title: settings?.heading || "" };
+    const limit = Math.min(Number(settings?.limit) || 8, 24);
+    const dedupe = settings?.dedupeByDesign !== false;
+    const finish = (arr) => (dedupe ? dedupeByDesign(arr) : arr).slice(0, limit);
+    const base = { orgId: ctx.orgId, active: { $ne: false } };
+    const title = settings?.heading || col.title;
+
+    if (col.type === "manual") {
+        const ids = col.productIds || [];
+        if (!ids.length) return { products: [], title };
+        const docs = await PlatformProduct.find({ ...base, _id: { $in: ids } }).populate(COLOR_POP).select(PRODUCT_SELECT).lean();
+        const byId = Object.fromEntries(docs.map((d) => [String(d._id), d]));
+        const ordered = ids.map((x) => byId[String(x)]).filter(Boolean);
+        return { products: finish(cards(ordered)), title };
+    }
+
+    const rx = (v) => new RegExp(String(v).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+    const clauses = []; let priceFilter = null;
+    for (const c of (col.rules?.conditions || [])) {
+        if (c.field === "priceCents") { (priceFilter = priceFilter || []).push(c); continue; }
+        else if (c.field === "tag") clauses.push({ tags: rx(c.value) });
+        else if (c.field === "category") clauses.push({ $or: [{ category: rx(c.value) }, { department: rx(c.value) }] });
+        else if (c.field === "brand") clauses.push({ brand: rx(c.value) });
+        else if (c.field === "title") clauses.push({ title: rx(c.value) });
+    }
+    const query = { ...base };
+    if (clauses.length) query[col.rules?.match === "any" ? "$or" : "$and"] = clauses;
+    const docs = await PlatformProduct.find(query).populate(COLOR_POP).select(PRODUCT_SELECT).limit(dedupe ? limit * 4 : limit * 2).lean();
+    let shaped = cards(docs);
+    if (priceFilter) for (const c of priceFilter) { const v = Number(c.value) || 0; shaped = shaped.filter((p) => (c.op === "lte" ? p.priceCents <= v : c.op === "gte" ? p.priceCents >= v : true)); }
+    if (col.sort === "price-asc") shaped.sort((a, b) => a.priceCents - b.priceCents);
+    else if (col.sort === "price-desc") shaped.sort((a, b) => b.priceCents - a.priceCents);
+    else if (col.sort === "title") shaped.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
+    return { products: finish(shaped), title };
+}
+
 const RESOLVERS = {
     featuredProducts,
+    collection,
 };
 
 export async function resolveSectionData(sections = [], ctx = {}) {

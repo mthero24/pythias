@@ -20,7 +20,7 @@ export async function generateMetadata({ params }) {
     const { slug } = await params;
     const { collection } = await load((await headers()).get("host"), slug);
     if (!collection) return siteMetadata();
-    return siteMetadata({ title: collection.seo?.title || collection.title, description: collection.seo?.description || collection.description });
+    return siteMetadata({ title: collection.seo?.title || collection.title, description: collection.seo?.description || collection.description, image: collection.image, path: `/collections/${slug}` });
 }
 
 export default async function CollectionPage({ params }) {

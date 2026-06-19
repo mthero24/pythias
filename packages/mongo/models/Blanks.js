@@ -49,6 +49,7 @@ const SchemaObj = new Schema(
         wholesaleCost: { default: 0, type: Number },
         wholesalePrice: { default: 0, type: Number },
         retailPrice: { default: 0, type: Number },
+        compareAtPrice: { default: 0, type: Number },   // "regular"/MSRP price → storefront strikes it through when > retailPrice
         basePrice: { default: 0, type: Number },
         cost: { default: 0, type: Number },
         sku: String,

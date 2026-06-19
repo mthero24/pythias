@@ -40,6 +40,33 @@ const Theme = new mongoose.Schema({
     },
     logoUrl: { type: String },
     favicon: { type: String },
+    // Brand identity (header presentation). logoStyle: how the brand shows in the header —
+    // "logo" (logo image only), "logoName" (logo + store name), or "name" (name text only,
+    // used when there's no logo). logoHeight in px. tagline shows under the name on the home hero/header.
+    tagline:    { type: String },
+    logoStyle:  { type: String, enum: ["logo", "logoName", "name"], default: "logo" },
+    logoHeight: { type: Number, default: 32 },
+}, { _id: false });
+
+// A shipping method's price = baseCents + perItemCents × (extra items beyond the first). min/maxDays
+// are the delivery estimate shown to the buyer. Used for the optional faster domestic tiers.
+const ShipMethod = new mongoose.Schema({
+    enabled:      { type: Boolean, default: false },
+    baseCents:    { type: Number, default: 0 },
+    perItemCents: { type: Number, default: 0 },
+    minDays:      { type: Number },
+    maxDays:      { type: Number },
+}, { _id: false });
+
+// A country the seller ships to (international), with its own standard rate. Countries NOT listed
+// (when international is enabled) can't check out — the buyer is blocked from ordering.
+const ShipCountry = new mongoose.Schema({
+    code:         { type: String, uppercase: true, trim: true },   // ISO-3166-1 alpha-2
+    name:         { type: String },
+    baseCents:    { type: Number, default: 0 },
+    perItemCents: { type: Number, default: 0 },
+    minDays:      { type: Number },
+    maxDays:      { type: Number },
 }, { _id: false });
 
 const schema = new mongoose.Schema({
@@ -85,13 +112,39 @@ const schema = new mongoose.Schema({
     theme:  { type: Theme, default: () => ({}) },
     pages:  { type: [Page], default: [] },
     nav:    {
-        links:    [{ label: String, href: String }],
+        // Header menu. `style`: "links" = horizontal top links (sections are hover dropdowns);
+        // "drawer" = a hamburger that opens a slide-out panel. A link with `children` is a "section"
+        // (label is the trigger; children are the items under it). `icon` is an optional emoji/glyph.
+        style:    { type: String, enum: ["links", "drawer"], default: "links" },
+        drawerSide: { type: String, enum: ["right", "left", "top", "bottom"], default: "right" },   // which edge the drawer slides from
+        // The cart/search/account cluster floats top-right once you scroll past the header. Sellers can
+        // turn the floating behavior off (controls then stay in the header bar only).
+        floatingControls: { type: Boolean, default: true },
+        links:    [{ label: String, href: String, icon: String, children: [{ label: String, href: String, icon: String }] }],
         showCart: { type: Boolean, default: true },
     },
     footer: {
-        links:   [{ label: String, href: String }],
+        // Same shape as the header menu: a link with `children` becomes a footer COLUMN (label is the
+        // column heading, children are its links). `icon` optional.
+        links:   [{ label: String, href: String, icon: String, children: [{ label: String, href: String, icon: String }] }],
         socials: [{ platform: String, url: String }],
         text:    { type: String },
+        bg:      { type: String },   // footer background color (defaults to the theme's primary)
+        fg:      { type: String },   // footer text color (defaults to a light tone)
+        // Trust badges (Veteran-owned, Google reviews, Secure checkout…) — an uploaded image OR an
+        // emoji + label text badge, optionally linking out.
+        badges:  [{ label: String, image: String, url: String, icon: String }],
+        showPayments: { type: Boolean, default: true },   // show accepted-payment-method icons
+        showBrand: { type: Boolean, default: true },      // show the logo + tagline + socials brand block
+        tagline:  { type: String },                       // short line under the footer logo
+        // Footer newsletter signup (list-building; captures email + marketing consent, no discount).
+        newsletter: {
+            enabled:     { type: Boolean, default: false },
+            heading:     { type: String, default: "Join our newsletter" },
+            subtext:     { type: String, default: "New arrivals, offers, and more — straight to your inbox." },
+            buttonText:  { type: String, default: "Subscribe" },
+            consentText: { type: String, default: "I agree to receive marketing emails. Unsubscribe anytime." },
+        },
     },
 
     // ── Legal/policy pages (built-ins: terms/returns/privacy/shipping + custom). Rendered at
@@ -100,8 +153,8 @@ const schema = new mongoose.Schema({
 
     // ── Customizable system pages (404 + runtime error). ─────────────────────────────────────
     system: {
-        notFound: { title: String, message: String, ctaText: String, ctaLink: String },
-        error:    { title: String, message: String, ctaText: String, ctaLink: String },
+        notFound: { title: String, message: String, ctaText: String, ctaLink: String, backgroundImage: String },
+        error:    { title: String, message: String, ctaText: String, ctaLink: String, backgroundImage: String },
     },
 
     // How product URLs are formed: "slug" (SEO name, default), "sku", or "id" (Mongo _id).
@@ -135,6 +188,17 @@ const schema = new mongoose.Schema({
         verifiedOnly: { type: Boolean, default: true },   // only buyers who purchased the product can review
     },
 
+    // Optional cart add-ons the buyer can choose (gift bag, gift message, branded packaging, …).
+    // type: "toggle" = a paid checkbox; "message" = a free text note (e.g. gift message).
+    cartAddOns: [{
+        id: String,
+        label: String,
+        description: String,
+        priceCents: { type: Number, default: 0 },
+        type: { type: String, enum: ["toggle", "message"], default: "toggle" },
+        enabled: { type: Boolean, default: true },
+    }],
+
     // Old-path → new-path 301 redirects (built by the AI link migrator). ────────────────────
     redirects: [{ from: String, to: String }],
 
@@ -167,9 +231,24 @@ const schema = new mongoose.Schema({
 
     // ── Shipping (seller-controlled) ─────────────────────────────────────────
     shipping: {
-        flatRateCents: { type: Number, default: 0 },   // charge per order
-        freeShipping:  { type: Boolean, default: false }, // always free (advertise it)
-        freeOverCents: { type: Number, default: 0 },   // free when subtotal ≥ this (0 = off)
+        homeCountry:   { type: String, default: "US", uppercase: true },   // the seller's domestic country
+        // ── Standard (always offered domestically) — base + per extra item ──
+        baseCents:     { type: Number, default: 0 },   // standard base price
+        perItemCents:  { type: Number, default: 0 },   // + per additional item
+        freeShipping:  { type: Boolean, default: false }, // standard always free (advertise it)
+        freeOverCents: { type: Number, default: 0 },   // standard free when subtotal ≥ this (0 = off)
+        freeOverItems: { type: Number, default: 0 },   // standard free when item count ≥ this (0 = off)
+        standardMinDays: { type: Number }, standardMaxDays: { type: Number },
+        // ── Optional faster domestic tiers (seller enables + prices) ──
+        expedited: { type: ShipMethod, default: () => ({}) },
+        twoDay:    { type: ShipMethod, default: () => ({}) },
+        nextDay:   { type: ShipMethod, default: () => ({}) },
+        // ── International — only the listed countries can buy ──
+        international: {
+            enabled:   { type: Boolean, default: false },
+            countries: { type: [ShipCountry], default: [] },
+        },
+        flatRateCents: { type: Number, default: 0 },   // legacy single flat rate (read as base if base unset)
     },
 
     // ── Rewards (seller-configurable loyalty / store credit) ─────────────────
@@ -234,6 +313,18 @@ const schema = new mongoose.Schema({
         autonomous: { type: Boolean, default: false },
         autoApply:  { type: Boolean, default: false },
         lastRunAt:  { type: Date },
+    },
+
+    // ── Sale / announcement bar (top-of-site offer strip) ────────────────────
+    // A thin bar above the header promoting a current sale/offer. Can be set directly OR
+    // be the promoted winner of a "sale" A/B test. `code` is an existing promo code to surface.
+    announcement: {
+        enabled: { type: Boolean, default: false },
+        message: { type: String },             // "Summer Sale — 20% off everything"
+        code:    { type: String },             // optional promo code to show ("SUMMER20")
+        link:    { type: String },             // optional CTA link
+        bg:      { type: String },             // bar background (defaults to theme accent)
+        fg:      { type: String },             // bar text color (defaults to a contrasting tone)
     },
 
     // ── Site-level SEO defaults (per-page seo overrides these) ───────────────

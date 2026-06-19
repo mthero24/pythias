@@ -17,6 +17,7 @@ export default function StoreError({ error, reset }) {
                 title={c.title || d.title}
                 message={c.message || d.message}
                 ctaText={c.ctaText || d.ctaText}
+                backgroundImage={c.backgroundImage}
                 onCta={() => reset()} />
         </div>
     );

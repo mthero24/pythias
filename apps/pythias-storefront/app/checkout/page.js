@@ -11,7 +11,7 @@ export default async function CheckoutPage() {
     if (!site) return <NoSite />;
     return (
         <SiteFrame site={site}>
-            <CheckoutView storeName={site.businessInfo?.legalName || site.name} />
+            <CheckoutView storeName={site.businessInfo?.legalName || site.name} badges={site.footer?.badges || []} />
         </SiteFrame>
     );
 }

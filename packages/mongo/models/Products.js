@@ -73,6 +73,7 @@ const schema = new mongoose.Schema({
             ref: ProductInventory,
         },
         price: Number,
+        compareAtPrice: { default: 0, type: Number },   // "was" price → shows a strikethrough + savings when > price
         wholesalePrice: { default: 0, type: Number },
         previousSkus: [String]
     }],
@@ -126,6 +127,7 @@ const schema = new mongoose.Schema({
         musicUrl: String,
     },
     designTemplateId: { type: mongoose.Schema.Types.ObjectId, ref: "DesignTemplate" },
+    salePercent: { type: Number, default: 0 },   // per-product sale % off → overrides blank-level compare-at on the storefront
 
     // Denormalized facet fields for Atlas Search faceting (server-side filter counts + filtering across the
     // whole catalog, not just a page). department/category/brand/tags are already top-level; color/size/price

@@ -13,12 +13,15 @@ export async function GET(req, { params }) {
     if (!mongoose.Types.ObjectId.isValid(id)) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const order = await PlatformOrder.findOne({ _id: id, orgId: auth.orgId, customerEmail: auth.customer.email })
-        .select("poNumber date status paid shippingInfo shippingCost taxRate shippingAddress fulfillmentGroups")
+        .select("poNumber date status paid shippingInfo shippingCost taxRate shippingAddress fulfillmentGroups giftAddOns shippingMethod")
         .lean();
     if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
 
-    const items = await PlatformItem.find({ order: order._id, orgId: auth.orgId })
-        .select("styleCode colorName sizeName price design personalization product color name").lean();
+    const allItems = await PlatformItem.find({ order: order._id, orgId: auth.orgId })
+        .select("styleCode colorName sizeName price design personalization product color name addOn addOnType giftMessage").lean();
+    // Gift add-ons are their own items — keep them out of the product line list and surface separately.
+    const items = allItems.filter((i) => !i.addOn);
+    const addOnItems = allItems.filter((i) => i.addOn);
 
     // Resolve a representative image per item — product mockup for pre-made, placement proof/artwork
     // for custom. Batch-load the referenced products once.
@@ -43,6 +46,12 @@ export async function GET(req, { params }) {
         }
         map.get(key).qty += 1;
     }
+    // Gift add-ons: prefer the order's recorded list (carries the gift message), fall back to the add-on items.
+    const giftAddOns = (order.giftAddOns?.length
+        ? order.giftAddOns.map((g) => ({ label: g.label, priceCents: g.priceCents || 0, message: g.message || "" }))
+        : addOnItems.map((it) => ({ label: it.name || "Gift add-on", priceCents: Math.round((it.price || 0) * 100), message: it.giftMessage || "" })));
+    const addOnsTotal = giftAddOns.reduce((s, g) => s + (g.priceCents || 0), 0) / 100;
+
     const subtotal = lines.reduce((s, l) => s + l.price * l.qty, 0);
     const shipping = order.shippingCost || 0;
     const tax = subtotal * (order.taxRate || 0);
@@ -61,7 +70,9 @@ export async function GET(req, { params }) {
             paid: !!order.paid,
             shippingAddress: order.shippingAddress ?? null,
             lines,
-            totals: { subtotal, shipping, tax, total: subtotal + shipping + tax },
+            giftAddOns,
+            shippingMethod: order.shippingMethod ?? null,
+            totals: { subtotal, addOns: addOnsTotal, shipping, tax, total: subtotal + addOnsTotal + shipping + tax },
             tracking,
             // Only surface fulfillment grouping when the order is split across >1 fulfiller.
             fulfillment: (order.fulfillmentGroups?.length > 1)

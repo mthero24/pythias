@@ -14,8 +14,10 @@ export async function POST(req) {
 
     const body = await req.json().catch(() => null);
     const auth = await getAuthedCustomer(req).catch(() => null);
-    const q = await quoteCart({ orgId: ctx.orgId, site: ctx.site, customer: auth?.customer ?? null, items: body?.items ?? [], redeemCents: body?.redeemCents, promoCode: body?.promoCode, giftCardCode: body?.giftCardCode });
+    const q = await quoteCart({ orgId: ctx.orgId, site: ctx.site, customer: auth?.customer ?? null, items: body?.items ?? [], redeemCents: body?.redeemCents, promoCode: body?.promoCode, giftCardCode: body?.giftCardCode, addOns: body?.addOns || {}, shippingCountry: body?.shippingAddress?.country, shippingMethod: body?.shippingMethod });
     if (!q.lines.length) return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
+    // Seller doesn't ship to this country — the wallet can't fulfill it.
+    if (body?.shippingAddress?.country && !q.shipsTo) return NextResponse.json({ error: false, shipsTo: false, shippingOptions: [] });
 
     const stripe = storefrontStripe();
     const currency = (ctx.site?.rewards?.currency || "usd").toLowerCase();
@@ -27,5 +29,5 @@ export async function POST(req) {
         try { ({ taxCents } = await computeTax(stripe, { currency, lines: q.lines, shippingCents: q.shippingCents, address: addr })); } catch { taxCents = 0; }
     }
     const totalCents = Math.max(0, q.subtotalCents + q.shippingCents + taxCents);
-    return NextResponse.json({ error: false, subtotalCents: q.subtotalCents, shippingCents: q.shippingCents, taxCents, totalCents, currency });
+    return NextResponse.json({ error: false, shipsTo: q.shipsTo, shippingOptions: q.shippingOptions, shippingMethod: q.shippingMethod, subtotalCents: q.subtotalCents, shippingCents: q.shippingCents, taxCents, totalCents, currency });
 }

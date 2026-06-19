@@ -4,6 +4,8 @@ export { default as SiteFrame } from "./components/SiteFrame";
 export { default as SectionRenderer } from "./components/SectionRenderer";
 export { default as PolicyView } from "./components/PolicyView";
 export { default as SpecialPage, SPECIAL_DEFAULTS } from "./components/SpecialPage";
+export { default as PaymentMarks } from "./components/PaymentMarks";
+export { default as FooterNewsletter } from "./components/FooterNewsletter";
 export { POLICY_TYPES, POLICY_BY_SLUG, POLICY_SLUGS } from "./policies";
 export { default as ProductCard } from "./components/ProductCard";
 export { default as SiteScripts, productJsonLd } from "./components/SiteScripts";

@@ -191,6 +191,19 @@ const schema = new mongoose.Schema({
   inStorePickup:   { type: Boolean, default: false },
   // ── Storefront (Commerce Cloud) order fields ──────────────────────
   source:               { type: String },                 // e.g. "storefront"
+  // Optional cart add-ons the buyer chose (gift bag, gift message, branded packaging…).
+  giftAddOns: [{ id: String, label: String, priceCents: Number, message: String }],
+  // Shipping method the buyer selected at checkout (e.g. "Standard", "Next Day", "International").
+  shippingMethod: { type: String },
+  // Communication consent captured at checkout (proof for TCPA/CAN-SPAM). orderUpdates = transactional
+  // notifications (text + email); marketing = promotional email opt-in. `text` is the exact copy shown.
+  consent: {
+    orderUpdates: { type: Boolean, default: false },
+    marketing:    { type: Boolean, default: false },
+    phone:        { type: String },
+    text:         { type: String },
+    at:           { type: Date },
+  },
   // Multi-vertical fulfillment: one storefront cart can mix a POD shirt, a dropshipped
   // electronic, and a warehoused supplement — each routed to its own fulfiller. The routing
   // engine splits the order by item.vertical and records one group per fulfiller here.

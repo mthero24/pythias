@@ -1,3 +1,5 @@
+import { themeVars } from "../lib/theme";
+
 // Injects the seller's analytics tags + social pixels + Organization JSON-LD.
 // Server-rendered <script> tags; each block renders only when its ID is set.
 // IDs come from site.analytics; schema from site.businessInfo. Rendered once per page
@@ -7,12 +9,30 @@ export default function SiteScripts({ site }) {
     const orgLd = organizationLd(site);
     const stripePk = process.env.STOREFRONT_STRIPE_PUBLISHABLE || "";
     const currency = (site?.rewards?.currency || "usd").toLowerCase();
+    const accent = site?.theme?.colors?.accent || "#f59e0b";
+    const floatingControls = site?.nav?.floatingControls !== false;
+    // The always-on sale/announcement bar (a promoted "sale" A/B winner persists here). The bar component
+    // reads this, or a running sale experiment's assigned offer, whichever applies.
+    const ann = site?.announcement?.enabled && site?.announcement?.message
+        ? { message: site.announcement.message, code: site.announcement.code || "", link: site.announcement.link || "", bg: site.announcement.bg || "", fg: site.announcement.fg || "" }
+        : null;
+    // Publish the theme palette to :root so fixed/portaled chrome (the floating header controls) can
+    // resolve var(--sf-*) — SiteFrame only sets them on its own wrapper, which fixed elements escape.
+    const rootVars = Object.entries(themeVars(site?.theme || {})).map(([k, v]) => `${k}:${v}`).join(";");
 
     return (
         <>
+            <style dangerouslySetInnerHTML={{ __html:
+                `:root{${rootVars}}`
+                // Responsive header helpers: swap horizontal nav for a drawer on mobile, and trim
+                // secondary controls so the header cluster never overflows on small screens.
+                + `@media(max-width:768px){.sf-only-desktop{display:none !important}}`
+                + `@media(min-width:769px){.sf-only-mobile{display:none !important}}`
+                + `@media(max-width:600px){.sf-hide-mobile{display:none !important}.sf-acct-label{display:none !important}}`
+            }} />
             {/* Client-readable storefront flags (read by cart/checkout/express-pay components). */}
             <script dangerouslySetInnerHTML={{ __html:
-                `window.__SF__=Object.assign(window.__SF__||{},{cartModal:${site?.catalog?.addToCartModal === true},stripePk:${JSON.stringify(stripePk)},currency:${JSON.stringify(currency)}});` }} />
+                `window.__SF__=Object.assign(window.__SF__||{},{cartModal:${site?.catalog?.addToCartModal === true},stripePk:${JSON.stringify(stripePk)},currency:${JSON.stringify(currency)},accent:${JSON.stringify(accent)},floatingControls:${floatingControls},announcement:${JSON.stringify(ann)}});` }} />
 
             {a.ga4Id && (
                 <>

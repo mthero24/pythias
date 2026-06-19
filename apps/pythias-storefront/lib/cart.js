@@ -10,7 +10,7 @@ export async function validateCart(orgId, items = []) {
         ? await PlatformProduct.find({ _id: { $in: ids }, orgId, active: { $ne: false } })
             .populate("variantsArray.color", "name")
             .populate("design", "images printType")
-            .select("title code productImages variantsArray design").lean()
+            .select("title code productImages variantsArray design salePercent").lean()
         : [];
     const byId = Object.fromEntries(products.map((p) => [String(p._id), p]));
 
@@ -68,7 +68,9 @@ export async function validateCart(orgId, items = []) {
             printLocation = it.printLocation || spots.join(" + ");
         }
 
-        const priceCents = Math.round(v.price * 100) + placementSurchargeCents;
+        // Per-product sale % off (authoritative — never trust client price).
+        const salePct = Math.max(0, Math.min(100, Number(p.salePercent) || 0));
+        const priceCents = Math.round(v.price * 100 * (1 - salePct / 100)) + placementSurchargeCents;
         const wholesaleCents = Math.round((v.wholesalePrice || 0) * 100);  // cost basis (for seller payout)
         subtotalCents += priceCents * qty;
         wholesaleTotalCents += wholesaleCents * qty;

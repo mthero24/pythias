@@ -5,7 +5,7 @@ import { productCardData, dedupeByDesign } from "@pythias/storefront";
 // Card + facet payload for search/collection grids — shared shaper (color swatches + alt views, etc.).
 export const shapeProduct = productCardData;
 
-const SELECT = "title slug sku brand productImages variantsArray category department tags design designTemplateId";
+const SELECT = "title slug sku brand productImages variantsArray category department tags design designTemplateId createdAt salePercent";
 // name + hex for color swatches; blank sizes ([{_id,name}]) so resolveVariantSize can map size _ids → names
 const POP = [{ path: "variantsArray.color", select: "name hexcode" }, { path: "variantsArray.blank", select: "sizes" }];
 
@@ -113,13 +113,110 @@ async function atlasTermIds(term, span) {
     } catch { return null; }
 }
 
+// Base color vocabulary for query understanding. A base word in the query maps to every catalog color
+// that contains it (so "blue" → Royal Blue, Navy Blue, Sky Blue…). gray/grey treated as synonyms.
+const BASE_COLORS = ["black", "white", "gray", "grey", "silver", "red", "blue", "navy", "green", "olive", "teal", "mint", "yellow", "gold", "orange", "purple", "lavender", "pink", "brown", "tan", "beige", "cream", "ivory", "maroon", "burgundy", "charcoal", "coral", "khaki", "turquoise"];
+// Size synonyms → canonical size. Longer phrases FIRST so "extra large" is matched before "large".
+const SIZE_ENTRIES = [["extra small", "XS"], ["x-small", "XS"], ["xs", "XS"], ["extra large", "XL"], ["x-large", "XL"], ["small", "S"], ["sm", "S"], ["medium", "M"], ["med", "M"], ["xxxl", "3XL"], ["3xl", "3XL"], ["xxl", "2XL"], ["2xl", "2XL"], ["xl", "XL"], ["large", "L"], ["lg", "L"]];
+// Gender/audience words → the catalog department they map to (resolved against real departments below).
+const GENDER_WORDS = [["women", "women"], ["womens", "women"], ["woman", "women"], ["ladies", "women"], ["mens", "men"], ["men", "men"], ["man", "men"], ["kids", "kid"], ["kid", "kid"], ["children", "kid"], ["child", "kid"], ["youth", "youth"], ["boys", "boy"], ["boy", "boy"], ["girls", "girl"], ["girl", "girl"], ["baby", "baby"], ["babies", "baby"], ["toddler", "toddler"], ["unisex", "unisex"]];
+
+// Context-aware query parser: pulls color / size / price / department / category / brand out of a free-text
+// query and turns them into filters, leaving the rest as the text term for relevance search. e.g.
+// "blue mens fathers day shirt under $25" → { text:"fathers day", colors:[blues], departments:[Men],
+// categories:[Shirts], maxPriceCents:2500 }. Everything is matched against the store's REAL catalog
+// vocabulary, so we only extract facets that exist (and never filter the results to nothing).
+function parseQueryFacets(term, vocab = {}) {
+    const { colors = [], sizes = [], departments = [], categories = [], brands = [] } = vocab;
+    let text = ` ${String(term).toLowerCase().replace(/\s+/g, " ")} `;
+    const cut = (re) => { text = text.replace(re, " "); };
+    const word = (w) => new RegExp(`(^| )${esc(w)}( |$)`, "i");
+    const wordG = (w) => new RegExp(`(^| )${esc(w)}( |$)`, "gi");
+
+    const r = { colors: new Set(), sizes: new Set(), departments: new Set(), categories: new Set(), brands: new Set(), maxPriceCents: 0 };
+
+    // Price: "under/below/less than/up to $X".
+    const pm = text.match(/\b(?:under|below|less than|cheaper than|up to|max)\s*\$?\s*(\d+(?:\.\d+)?)\b/i);
+    if (pm) { r.maxPriceCents = Math.round(parseFloat(pm[1]) * 100); cut(new RegExp(esc(pm[0]), "i")); }
+
+    // Colors — base word → catalog colors containing it.
+    const knownC = colors.map((c) => ({ raw: c, lc: String(c).toLowerCase() }));
+    for (const base of BASE_COLORS) {
+        if (!word(base).test(text)) continue;
+        const isGrey = base === "gray" || base === "grey";
+        const matched = knownC.filter((c) => c.lc.includes(base) || (isGrey && (c.lc.includes("gray") || c.lc.includes("grey"))));
+        if (!matched.length) continue;
+        matched.forEach((c) => r.colors.add(c.raw));
+        cut(wordG(base));
+    }
+
+    // Sizes — synonym → canonical, only if that size exists in the catalog.
+    const sizeByCanon = new Map(sizes.map((s) => [String(s).toUpperCase(), s]));
+    for (const [w, canon] of SIZE_ENTRIES) {
+        if (sizeByCanon.has(canon) && word(w).test(text)) { r.sizes.add(sizeByCanon.get(canon)); cut(wordG(w)); }
+    }
+
+    // Departments / categories / brands — match the store's real values (whole word/phrase, simple plural).
+    const matchVocab = (values, bucket) => {
+        for (const v of values) {
+            const lc = String(v).toLowerCase().trim();
+            if (lc.length < 3) continue;
+            for (const variant of [lc, lc.replace(/s$/, ""), `${lc}s`]) {
+                if (variant.length < 3) continue;
+                if (word(variant).test(text)) { bucket.add(v); cut(wordG(variant)); break; }
+            }
+        }
+    };
+    matchVocab(departments, r.departments);
+    matchVocab(categories, r.categories);
+    matchVocab(brands, r.brands);
+
+    // Gender/audience words → a department, if the catalog has a matching one (avoid men⊂women).
+    for (const [w, root] of GENDER_WORDS) {
+        if (!word(w).test(text)) continue;
+        const dep = departments.find((d) => {
+            const dl = String(d).toLowerCase();
+            return root === "men" ? /(^|[^o])\bmen('?s)?\b/.test(dl) && !dl.includes("women") : dl.includes(root);
+        });
+        if (dep) { r.departments.add(dep); cut(wordG(w)); }
+    }
+
+    return {
+        text: text.replace(/\s+/g, " ").trim(),
+        colors: [...r.colors], sizes: [...r.sizes],
+        departments: [...r.departments], categories: [...r.categories], brands: [...r.brands],
+        maxPriceCents: r.maxPriceCents,
+    };
+}
+
 // Faceted search → { products (shaped + deduped), facets }. facets = { departments, categories, colors,
 // sizes, brands } each [{ value, count }], scoped to org (+ term) but NOT narrowed by the active
 // selections, so multi-select within a facet stays usable.
 export async function searchProductsFaceted(orgId, { q, filters = {}, sort = "featured", limit = 200, dedupe = true } = {}) {
-    const term = String(q || "").trim();
+    let term = String(q || "").trim();
     const span = dedupe ? limit * 6 : limit * 2;   // over-fetch — dedupe + JS sort happen after
     const oid = mongoose.Types.ObjectId.isValid(orgId) ? new mongoose.Types.ObjectId(orgId) : orgId;
+
+    // Context-aware query understanding: lift color/size/price/department/category/brand out of the free
+    // text and apply them as filters (so they're not phrase-matched). Only facets the catalog actually
+    // has are extracted. Explicit UI selections win — parsed facets fill the gaps.
+    const F = { ...filters };
+    if (term) {
+        const base = { orgId: oid, active: { $ne: false } };
+        const [colors, sizes, departments, categories, brands] = await Promise.all([
+            PlatformProduct.distinct("facetColors", base), PlatformProduct.distinct("facetSizes", base),
+            PlatformProduct.distinct("department", base), PlatformProduct.distinct("category", base),
+            PlatformProduct.distinct("brand", base),
+        ]);
+        const p = parseQueryFacets(term, { colors, sizes, departments, categories, brands });
+        term = p.text;
+        if (!F.colors?.length && p.colors.length) F.colors = p.colors;
+        if (!F.sizes?.length && p.sizes.length) F.sizes = p.sizes;
+        if (!F.departments?.length && p.departments.length) F.departments = p.departments;
+        if (!F.categories?.length && p.categories.length) F.categories = p.categories;
+        if (!F.brands?.length && p.brands.length) F.brands = p.brands;
+        if (!F.maxPriceCents && p.maxPriceCents) F.maxPriceCents = p.maxPriceCents;
+    }
 
     // Term relevance: Atlas ids when available, else a tolerant Mongo regex.
     const atlasIds = await atlasTermIds(term, span * 2);
@@ -132,12 +229,12 @@ export async function searchProductsFaceted(orgId, { q, filters = {}, sort = "fe
 
     // Org scope + active facet selections (color/size/price use the denormalized facet fields).
     const cond = termClause({ orgId: oid, active: { $ne: false } });
-    if (filters.departments?.length) cond.department  = { $in: filters.departments };
-    if (filters.categories?.length)  cond.category    = { $in: filters.categories };
-    if (filters.colors?.length)      cond.facetColors = { $in: filters.colors };
-    if (filters.sizes?.length)       cond.facetSizes  = { $in: filters.sizes };
-    if (filters.brands?.length)      cond.brand       = { $in: filters.brands };
-    if (filters.maxPriceCents)       cond.minPriceCents = { $lte: Number(filters.maxPriceCents) };
+    if (F.departments?.length) cond.department  = { $in: F.departments };
+    if (F.categories?.length)  cond.category    = { $in: F.categories };
+    if (F.colors?.length)      cond.facetColors = { $in: F.colors };
+    if (F.sizes?.length)       cond.facetSizes  = { $in: F.sizes };
+    if (F.brands?.length)      cond.brand       = { $in: F.brands };
+    if (F.maxPriceCents)       cond.minPriceCents = { $lte: Number(F.maxPriceCents) };
 
     let docs = await PlatformProduct.find(cond).populate(POP).select(SELECT).limit(span).lean();
     // Order: Atlas relevance when we have ids; otherwise newest. price/title re-sort happens on cards below.

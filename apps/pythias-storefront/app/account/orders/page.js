@@ -24,6 +24,7 @@ function OrdersList() {
                     <div>
                         <div style={{ fontWeight: 700 }}>#{o.poNumber || o.id.slice(-6)}</div>
                         <div style={{ color: "#64748b", fontSize: "0.85rem" }}>{fmtDate(o.date)}</div>
+                        {o.hasGift && <div style={{ color: "#9333ea", fontSize: "0.82rem", marginTop: 2 }}>🎁 Gift options added</div>}
                         {o.tracking && <div style={{ color: "var(--sf-secondary, #16a34a)", fontSize: "0.82rem", marginTop: 2 }}>Tracking available</div>}
                     </div>
                     <StatusBadge status={o.status} />

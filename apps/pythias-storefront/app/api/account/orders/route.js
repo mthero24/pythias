@@ -17,7 +17,7 @@ export async function GET(req) {
     // Orders are matched by the customer's email within this org. (Checkout will also stamp
     // storefrontCustomerId for a hard link.)
     const orders = await PlatformOrder.find({ orgId: auth.orgId, customerEmail: auth.customer.email })
-        .select("poNumber date status paid shippingInfo")
+        .select("poNumber date status paid shippingInfo giftAddOns")
         .sort({ date: -1 })
         .limit(100)
         .lean();
@@ -30,6 +30,7 @@ export async function GET(req) {
             date: o.date ?? o.createdAt ?? null,
             status: o.status ?? "pending",
             paid: !!o.paid,
+            hasGift: (o.giftAddOns?.length || 0) > 0,
             tracking: firstTracking(o),
         })),
     });

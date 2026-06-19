@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useCart } from "@/components/cart/CartProvider";
 import FavoriteHeart from "@/components/favorites/FavoriteHeart";
 import ExpressCheckout from "@/components/checkout/ExpressCheckout";
@@ -7,12 +8,16 @@ import { track } from "@/components/analytics/tracker";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { buildRenderUrl } from "@/lib/renderUrl";
 
+// Request an image at a given pixel size (CDN + renderImages both honor width/height). Used to serve a
+// sharper main carousel image (the URLs are saved at width=400) without changing the stored `img`.
+const atWidth = (url, w) => { try { const u = new URL(url); u.searchParams.set("width", String(w)); u.searchParams.set("height", String(w)); return u.toString(); } catch { return url; } };
+
 // Product-page top: the same two-column "mini product page" as the quick-view modal, but full size —
 // image carousel (color-driven), swatches + size buttons, quantity, express wallets, Add to cart / Buy now.
 // Used for standard products; customizable (design-template) products keep their own CustomizableBuyBox.
 // `images` is [{ url, color }] (color = the colorName the image belongs to, or null for shared images).
 // `galleryScope`: "all" shows every image; "current" shows only the selected color's images (+ shared).
-export default function ProductView({ productId, title, images = [], variants = [], siblings = [], thumbs = "bottom", galleryScope = "all", placement = null, printRender = null, designId = null, defaultColor = "" }) {
+export default function ProductView({ productId, title, images = [], variants = [], siblings = [], thumbs = "bottom", galleryScope = "all", placement = null, printRender = null, customizeBlankId = "", customizeArt = null, defaultColor = "", rating = null, shipping = null, hasSizeChart = false, salePercent = 0 }) {
     const { add } = useCart();
     const { price: money, t } = useI18n();
 
@@ -36,12 +41,28 @@ export default function ProductView({ productId, title, images = [], variants = 
     const [err, setErr] = useState("");
     // Hover-zoom on the main image: track the cursor as a % so the zoom pans to where you point.
     const [zoom, setZoom] = useState({ on: false, x: 50, y: 50 });
+    const [zoomReady, setZoomReady] = useState(false);   // load the high-res zoom layer on first hover
     const onZoomMove = (e) => {
         const r = e.currentTarget.getBoundingClientRect();
         const x = Math.max(0, Math.min(100, ((e.clientX - r.left) / r.width) * 100));
         const y = Math.max(0, Math.min(100, ((e.clientY - r.top) / r.height) * 100));
+        if (!zoomReady) setZoomReady(true);
         setZoom({ on: true, x, y });
     };
+    // Sticky add-to-cart bar (shows once the buy box scrolls above the viewport) + image lightbox.
+    const buyBoxRef = useRef(null);
+    const [showSticky, setShowSticky] = useState(false);
+    const [lightbox, setLightbox] = useState(false);
+    useEffect(() => {
+        const el = buyBoxRef.current; if (!el || typeof IntersectionObserver === "undefined") return;
+        const io = new IntersectionObserver(([e]) => setShowSticky(!e.isIntersecting && e.boundingClientRect.top < 0), { threshold: 0 });
+        io.observe(el); return () => io.disconnect();
+    }, []);
+    useEffect(() => {
+        const onKey = (e) => { if (e.key === "Escape") setLightbox(false); };
+        if (lightbox) window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [lightbox]);
 
     useEffect(() => { track("product_view", { productId }); }, [productId]);
 
@@ -79,12 +100,16 @@ export default function ProductView({ productId, title, images = [], variants = 
     const renderSpot = (side) => printRender
         ? buildRenderUrl({ orgSlug: printRender.orgSlug, blankCode: printRender.blankCode, colorName: color, art: printRender.art, side })
         : null;
+    // Native view (the side the design already lives on) → use the product's own color image (always
+    // color-correct, no render needed). Non-native (back/pocket) → a color-aware render.
+    const kindForKey = (k) => placeSpots.find((s) => s.key === k)?.kind;
+    const spotImg = (spotKey) => (kindForKey(spotKey) === printRender?.artSide ? (gallery[0] || renderSpot(spotKey)) : renderSpot(spotKey));
 
     const placementOptions = useMemo(() => {
         if (!printRender || !placeSpots.length) return [];
         const byKind = Object.fromEntries(placeSpots.map((s) => [s.kind, s]));
         const has = (kind) => !!byKind[kind];
-        const r = (kind) => renderSpot(byKind[kind].key);
+        const r = (kind) => spotImg(byKind[kind].key);
         const o = [];
         if (has("front")) o.push({ key: "front", label: "Front Only", desc: "Design on front", spots: [byKind.front.key], imgs: [r("front")].filter(Boolean) });
         if (has("back")) o.push({ key: "back", label: "Back Only", desc: "Design on back", spots: [byKind.back.key], imgs: [r("back")].filter(Boolean) });
@@ -93,7 +118,7 @@ export default function ProductView({ productId, title, images = [], variants = 
         if (has("pocket") && has("back")) o.push({ key: "pocket-back", label: "Pocket & Back", desc: "Pocket + back design", spots: [byKind.pocket.key, byKind.back.key], imgs: [r("pocket"), r("back")].filter(Boolean) });
         return o;
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [printRender, placeSpots, color]);
+    }, [printRender, placeSpots, color, gallery]);
 
     useEffect(() => { if (placementOptions.length && !placementOptions.find((o) => o.key === placeKey)) setPlaceKey(placementOptions[0].key); }, [placementOptions]);   // eslint-disable-line
     const selectedPlacement = placementOptions.find((o) => o.key === placeKey) || null;
@@ -104,7 +129,7 @@ export default function ProductView({ productId, title, images = [], variants = 
     const isNative = selectedPlacement && selectedPlacement.key === printRender?.artSide;
     const viewGallery = useMemo(() => {
         if (!(printRender && selectedPlacement && !isNative)) return gallery;
-        const imgs = selectedPlacement.spots.map((spotKey) => renderSpot(spotKey)).filter(Boolean);
+        const imgs = selectedPlacement.spots.map((spotKey) => spotImg(spotKey)).filter(Boolean);
         return imgs.length ? imgs : gallery;
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [gallery, printRender, selectedPlacement, isNative, color]);
@@ -114,7 +139,15 @@ export default function ProductView({ productId, title, images = [], variants = 
         : (() => { const ps = variants.map((v) => v.price).filter((n) => typeof n === "number" && n > 0); return ps.length ? Math.round(Math.min(...ps) * 100) : 0; })();
     // Extra print spots beyond the first add the blank's per-spot surcharge.
     const surchargeCents = Math.max(0, spots.length - 1) * (placement?.surchargeCents || 0);
-    const priceCents = basePriceCents + surchargeCents;
+    // Pricing: a per-product sale % overrides the blank-level compare-at; otherwise use the variant's
+    // compare-at. The struck-through "was" is the regular price; surcharge is added after the discount.
+    const salePct = Math.max(0, Math.min(100, Number(salePercent) || 0));
+    const saleBaseCents = salePct > 0 ? Math.round(basePriceCents * (1 - salePct / 100)) : basePriceCents;
+    const priceCents = saleBaseCents + surchargeCents;
+    const compareAtCents = salePct > 0 ? basePriceCents : (match?.compareAt > 0 ? Math.round(match.compareAt * 100) : 0);
+    const onSale = compareAtCents > saleBaseCents;
+    const savePct = onSale ? Math.round((1 - saleBaseCents / compareAtCents) * 100) : 0;
+    const r5 = rating?.count > 0 ? Math.round(rating.avg) : 0;
 
     const pickPlacement = (opt) => setPlaceKey(opt.key);   // carousel follows via viewGallery + reset effect
     const safeIdx = activeIdx < viewGallery.length ? activeIdx : 0;
@@ -137,11 +170,11 @@ export default function ProductView({ productId, title, images = [], variants = 
         ...((selectedPlacement && !isNative) ? { printLocation: selectedPlacement.label, printLocations: selectedPlacement.spots, customKey: `loc-${placeKey}` } : {}),
     });
 
-    // Deep-link into the design studio preloaded with this product's blank, color, art and chosen spots.
+    // Deep-link into the design studio preloaded with this product's blank, color and design art.
     const customizeHref = `/create-your-own?product=${productId}`
-        + (placement?.blankId ? `&blank=${placement.blankId}` : "")
+        + (customizeBlankId ? `&blank=${customizeBlankId}` : "")
         + (color ? `&color=${encodeURIComponent(color)}` : "")
-        + (designId ? `&design=${designId}` : "")
+        + (customizeArt ? `&art=${encodeURIComponent(customizeArt)}` : "")
         + (spots.length ? `&spots=${spots.join(",")}` : "");
     const addToCart = () => { if (!match) return setErr("That combination isn't available."); setErr(""); add(line(), qty); setAdded(true); setTimeout(() => setAdded(false), 2500); };
     const buyNow = () => { if (!match) return setErr("That combination isn't available."); add(line(), qty, { silent: true }); setTimeout(() => { window.location.href = "/checkout"; }, 50); };
@@ -151,15 +184,20 @@ export default function ProductView({ productId, title, images = [], variants = 
     const qtyBtn = { width: 36, height: 36, border: "1px solid rgba(0,0,0,0.2)", background: "#fff", cursor: "pointer", fontSize: "1.1rem", lineHeight: 1 };
 
     return (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 40, alignItems: "flex-start" }}>
+        <>
+        <style>{`@media(max-width:700px){.sf-pdp-grid{gap:22px !important}.sf-pdp-grid h1{font-size:1.55rem !important}.sf-pdp-grid>div{flex-basis:100% !important}}`}</style>
+        <div className="sf-pdp-grid" style={{ display: "flex", flexWrap: "wrap", gap: 40, alignItems: "flex-start" }}>
             {/* Left — image carousel. Thumbnail strip position is store-configurable (bottom/top/left/right). */}
             {(() => {
                 const vertical = thumbs === "left" || thumbs === "right";
                 const main = (
                     <div onMouseMove={onZoomMove} onMouseLeave={() => setZoom((z) => ({ ...z, on: false }))}
                         style={{ position: "relative", aspectRatio: "1/1", background: "#f3f4f6", borderRadius: 14, overflow: "hidden", flex: 1, minWidth: 0, cursor: zoom.on ? "zoom-in" : "default" }}>
-                        {img && <img src={img} alt={title} onError={(e) => { const fb = gallery[0]; if (fb && e.currentTarget.src !== fb) e.currentTarget.src = fb; }}
-                            style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 120ms ease-out", transform: zoom.on ? "scale(2.2)" : "scale(1)", transformOrigin: `${zoom.x}% ${zoom.y}%` }} />}
+                        {img && <img src={atWidth(img, 700)} alt={title} onClick={() => setLightbox(true)} onError={(e) => { const fb = gallery[0]; if (fb && e.currentTarget.src !== fb) e.currentTarget.src = fb; }}
+                            style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "zoom-in" }} />}
+                        {img && zoomReady && <img src={atWidth(img, 1600)} alt="" aria-hidden
+                            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", pointerEvents: "none",
+                                opacity: zoom.on ? 1 : 0, transform: zoom.on ? "scale(2.4)" : "scale(1)", transformOrigin: `${zoom.x}% ${zoom.y}%`, transition: "opacity 120ms ease-out" }} />}
                         {viewGallery.length > 1 && (
                             <>
                                 <button onClick={() => step(-1)} aria-label="Previous image" style={arrowStyle("left")}>‹</button>
@@ -175,7 +213,7 @@ export default function ProductView({ productId, title, images = [], variants = 
                         {viewGallery.map((src, i) => (
                             <button key={i} onClick={() => setActiveIdx(i)} style={{ flex: "0 0 auto", width: 64, height: 64, borderRadius: 8, overflow: "hidden", cursor: "pointer", padding: 0,
                                 border: i === activeIdx ? "2px solid var(--sf-accent,#f59e0b)" : "1px solid rgba(0,0,0,0.15)", background: "#f3f4f6" }}>
-                                <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                <img src={atWidth(src, 160)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                             </button>
                         ))}
                     </div>
@@ -192,13 +230,25 @@ export default function ProductView({ productId, title, images = [], variants = 
 
             {/* Right — details */}
             <div style={{ flex: "1 1 340px", minWidth: 0 }}>
-                <h1 style={{ fontSize: "1.9rem", margin: "0 0 6px" }}>{title}</h1>
+                <h1 style={{ fontSize: "1.9rem", margin: "0 0 8px", lineHeight: 1.2 }}>{title}</h1>
+                {rating && (
+                    <a href="#review" style={{ display: "inline-flex", alignItems: "center", gap: 8, textDecoration: "none", color: "inherit", marginBottom: 10 }}>
+                        <span style={{ color: "#f59e0b", letterSpacing: 1 }}>{"★★★★★".slice(0, r5)}{"☆☆☆☆☆".slice(0, 5 - r5)}</span>
+                        <span style={{ fontSize: "0.85rem", color: "var(--sf-muted,#64748b)" }}>{rating.avg.toFixed(1)} · {rating.count} review{rating.count === 1 ? "" : "s"}</span>
+                    </a>
+                )}
                 {(colors.length > 1 || siblings.length > 0) && (
                     <div style={{ fontSize: "0.85rem", opacity: 0.6, margin: "0 0 14px" }}>
                         {[colors.length > 1 && `${colors.length} colors`, siblings.length > 0 && `${styleCount} styles`].filter(Boolean).join(" · ")}
                     </div>
                 )}
-                {priceCents > 0 && <div style={{ fontWeight: 800, fontSize: "1.6rem", color: "var(--sf-secondary)", marginBottom: 18 }}>{money(priceCents)}</div>}
+                {priceCents > 0 && (
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 18, flexWrap: "wrap" }}>
+                        <span style={{ fontWeight: 800, fontSize: "1.6rem", color: onSale ? "#dc2626" : "var(--sf-secondary)" }}>{money(priceCents)}</span>
+                        {onSale && <span style={{ color: "#94a3b8", textDecoration: "line-through", fontSize: "1.05rem" }}>{money(compareAtCents)}</span>}
+                        {onSale && <span style={{ background: "#fee2e2", color: "#b91c1c", fontWeight: 800, fontSize: "0.75rem", padding: "3px 9px", borderRadius: 999 }}>Save {savePct}%</span>}
+                    </div>
+                )}
 
                 {hasColors && (
                     <div style={{ marginBottom: 16 }}>
@@ -216,7 +266,10 @@ export default function ProductView({ productId, title, images = [], variants = 
 
                 {hasSizes && (
                     <div style={{ marginBottom: 18 }}>
-                        <div style={{ fontWeight: 700, fontSize: "0.82rem", marginBottom: 6 }}>Size{size ? `: ${size}` : ""}</div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                            <span style={{ fontWeight: 700, fontSize: "0.82rem" }}>Size{size ? `: ${size}` : ""}</span>
+                            {hasSizeChart && <a href="#size-chart" style={{ fontSize: "0.8rem", color: "var(--sf-secondary)", fontWeight: 600, textDecoration: "none" }}>📏 Size guide</a>}
+                        </div>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                             {sizes.map((s) => {
                                 const on = size === s;
@@ -248,6 +301,7 @@ export default function ProductView({ productId, title, images = [], variants = 
                         <span style={{ minWidth: 40, textAlign: "center", fontWeight: 600 }}>{qty}</span>
                         <button onClick={() => setQty((n) => Math.min(99, n + 1))} aria-label="Increase quantity" style={qtyBtn}>+</button>
                     </div>
+                    {qty > 1 && priceCents > 0 && <span style={{ marginLeft: "auto", fontWeight: 700 }}>Total {money(priceCents * qty)}</span>}
                 </div>
 
                 {err && <div style={{ color: "#dc2626", fontSize: "0.88rem", marginBottom: 10 }}>{err}</div>}
@@ -257,7 +311,7 @@ export default function ProductView({ productId, title, images = [], variants = 
                         <ExpressCheckout key={`${match.sku}-${priceCents}-${qty}`} items={[{ productId, sku: match.sku, qty }]} amountCents={priceCents * qty} />
                     </div>
                 )}
-                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                <div ref={buyBoxRef} style={{ display: "flex", gap: 10, alignItems: "center" }}>
                     <button onClick={addToCart} disabled={!match} style={{ flex: 1, padding: "14px 0", borderRadius: 10, border: "1px solid var(--sf-accent,#f59e0b)", background: "#fff", color: "var(--sf-accent,#f59e0b)", fontWeight: 700, fontSize: "1rem", cursor: match ? "pointer" : "not-allowed", opacity: match ? 1 : 0.5 }}>
                         {added ? `${t("product.added", "Added")} ✓` : t("product.addToCart", "Add to cart")}
                     </button>
@@ -267,6 +321,13 @@ export default function ProductView({ productId, title, images = [], variants = 
                     <FavoriteHeart size={28} product={{ productId, title, image: img, priceCents, sku: match?.sku || "", color: match?.color || "", size: match?.size || "" }} />
                 </div>
                 {added && <a href="/cart" style={{ display: "inline-block", marginTop: 12, color: "var(--sf-secondary)", fontWeight: 600, textDecoration: "none" }}>View cart →</a>}
+
+                {/* Trust + shipping reassurance right at the decision point */}
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 18px", marginTop: 16, fontSize: "0.82rem", color: "var(--sf-muted,#64748b)" }}>
+                    <span>🚚 {shipping?.freeShipping ? "Free shipping" : shipping?.freeOverCents > 0 ? `Free shipping over ${money(shipping.freeOverCents)}` : "Fast shipping"}</span>
+                    <span>↩️ Easy returns</span>
+                    <span>🔒 Secure checkout</span>
+                </div>
 
                 <a href={customizeHref} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 14, padding: "13px 0", borderRadius: 10,
                     border: "1px dashed var(--sf-accent,#f59e0b)", color: "var(--sf-accent,#f59e0b)", fontWeight: 700, fontSize: "0.96rem", textDecoration: "none" }}>
@@ -310,5 +371,33 @@ export default function ProductView({ productId, title, images = [], variants = 
                 )}
             </div>
         </div>
+
+        {lightbox && typeof document !== "undefined" && createPortal(
+            <div onClick={() => setLightbox(false)} role="dialog" aria-modal="true"
+                style={{ position: "fixed", inset: 0, zIndex: 3000, background: "rgba(0,0,0,0.9)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+                <button onClick={() => setLightbox(false)} aria-label="Close" style={{ position: "absolute", top: 18, right: 22, background: "none", border: "none", color: "#fff", fontSize: "2rem", cursor: "pointer", lineHeight: 1 }}>×</button>
+                {viewGallery.length > 1 && <button onClick={(e) => { e.stopPropagation(); step(-1); }} aria-label="Previous" style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", background: "rgba(255,255,255,0.15)", border: "none", color: "#fff", width: 48, height: 48, borderRadius: "50%", fontSize: "1.6rem", cursor: "pointer" }}>‹</button>}
+                {img && <img src={atWidth(img, 1200)} alt={title} onClick={(e) => e.stopPropagation()} style={{ maxWidth: "92vw", maxHeight: "88vh", objectFit: "contain", borderRadius: 8 }} />}
+                {viewGallery.length > 1 && <button onClick={(e) => { e.stopPropagation(); step(1); }} aria-label="Next" style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", background: "rgba(255,255,255,0.15)", border: "none", color: "#fff", width: 48, height: 48, borderRadius: "50%", fontSize: "1.6rem", cursor: "pointer" }}>›</button>}
+            </div>,
+            document.body
+        )}
+
+        {showSticky && typeof document !== "undefined" && createPortal(
+            <div style={{ position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 1200, background: "#fff", borderTop: "1px solid var(--sf-border,#e5e7eb)", boxShadow: "0 -4px 20px rgba(16,24,40,0.1)" }}>
+                <div className="sf-container" style={{ display: "flex", alignItems: "center", gap: 14, padding: "10px 16px" }}>
+                    {img && <img src={img} alt="" style={{ width: 46, height: 46, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />}
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ fontWeight: 700, fontSize: "0.9rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</div>
+                        <div style={{ fontSize: "0.82rem", color: "var(--sf-secondary)", fontWeight: 700 }}>{money(priceCents)}{[color, size].filter(Boolean).length ? ` · ${[color, size].filter(Boolean).join(" / ")}` : ""}</div>
+                    </div>
+                    <button onClick={addToCart} disabled={!match} style={{ flexShrink: 0, padding: "12px 22px", borderRadius: 10, border: "none", background: "var(--sf-accent,#f59e0b)", color: "#fff", fontWeight: 700, fontSize: "0.95rem", cursor: match ? "pointer" : "not-allowed" }}>
+                        {added ? "Added ✓" : "Add to cart"}
+                    </button>
+                </div>
+            </div>,
+            document.body
+        )}
+        </>
     );
 }

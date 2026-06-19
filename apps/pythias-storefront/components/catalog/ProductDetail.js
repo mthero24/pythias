@@ -1,8 +1,10 @@
 import { StorefrontReviewSummary, PlatformProduct, PlatformDesign, Organization, resolveVariantSize } from "@pythias/mongo";
-import { SiteFrame, SectionRenderer, productJsonLd, productHref } from "@pythias/storefront";
+import { SiteFrame, SectionRenderer, productJsonLd, productHref, ProductCard, productCardData, dedupeByDesign } from "@pythias/storefront";
+import RecentlyViewed from "@/components/catalog/RecentlyViewed";
 import CustomizableBuyBox from "@/components/customizer/CustomizableBuyBox";
 import ProductView from "@/components/catalog/ProductView";
 import SizeChart from "@/components/catalog/SizeChart";
+import Accordion from "@/components/catalog/Accordion";
 import ReviewsSection from "@/components/reviews/ReviewsSection";
 import { systemPageSections } from "@/lib/systemSections";
 
@@ -20,6 +22,7 @@ export default async function ProductDetail({ site, product, host }) {
     const variants = (product.variantsArray ?? []).map((v) => ({
         sku:   v.sku ?? null,
         price: typeof v.price === "number" ? v.price : null,
+        compareAt: typeof v.compareAtPrice === "number" && v.compareAtPrice > 0 ? v.compareAtPrice : null,
         image: v.image ?? null,
         color: v.color?.name ?? v.ids?.colorName ?? "",
         hex:   v.color?.hexcode ?? null,
@@ -71,15 +74,16 @@ export default async function ProductDetail({ site, product, host }) {
     // Print-placement customization is ONLY for single-image designs: if the design has art for just one
     // side, the buyer can move it to any spot (rendered on the fly by the org's compositor). Multi-location
     // designs render natively (no placement choice). Needs the org's render subdomain + the design art.
-    let printRender = null;
-    if (placement && product.design) {
+    let printRender = null, customizeArt = null;
+    if (product.design) {
         const [designDoc, org] = await Promise.all([
             PlatformDesign.findOne({ _id: product.design }).select("images").lean().catch(() => null),
             Organization.findOne({ _id: site.orgId }).select("slug").lean().catch(() => null),
         ]);
         const imgs = designDoc?.images || {};
         const labeled = Object.keys(imgs).filter((k) => imgs[k]);
-        if (labeled.length === 1 && org?.slug && placement.blankCode) {
+        customizeArt = labeled.length ? imgs[labeled[0]] : null;   // design art to drop into the studio
+        if (placement && labeled.length === 1 && org?.slug && placement.blankCode) {
             printRender = { orgSlug: org.slug, blankCode: placement.blankCode, art: imgs[labeled[0]], artSide: labeled[0] };
         }
     }
@@ -101,7 +105,24 @@ export default async function ProductDetail({ site, product, host }) {
         }));
     }
 
+    // "You may also like" — other products in the same category/department (different designs from this one).
+    let related = [];
+    {
+        const cats = [...(product.category || []), ...(product.department || [])].filter(Boolean);
+        const q = { orgId: site.orgId, active: { $ne: false }, _id: { $ne: product._id } };
+        if (product.design) q.design = { $ne: product.design };   // the same-design blanks are in "Also available as"
+        if (cats.length) q.$or = [{ category: { $in: cats } }, { department: { $in: cats } }];
+        const docs = await PlatformProduct.find(q).populate("variantsArray.color", "name hexcode")
+            .select("title slug sku brand productImages variantsArray category department design createdAt salePercent")
+            .sort({ _id: -1 }).limit(16).lean().catch(() => []);
+        related = dedupeByDesign(docs.map(productCardData)).slice(0, 8);
+    }
+
     const summary = await StorefrontReviewSummary.findOne({ orgId: site.orgId, productId: product._id }).select("avg count").lean().catch(() => null);
+    // Shipping / returns copy for the detail accordions (from the store's policy pages).
+    const policyBody = (re) => (site.policies || []).find((p) => re.test(p.slug || "") || re.test(p.title || ""))?.body || null;
+    const shippingBody = policyBody(/ship/i);
+    const returnsBody = policyBody(/return|refund/i);
     const jsonLd = productJsonLd({ title: product.title, description: product.description, images, price: minPrice });
     if (summary?.count > 0) jsonLd.aggregateRating = { "@type": "AggregateRating", ratingValue: summary.avg, reviewCount: summary.count };
 
@@ -119,8 +140,15 @@ export default async function ProductDetail({ site, product, host }) {
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgLd) }} />
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
-            <section style={{ padding: "40px 0" }}>
+            <section style={{ padding: "28px 0 40px" }}>
                 <div className="sf-container">
+                    <nav aria-label="Breadcrumb" style={{ fontSize: "0.82rem", color: "var(--sf-muted, #64748b)", marginBottom: 22 }}>
+                        <a href="/" style={{ color: "inherit", textDecoration: "none" }}>Home</a>
+                        <span style={{ margin: "0 7px", opacity: 0.5 }}>/</span>
+                        <a href="/products" style={{ color: "inherit", textDecoration: "none" }}>Shop</a>
+                        <span style={{ margin: "0 7px", opacity: 0.5 }}>/</span>
+                        <span style={{ color: "var(--sf-text)" }}>{product.title}</span>
+                    </nav>
                     {product.designTemplateId ? (
                         // Customizable products keep the personalization buy box (its own UI).
                         <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 48, alignItems: "start" }}>
@@ -144,39 +172,60 @@ export default async function ProductDetail({ site, product, host }) {
                     ) : (
                         <ProductView productId={String(product._id)} title={product.title} images={galleryImages} variants={variants} siblings={siblings}
                             thumbs={cat.galleryThumbs || "bottom"} galleryScope={cat.galleryScope || "all"} defaultColor={product.defaultColor?.name || ""}
-                            placement={placement} printRender={printRender} designId={product.design ? String(product.design) : null} />
+                            placement={placement} printRender={printRender}
+                            rating={summary?.count > 0 ? { avg: summary.avg, count: summary.count } : null}
+                            shipping={site.shipping || null} hasSizeChart={!!sizeGuide} salePercent={product.salePercent || 0}
+                            customizeBlankId={primaryBlank ? String(primaryBlank._id) : ""} customizeArt={customizeArt} />
                     )}
 
-                    {(product.description || bulletPoints.length > 0) && (
-                        <div style={{ marginTop: 44, maxWidth: 820, borderTop: "1px solid var(--sf-border, #e5e7eb)", paddingTop: 28 }}>
-                            <h2 style={{ fontSize: "1.15rem", margin: "0 0 16px", fontWeight: 700 }}>Product details</h2>
-                            {product.description && (
-                                <div style={{ lineHeight: 1.8, color: "var(--sf-text)", opacity: 0.92, whiteSpace: "pre-wrap", fontSize: "0.98rem" }}>{product.description}</div>
+                    {(product.description || bulletPoints.length > 0 || shippingBody || returnsBody) && (
+                        <div style={{ marginTop: 44, maxWidth: 820 }}>
+                            {(product.description || bulletPoints.length > 0) && (
+                                <Accordion title="Product details" defaultOpen>
+                                    {product.description && <div style={{ whiteSpace: "pre-wrap" }}>{product.description}</div>}
+                                    {bulletPoints.length > 0 && (
+                                        <ul style={{ listStyle: "none", padding: 0, margin: product.description ? "18px 0 0" : 0, display: "grid", gap: 12 }}>
+                                            {bulletPoints.map((bp, i) => (
+                                                <li key={i} style={{ display: "flex", gap: 10, lineHeight: 1.6 }}>
+                                                    <span aria-hidden style={{ color: "var(--sf-accent, #f59e0b)", fontWeight: 800, flexShrink: 0, marginTop: 1 }}>✓</span>
+                                                    <span>{bp.title && <strong style={{ fontWeight: 700 }}>{bp.title}{bp.description ? ": " : ""}</strong>}{bp.description && <span style={{ opacity: 0.9 }}>{bp.description}</span>}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </Accordion>
                             )}
-                            {bulletPoints.length > 0 && (
-                                <ul style={{ listStyle: "none", padding: 0, margin: product.description ? "22px 0 0" : 0, display: "grid", gap: 12 }}>
-                                    {bulletPoints.map((bp, i) => (
-                                        <li key={i} style={{ display: "flex", gap: 10, lineHeight: 1.6, fontSize: "0.95rem" }}>
-                                            <span aria-hidden style={{ color: "var(--sf-accent, #f59e0b)", fontWeight: 800, flexShrink: 0, marginTop: 1 }}>✓</span>
-                                            <span>
-                                                {bp.title && <strong style={{ fontWeight: 700 }}>{bp.title}{bp.description ? ": " : ""}</strong>}
-                                                {bp.description && <span style={{ opacity: 0.9 }}>{bp.description}</span>}
-                                            </span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
+                            {shippingBody && <Accordion title="Shipping"><div style={{ whiteSpace: "pre-wrap" }}>{shippingBody}</div></Accordion>}
+                            {returnsBody && <Accordion title="Returns"><div style={{ whiteSpace: "pre-wrap" }}>{returnsBody}</div></Accordion>}
                         </div>
                     )}
 
                     <SizeChart guide={sizeGuide} />
                 </div>
             </section>
-            <section id="review" style={{ padding: "0 0 56px" }}>
+            <section id="review" style={{ padding: "0 0 40px" }}>
                 <div className="sf-container">
                     <ReviewsSection productId={String(product._id)} />
                 </div>
             </section>
+
+            {(related.length > 0) && (
+                <section style={{ padding: "0 0 8px" }}>
+                    <div className="sf-container">
+                        <h2 style={{ fontSize: "1.3rem", margin: "0 0 18px" }}>You may also like</h2>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: 22 }}>
+                            {related.map((p) => <ProductCard key={p.id} product={p} urlMode={mode} />)}
+                        </div>
+                    </div>
+                </section>
+            )}
+
+            <section style={{ padding: "0 0 56px" }}>
+                <div className="sf-container">
+                    <RecentlyViewed current={{ id: String(product._id), title: product.title, image: images[0] || null, href: productHref(product, mode), priceCents: minPrice ? Math.round(minPrice * 100) : 0 }} />
+                </div>
+            </section>
+
             <SectionRenderer sections={pageSections} site={site} data={pageSectionData} />
         </SiteFrame>
     );

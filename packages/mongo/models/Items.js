@@ -135,6 +135,11 @@ const schema = new mongoose.Schema(
     discount: { type: Number, default: 0 },
     discountName: { type: String },
     custom:  { type: Boolean, default: false },
+    // Cart gift add-on items (gift bag, gift message, branded packaging) — their own line so the floor
+    // handles them; no blank/design, so routing leaves them in-house.
+    addOn:       { type: Boolean, default: false },
+    addOnType:   { type: String },   // the add-on's id (e.g. "gift-bag", "gift-message")
+    giftMessage: { type: String },   // the buyer's message for a gift-message add-on
     dstFile: { type: Object },  // { locationName: dstUrl } — one key per print location
     // Buyer personalization (custom-text designs from a DesignTemplate). The buyer's field values
     // are authoritative; production renders the final artwork server-side from template + values.
