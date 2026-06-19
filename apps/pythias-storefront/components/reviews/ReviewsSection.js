@@ -15,11 +15,15 @@ export default function ReviewsSection({ productId }) {
     const [data, setData] = useState(null);
     const [writing, setWriting] = useState(false);
 
-    const load = () => fetch(`/api/products/${productId}/reviews`).then((r) => r.json()).then((d) => !d.error && setData(d)).catch(() => {});
-    useEffect(() => { load(); }, [productId]);
+    const load = () => {
+        const token = typeof window !== "undefined" ? localStorage.getItem("sf_token") : null;
+        return fetch(`/api/products/${productId}/reviews`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+            .then((r) => r.json()).then((d) => !d.error && setData(d)).catch(() => {});
+    };
+    useEffect(() => { load(); }, [productId, customer]);
 
     if (!data) return null;
-    const { summary, reviews } = data;
+    const { summary, reviews, canReview, verifiedOnly, signedIn } = data;
 
     return (
         <section style={{ borderTop: "1px solid rgba(0,0,0,0.08)", marginTop: 40, paddingTop: 32 }}>
@@ -44,9 +48,21 @@ export default function ReviewsSection({ productId }) {
                             </div>
                         );
                     })}
-                    <button onClick={() => setWriting((w) => !w)} style={{ marginTop: 14, padding: "10px 16px", borderRadius: 9, border: "1px solid rgba(0,0,0,0.18)", background: "#fff", fontWeight: 700, cursor: "pointer" }}>
-                        Write a review
-                    </button>
+                    {canReview ? (
+                        <button onClick={() => setWriting((w) => !w)} style={{ marginTop: 14, padding: "10px 16px", borderRadius: 9, border: "1px solid rgba(0,0,0,0.18)", background: "#fff", fontWeight: 700, cursor: "pointer" }}>
+                            Write a review
+                        </button>
+                    ) : verifiedOnly ? (
+                        <div style={{ marginTop: 14, fontSize: "0.82rem", color: "#64748b", lineHeight: 1.5 }}>
+                            {signedIn
+                                ? "Only verified buyers who purchased this product can leave a review."
+                                : <>Purchased this? <a href="/account" style={{ color: "var(--sf-secondary)", fontWeight: 600 }}>Sign in</a> to write a review.</>}
+                        </div>
+                    ) : (
+                        <button onClick={() => setWriting((w) => !w)} style={{ marginTop: 14, padding: "10px 16px", borderRadius: 9, border: "1px solid rgba(0,0,0,0.18)", background: "#fff", fontWeight: 700, cursor: "pointer" }}>
+                            Write a review
+                        </button>
+                    )}
                 </div>
 
                 {/* AI highlights */}

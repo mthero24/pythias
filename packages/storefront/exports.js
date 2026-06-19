@@ -12,5 +12,5 @@ export { SECTION_MANIFEST, MANIFEST_BY_TYPE } from "./sections/manifest";
 export { COLLAGE_PRESETS } from "./sections/ImageCollage";
 export { themeVars } from "./lib/theme";
 export { slugifyName, productHref } from "./lib/url";
-export { productCardData } from "./lib/card";
+export { productCardData, dedupeByDesign } from "./lib/card";
 export { THEME_PRESETS, PRESET_BY_ID, applyPreset } from "./themes/presets";

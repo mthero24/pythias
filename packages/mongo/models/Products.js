@@ -6,6 +6,7 @@ import Color from "./Color";
 import MarketPlaces from "./MarketPlaces";
 import Inventory from "./inventory"
 import ProductInventory from "./ProductInventory"
+import { resolveVariantSize } from "../helpers/variantSize"
 
 const schema = new mongoose.Schema({
   orgId: { type: mongoose.Schema.Types.ObjectId, index: true },
@@ -125,6 +126,13 @@ const schema = new mongoose.Schema({
         musicUrl: String,
     },
     designTemplateId: { type: mongoose.Schema.Types.ObjectId, ref: "DesignTemplate" },
+
+    // Denormalized facet fields for Atlas Search faceting (server-side filter counts + filtering across the
+    // whole catalog, not just a page). department/category/brand/tags are already top-level; color/size/price
+    // live on variants, so the pre-save hook (+ backfill script) flattens them here as top-level fields.
+    facetColors:   { type: [String] },
+    facetSizes:    { type: [String] },
+    minPriceCents: { type: Number },
 });
 
 // Compound index for efficient paginated listing per org
@@ -153,6 +161,34 @@ schema.pre("save", async function generateSlug(next) {
         const filter = (s) => ({ slug: s, _id: { $ne: this._id }, ...(this.orgId ? { orgId: this.orgId } : {}) });
         while (await this.constructor.exists(filter(slug))) slug = `${base}-${++n}`;
         this.slug = slug;
+        next();
+    } catch (e) { next(e); }
+});
+
+// Flatten variant-derived facets (color names, sizes, min price) to top-level fields so Atlas Search can
+// facet/filter on them. Reads the denormalized v.ids.colorName/sizeName (with a populated color name as a
+// fallback) so it works whether or not color refs are populated — matching the storefront card shaper.
+export function computeProductFacets(doc) {
+    const variants = doc?.variantsArray || [];
+    // Color name can live in any of: a populated color ref (.color.name), the stored top-level colorName,
+    // or the denormalized ids.colorName. Size is a stored string (or size.name / ids.sizeName).
+    const colors = [...new Set(variants.map((v) => v.color?.name || v.colorName || v.ids?.colorName).filter(Boolean))];
+    // resolveVariantSize falls back to the blank's sizes ([{_id,name}]) when the variant stored a size _id.
+    const sizes  = [...new Set(variants.map((v) => resolveVariantSize(v, v.blank?.sizes)).filter(Boolean))];
+    const prices = variants.map((v) => v.price).filter((n) => typeof n === "number" && n > 0);
+    return {
+        facetColors: colors,
+        facetSizes: sizes,
+        minPriceCents: prices.length ? Math.round(Math.min(...prices) * 100) : undefined,
+    };
+}
+
+// Keep the denormalized facet fields in sync on every full-document save. NOTE: this fires on .save()
+// (create + doc edits). Bulk updateOne/findOneAndUpdate paths bypass it — those should call
+// computeProductFacets() and write the fields themselves (or re-run the backfill).
+schema.pre("save", function syncFacets(next) {
+    try {
+        Object.assign(this, computeProductFacets(this));
         next();
     } catch (e) { next(e); }
 });

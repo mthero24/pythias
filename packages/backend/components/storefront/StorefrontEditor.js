@@ -36,7 +36,7 @@ import { THEME_PRESETS, SECTION_MANIFEST, MANIFEST_BY_TYPE, applyPreset, COLLAGE
 
 // redirects + termContent are written live by their services (migrator / term generator), NOT via the
 // draft autosave — keep them out so a stale autosave can't clobber them.
-const LIVE_FIELDS = ["theme", "pages", "nav", "footer", "policies", "system", "productUrlMode", "catalog", "indexableTerms", "analytics", "businessInfo", "seo"];
+const LIVE_FIELDS = ["theme", "pages", "nav", "footer", "policies", "system", "productUrlMode", "catalog", "indexableTerms", "analytics", "businessInfo", "seo", "reviews"];
 const pick = (o, keys) => Object.fromEntries(keys.filter((k) => k in (o ?? {})).map((k) => [k, o[k]]));
 const clone = (v) => JSON.parse(JSON.stringify(v ?? null));
 
@@ -243,6 +243,13 @@ function DesignTab({ work, set }) {
                 <TextField select size="small" label="Drawer slides from" value={cat.drawerSide || "left"} sx={{ minWidth: 160 }} onChange={(e) => setCat("drawerSide", e.target.value)}>
                     {["left", "right", "top", "bottom"].map((s) => <MenuItem key={s} value={s} sx={{ textTransform: "capitalize" }}>{s}</MenuItem>)}
                 </TextField>
+                <TextField select size="small" label="Product image thumbnails" value={cat.galleryThumbs || "bottom"} sx={{ minWidth: 190 }} onChange={(e) => setCat("galleryThumbs", e.target.value)}>
+                    {["bottom", "top", "left", "right"].map((s) => <MenuItem key={s} value={s} sx={{ textTransform: "capitalize" }}>{s}</MenuItem>)}
+                </TextField>
+                <TextField select size="small" label="Carousel images" value={cat.galleryScope || "all"} sx={{ minWidth: 200 }} onChange={(e) => setCat("galleryScope", e.target.value)}>
+                    <MenuItem value="all">All colors</MenuItem>
+                    <MenuItem value="current">Selected color only</MenuItem>
+                </TextField>
             </Box>
             <Box sx={{ mt: 1.5 }}>
                 <Typography fontSize="0.82rem" fontWeight={700} sx={{ mb: 0.25 }}>Show filters</Typography>
@@ -260,6 +267,11 @@ function DesignTab({ work, set }) {
             <Box sx={{ mt: 0.5 }}>
                 <FormControlLabel control={<Switch size="small" checked={cat.addToCartModal === true} onChange={(e) => setCat("addToCartModal", e.target.checked)} />}
                     label={<span>Add-to-cart pop-up <Typography component="span" fontSize="0.72rem" color="text.disabled">(confirmation modal when an item is added)</Typography></span>} />
+            </Box>
+            <Box sx={{ mt: 0.5 }}>
+                <Typography fontSize="0.82rem" fontWeight={700} sx={{ mb: 0.25 }}>Reviews</Typography>
+                <FormControlLabel control={<Switch size="small" checked={work.reviews?.verifiedOnly !== false} onChange={(e) => set((w) => { w.reviews = w.reviews || {}; w.reviews.verifiedOnly = e.target.checked; })} />}
+                    label={<span>Verified buyers only <Typography component="span" fontSize="0.72rem" color="text.disabled">(must have purchased the product to leave a review)</Typography></span>} />
             </Box>
         </Box>
     );

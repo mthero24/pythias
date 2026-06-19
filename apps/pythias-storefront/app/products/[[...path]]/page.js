@@ -9,7 +9,7 @@ import { resolveSectionData } from "@pythias/storefront/server";
 import NoSite from "@/components/NoSite";
 import { siteMetadata } from "@/lib/siteMeta";
 import { systemPageSections } from "@/lib/systemSections";
-import { searchProducts } from "@/lib/catalog";
+import { searchProductsFaceted } from "@/lib/catalog";
 import ProductDetail from "@/components/catalog/ProductDetail";
 import SearchBox from "@/components/catalog/SearchBox";
 import FilterableProductGrid from "@/components/catalog/FilterableProductGrid";
@@ -21,15 +21,15 @@ const titleCase = (s) => String(s || "").replace(/\b\w/g, (c) => c.toUpperCase()
 
 async function resolveProductDoc(orgId, token) {
     const base = { orgId, active: { $ne: false } };
-    const SELECT = "title description productImages variantsArray designTemplateId slug sku";
+    const SELECT = "title description productImages variantsArray design designTemplateId slug sku blanks defaultColor";
+    const pop = (qy) => qy.populate("variantsArray.color", "name hexcode").populate("variantsArray.blank", "sizes").populate("blanks", "bulletPoints sizeGuide images extraLocationPriceCents name code").populate("defaultColor", "name").select(SELECT);
     if (mongoose.Types.ObjectId.isValid(token)) {
-        const byId = await PlatformProduct.findOne({ ...base, _id: token }).populate("variantsArray.color", "name").select(SELECT).lean().catch(() => null);
+        const byId = await pop(PlatformProduct.findOne({ ...base, _id: token })).lean().catch(() => null);
         if (byId) return byId;
     }
     // Resolve by slug, SKU (case-insensitive), or a stored alias (old/SKU handles). Canonical tag dedupes.
     const lc = String(token).toLowerCase();
-    return PlatformProduct.findOne({ ...base, $or: [{ slug: lc }, { sku: token }, { sku: lc }, { slugAliases: lc }] })
-        .populate("variantsArray.color", "name").select(SELECT).lean().catch(() => null);
+    return pop(PlatformProduct.findOne({ ...base, $or: [{ slug: lc }, { sku: token }, { sku: lc }, { slugAliases: lc }] })).lean().catch(() => null);
 }
 
 // One resolver for the whole /products/* space. Precedence: manual landing page -> product -> search.
@@ -47,7 +47,8 @@ const resolvePath = cache(async (host, pathKey, q, preview) => {
     // /products (+ ?q=) -> catalog index / search
     if (segments.length === 0) {
         const term = (q || "").trim();
-        return { kind: "index", site, term, products: await searchProducts(orgId, term, 200) };
+        const { products, facets, tags } = await searchProductsFaceted(orgId, { q: term, limit: 200 });
+        return { kind: "index", site, term, products, facets, tags };
     }
 
     const fullPath = segments.join("/").toLowerCase();
@@ -64,7 +65,7 @@ const resolvePath = cache(async (host, pathKey, q, preview) => {
 
     // 3) Otherwise it's a search / category landing (never a 404).
     const term = segments.join(" ").replace(/-/g, " ").trim();
-    const products = await searchProducts(orgId, term, 200);
+    const { products, facets, tags } = await searchProductsFaceted(orgId, { q: term, limit: 200 });
     const curated = (site.indexableTerms || []).map((t) => slugifyName(t));
     let taxonomy = false;
     try {
@@ -76,7 +77,7 @@ const resolvePath = cache(async (host, pathKey, q, preview) => {
     // Pre-generated SEO copy (server-rendered, in the HTML) + a few aggregated tags for keyword context.
     const tc = (site.termContent || []).find((t) => t.term === slugifyName(fullPath) || t.term === slugifyName(term));
     const topTags = await aggregateTags(products.map((p) => p.id));
-    return { kind: "search", site, term, products, indexable, heading: tc?.h1 || titleCase(term), description: tc?.description || "", topTags };
+    return { kind: "search", site, term, products, facets, tags, indexable, heading: tc?.h1 || titleCase(term), description: tc?.description || "", topTags };
 });
 
 // Most common tags across the result set (a few, for on-page SEO context — not every tag from every product).
@@ -134,7 +135,9 @@ export default async function ProductsRoute({ params, searchParams }) {
                 <div className="sf-container">
                     <SearchBox initial={r.term || ""} />
                     <h1 style={{ fontSize: "1.6rem", margin: "0 0 18px" }}>{heading}</h1>
-                    <FilterableProductGrid products={r.products} urlMode={urlMode} catalog={site.catalog} emptyText={r.term ? `No products match "${r.term}".` : "No products yet."} />
+                    <FilterableProductGrid products={r.products} urlMode={urlMode} catalog={site.catalog}
+                        initialFacets={r.facets} initialTags={r.tags || []} searchContext={{ q: r.term || "" }}
+                        emptyText={r.term ? `No products match "${r.term}".` : "No products yet."} />
 
                     {/* Server-rendered SEO copy (curated terms only) + a few aggregated tags — in the HTML for crawlers. */}
                     {tags.length > 0 && (

@@ -3,10 +3,11 @@
 // data for sections[i], or null. The public app calls this server-side; the editor
 // can call it behind an API route so its preview uses the exact same data shape.
 import { PlatformProduct, StorefrontProductStat } from "@pythias/mongo";
-import { productCardData } from "./lib/card";
+import { productCardData, dedupeByDesign } from "./lib/card";
 
-const PRODUCT_SELECT = "title slug sku productImages variantsArray brand category tags";
-const COLOR_POP = { path: "variantsArray.color", select: "name hexcode" };   // for card swatches
+const PRODUCT_SELECT = "title slug sku productImages variantsArray brand category tags design designTemplateId";
+// color swatches + blank sizes ([{_id,name}]) so resolveVariantSize maps size _ids → names
+const COLOR_POP = [{ path: "variantsArray.color", select: "name hexcode" }, { path: "variantsArray.blank", select: "sizes" }];
 const cards = (docs) => (docs || []).map(productCardData);
 
 const minPrice = (p) => {
@@ -20,6 +21,10 @@ async function featuredProducts(settings, ctx) {
     const limit = Math.min(Number(settings?.limit) || 8, 24);
     const sort = String(settings?.sort || "featured").toLowerCase();
     const q = String(settings?.query || "").trim();
+    // One card per design (POD: same art on tee/hoodie/tank), unless the seller turns it off for this grid.
+    const dedupe = settings?.dedupeByDesign !== false;
+    const pick = (docs) => (dedupe ? dedupeByDesign(cards(docs)) : cards(docs)).slice(0, limit);
+    const span = dedupe ? limit * 4 : limit;   // over-fetch so dedupe still fills `limit` distinct designs
 
     const base = { orgId: ctx.orgId, active: { $ne: false } };
     if (q) {
@@ -40,12 +45,11 @@ async function featuredProducts(settings, ctx) {
             const found = await PlatformProduct.find({ ...base, _id: { $in: ids } }).populate(COLOR_POP).select(PRODUCT_SELECT).lean();
             const rank = new Map(ids.map((id, i) => [String(id), i]));
             found.sort((a, b) => (rank.get(String(a._id)) ?? 1e9) - (rank.get(String(b._id)) ?? 1e9));
-            if (found.length >= limit) return { products: cards(found.slice(0, limit)) };
-            // not enough sellers — top up with newest below, excluding the ones we have
+            // top up with newest below (excluding the ones we have) so dedupe can't leave the grid short
             const have = new Set(found.map((p) => String(p._id)));
             const fill = await PlatformProduct.find({ ...base, _id: { $nin: [...have] } })
-                .populate(COLOR_POP).select(PRODUCT_SELECT).sort({ _id: -1 }).limit(limit - found.length).lean();
-            return { products: cards([...found, ...fill]) };
+                .populate(COLOR_POP).select(PRODUCT_SELECT).sort({ _id: -1 }).limit(span).lean();
+            return { products: pick([...found, ...fill]) };
         }
     }
 
@@ -54,12 +58,12 @@ async function featuredProducts(settings, ctx) {
         const candidates = await PlatformProduct.find(base).populate(COLOR_POP).select(PRODUCT_SELECT).limit(300).lean();
         const lowFirst = sort.includes("low");
         candidates.sort((a, b) => (lowFirst ? minPrice(a) - minPrice(b) : minPrice(b) - minPrice(a)));
-        return { products: cards(candidates.slice(0, limit)) };
+        return { products: pick(candidates) };
     }
 
     const order = sort === "newest" ? { _id: -1 } : { _id: 1 };
-    const products = await PlatformProduct.find(base).populate(COLOR_POP).select(PRODUCT_SELECT).sort(order).limit(limit).lean();
-    return { products: cards(products) };
+    const products = await PlatformProduct.find(base).populate(COLOR_POP).select(PRODUCT_SELECT).sort(order).limit(span).lean();
+    return { products: pick(products) };
 }
 
 const RESOLVERS = {

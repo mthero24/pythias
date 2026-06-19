@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { PlatformProduct, PlatformInventory, SkuToUpc } from "@pythias/mongo";
+import { PlatformProduct, PlatformInventory, SkuToUpc, computeProductFacets } from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
 import { createTempUpcs, updateTempUpc } from "@pythias/integrations";
 import { logActivity, userFromToken, logChange, logError } from "@pythias/backend/server";
@@ -165,6 +165,7 @@ async function buildPlatformDoc(raw, orgId) {
         active: true,
         variants: null,
         variantsArray,
+        ...computeProductFacets({ variantsArray }),   // keep Atlas facet fields in sync (findByIdAndUpdate skips the hook)
         defaultColor: defaultColorId,
         variantImages: raw.variantImages ?? null,
         variantSecondaryImages: raw.variantSecondaryImages ?? null,

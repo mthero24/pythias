@@ -126,6 +126,13 @@ const schema = new mongoose.Schema({
         showAltView:  { type: Boolean, default: true },   // back/sleeve "more views" badge on cards
         quickAdd:     { type: Boolean, default: true },   // hover "+" quick-add button on cards
         addToCartModal: { type: Boolean, default: false },   // pop a confirmation modal on add-to-cart
+        galleryThumbs: { type: String, enum: ["bottom", "top", "left", "right"], default: "bottom" },   // product-page carousel thumbnail position
+        galleryScope:  { type: String, enum: ["all", "current"], default: "all" },   // carousel images: all colors, or only the selected color
+    },
+
+    // Product reviews settings.
+    reviews: {
+        verifiedOnly: { type: Boolean, default: true },   // only buyers who purchased the product can review
     },
 
     // Old-path → new-path 301 redirects (built by the AI link migrator). ────────────────────

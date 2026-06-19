@@ -32,7 +32,12 @@ const createImage = async (data) => {
         const composits = [];
 
         for (const box of data.box) {
-            if (!data.designImage[box.side]) continue;
+            // srcSide: a single-image design (e.g. front-only) placed on a different spot uses that one
+            // labeled art for whatever box we're rendering. Without it, art must be labeled for box.side.
+            // If srcSide is given but that exact key isn't present, fall back to the design's only/first art.
+            let artSide = data.srcSide || box.side;
+            if (!data.designImage[artSide] && data.srcSide) artSide = Object.keys(data.designImage || {}).find((k) => data.designImage[k]);
+            if (!artSide || !data.designImage[artSide]) continue;
             if (!box.boxWidth) box.boxWidth = box.width;
             if (!box.boxHeight) box.boxHeight = box.height;
 
@@ -50,7 +55,7 @@ const createImage = async (data) => {
             let designBuf;
             let originalSize;
 
-            const designUrl = `${CDN(data.designImage[box.side])}?width=${parseInt(bw * multiplier)}&height=${parseInt(bh * multiplier)}`;
+            const designUrl = `${CDN(data.designImage[artSide])}?width=${parseInt(bw * multiplier)}&height=${parseInt(bh * multiplier)}`;
 
             try {
                 const rawDesignBuf = await fetchBuf(designUrl);
@@ -176,6 +181,7 @@ export async function GET(req) {
         const blankCode = req.nextUrl.searchParams.get("blank");
         const bm = req.nextUrl.searchParams.get("blankImage");
         const side = req.nextUrl.searchParams.get("side");
+        const colorName = req.nextUrl.searchParams.get("colorName");
         designImage = req.nextUrl.searchParams.get("design");
 
         if (side) {
@@ -183,11 +189,18 @@ export async function GET(req) {
             designImage = { [side]: designImage };
         }
 
-        const blank = await PlatformBlank.findOne({ code: blankCode, orgId }).lean();
+        const blank = await PlatformBlank.findOne({ code: blankCode, orgId }).populate("colors", "name").lean();
         if (blank?.images?.length > 0) {
+            // Match the blank image to the requested color (images[].color may be a Color id or a name),
+            // so we pull the garment in the right color — not just the first image that has the box.
+            const colorObj = colorName ? blank.colors?.find(c => c.name?.toLowerCase() === colorName.toLowerCase()) : null;
+            const matchesColor = (i) => !colorName
+                || String(i.color ?? "").toLowerCase() === colorName.toLowerCase()
+                || (colorObj && String(i.color ?? "") === String(colorObj._id));
             blankImage = bm
                 ? blank.images.find(i => i.image === bm) ?? null
-                : blank.images.find(i => i.boxes && i.boxes[side]) ?? null;
+                : (blank.images.find(i => matchesColor(i) && i.boxes?.[side])
+                    ?? blank.images.find(i => i.boxes?.[side]) ?? null);
         }
     }
 
@@ -205,7 +218,10 @@ export async function GET(req) {
         boxEntries.forEach(b => { b.place = place; });
     }
 
-    const data = { box: boxEntries, styleImage: blankImage.image, designImage, width };
+    // srcSide: render a single-image design's art onto the requested box(es) even if it isn't labeled for
+    // that side (front-only design shown on the back). Only valid for single-location designs.
+    const srcSide = sp.get("srcSide") || undefined;
+    const data = { box: boxEntries, styleImage: blankImage.image, designImage, width, srcSide };
     const result = await createImage(data);
 
     if (result) {

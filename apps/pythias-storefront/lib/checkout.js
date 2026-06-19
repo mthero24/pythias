@@ -146,6 +146,7 @@ export async function placeOrder({ orgId, site, customer, items, shippingAddress
                     : Object.fromEntries((l.personalization?.sides || []).filter((s) => s.artworkUrl && s.location).map((s) => [s.location, s.artworkUrl])),
                 type: l.printType || null,
                 name: l.title,
+                ...(l.printLocation ? { printLocation: l.printLocation } : {}),
                 price: l.priceCents / 100, sku: l.sku || undefined, product: l.productId,
                 // Buyer personalization (custom-text design) — production renders artwork from this.
                 ...(l.personalization ? { personalization: l.personalization, custom: true } : {}),

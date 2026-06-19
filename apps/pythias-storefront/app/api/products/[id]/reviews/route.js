@@ -13,6 +13,18 @@ const shape = (r) => ({
     aiTags: r.aiTags || [], createdAt: r.createdAt,
 });
 
+// Did this customer/email order this product? (Verified-buyer proof, also the gate for verified-only stores.)
+async function purchaseInfo(orgId, cust, email, productId) {
+    if (!cust && !email) return { verified: false };
+    const orders = await PlatformOrder.find({
+        orgId,
+        ...(cust ? { $or: [{ storefrontCustomerId: cust._id }, ...(email ? [{ customerEmail: email }] : [])] } : { customerEmail: email }),
+    }).select("_id").limit(50).lean();
+    if (!orders.length) return { verified: false };
+    const item = await PlatformItem.findOne({ orgId, product: productId, order: { $in: orders.map((o) => o._id) } }).select("order").lean();
+    return item ? { verified: true, orderId: item.order } : { verified: false };
+}
+
 // GET /api/products/[id]/reviews — published reviews + cached summary (incl. AI highlights).
 export async function GET(req, { params }) {
     const ctx = await resolveOrg(req);
@@ -26,8 +38,16 @@ export async function GET(req, { params }) {
         StorefrontReview.find({ orgId: ctx.orgId, productId, status: "published" }).sort({ helpfulCount: -1, createdAt: -1 }).limit(100).lean(),
     ]);
 
+    // Eligibility for the write-review form: when the store requires verified buyers, only a signed-in
+    // customer who purchased this product can review.
+    const verifiedOnly = ctx.site?.reviews?.verifiedOnly !== false;   // default: required
+    const auth = await getAuthedCustomer(req).catch(() => null);
+    const signedIn = !!auth?.customer;
+    const canReview = !verifiedOnly || (signedIn && (await purchaseInfo(ctx.orgId, auth.customer, auth.customer.email, productId)).verified);
+
     return NextResponse.json({
         error: false,
+        verifiedOnly, signedIn, canReview,
         summary: summary ? {
             avg: summary.avg, count: summary.count, distribution: summary.distribution,
             aiSummary: summary.aiSummary || null, aiPros: summary.aiPros || [], aiCons: summary.aiCons || [],
@@ -55,17 +75,13 @@ export async function POST(req, { params }) {
     if (!auth && !email) return NextResponse.json({ error: "Email is required" }, { status: 400 });
 
     // Verified-buyer: did this customer order this product?
-    let verifiedBuyer = false, orderId;
     const cust = auth?.customer;
-    if (cust || email) {
-        const orders = await PlatformOrder.find({
-            orgId: ctx.orgId,
-            ...(cust ? { $or: [{ storefrontCustomerId: cust._id }, { customerEmail: email }] } : { customerEmail: email }),
-        }).select("_id").limit(50).lean();
-        if (orders.length) {
-            const item = await PlatformItem.findOne({ orgId: ctx.orgId, product: productId, order: { $in: orders.map((o) => o._id) } }).select("order").lean();
-            if (item) { verifiedBuyer = true; orderId = item.order; }
-        }
+    const { verified: verifiedBuyer, orderId } = await purchaseInfo(ctx.orgId, cust, email, productId);
+
+    // Verified-only stores: a review requires a matching purchase (default on).
+    const verifiedOnly = ctx.site?.reviews?.verifiedOnly !== false;
+    if (verifiedOnly && !verifiedBuyer) {
+        return NextResponse.json({ error: "Only verified buyers who purchased this product can leave a review." }, { status: 403 });
     }
 
     try {

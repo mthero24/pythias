@@ -14,9 +14,11 @@ export async function validateCart(orgId, items = []) {
         : [];
     const byId = Object.fromEntries(products.map((p) => [String(p._id), p]));
 
-    // Blanks used by "create your own" custom lines — priced authoritatively from the blank's sizes.
-    const blankIds = [...new Set(items.map((i) => i.blankId).filter((id) => mongoose.Types.ObjectId.isValid(id)))];
-    const blanks = blankIds.length ? await Blank.find({ _id: { $in: blankIds }, orgId }).select("name code sizes").lean() : [];
+    // Blanks used by "create your own" custom lines (priced from the blank's sizes) + the product
+    // variants' blanks (for the print-placement per-extra-spot surcharge).
+    const variantBlankIds = products.flatMap((p) => (p.variantsArray || []).map((v) => v.blank).filter(Boolean).map(String));
+    const blankIds = [...new Set([...items.map((i) => i.blankId), ...variantBlankIds].filter((id) => mongoose.Types.ObjectId.isValid(id)))];
+    const blanks = blankIds.length ? await Blank.find({ _id: { $in: blankIds }, orgId }).select("name code sizes extraLocationPriceCents").lean() : [];
     const blankById = Object.fromEntries(blanks.map((b) => [String(b._id), b]));
 
     const lines = [];
@@ -50,7 +52,23 @@ export async function validateCart(orgId, items = []) {
         const v = (p.variantsArray ?? []).find((x) => x.sku === it.sku) ?? (p.variantsArray ?? [])[0];
         if (!v || !(v.price > 0)) { errors.push(`${p.title}: variant unavailable`); continue; }
 
-        const priceCents = Math.round(v.price * 100);
+        // Print-placement customization (single-image designs only): the buyer moved the one design onto
+        // the chosen spot(s). Remap the design map to those spots from the REAL art (never trust the
+        // client) and add the blank's per-extra-spot surcharge. Multi-location designs render natively.
+        const spots = Array.isArray(it.printLocations) ? it.printLocations.filter(Boolean) : [];
+        const designImgs = p.design?.images || {};
+        const labeledSides = Object.keys(designImgs).filter((k) => designImgs[k]);
+        let design = p.design?.images ?? null;
+        let placementSurchargeCents = 0, printLocation = null;
+        if (spots.length && labeledSides.length === 1) {
+            const art = designImgs[labeledSides[0]];
+            design = Object.fromEntries(spots.map((s) => [s, art]));   // the single art on each chosen spot
+            const blank = v.blank ? blankById[String(v.blank)] : null;
+            placementSurchargeCents = Math.max(0, spots.length - 1) * Math.round(blank?.extraLocationPriceCents || 0);
+            printLocation = it.printLocation || spots.join(" + ");
+        }
+
+        const priceCents = Math.round(v.price * 100) + placementSurchargeCents;
         const wholesaleCents = Math.round((v.wholesalePrice || 0) * 100);  // cost basis (for seller payout)
         subtotalCents += priceCents * qty;
         wholesaleTotalCents += wholesaleCents * qty;
@@ -67,8 +85,9 @@ export async function validateCart(orgId, items = []) {
             blankId: v.blank ? String(v.blank) : null,
             colorId: v.color?._id ? String(v.color._id) : (v.color ? String(v.color) : null),
             designRef: p.design?._id ? String(p.design._id) : null,
-            design: p.design?.images ?? null,
+            design,
             printType: p.design?.printType ?? null,
+            printLocation, printLocations: spots.length ? spots : undefined,
             priceCents,
             wholesaleCents,
             qty,

@@ -26,7 +26,12 @@ const createImage = async (data) => {
     if (data.box && data.box.length > 0 && data.designImage && data.designImage !== "undefined" && data.designImage !== "null") {
         const composits = [];
         for (const box of data.box) {
-            if (!data.designImage[box.side]) continue;
+            // srcSide: a single-image design (e.g. front-only) placed on a different spot uses that one
+            // labeled art for whatever box we're rendering. Without it, art must be labeled for box.side.
+            // If srcSide is given but that exact key isn't present, fall back to the design's only/first art.
+            let artSide = data.srcSide || box.side;
+            if (!data.designImage[artSide] && data.srcSide) artSide = Object.keys(data.designImage || {}).find((k) => data.designImage[k]);
+            if (!artSide || !data.designImage[artSide]) continue;
             if (!box.boxWidth) box.boxWidth = box.width;
             if (!box.boxHeight) box.boxHeight = box.height;
             // Custom designs carry a normalized placement (0–1) within the print box. When present, the
@@ -44,7 +49,7 @@ const createImage = async (data) => {
             let designBuf;
             let originalSize;
             try {
-                const designImg = await readImage(`${CDN(data.designImage[box.side])}?width=${parseInt(bw * multiplier)}&height=${parseInt(bh * multiplier)}`);
+                const designImg = await readImage(`${CDN(data.designImage[artSide])}?width=${parseInt(bw * multiplier)}&height=${parseInt(bh * multiplier)}`);
                 if (!designImg) continue;
                 originalSize = await designImg.metadata();
                 if (box.rotation && box.rotation !== 0) {
@@ -127,7 +132,10 @@ export async function GET(req) {
         const colorObj = colorName
             ? blank.colors?.find(c => c.name?.toLowerCase() === colorName.toLowerCase())
             : null;
-        const matchesColor = (img) => !colorObj || img.color?.toString() === colorObj._id?.toString();
+        // images[].color may be a Color id OR a name — match either so the right-color garment is pulled.
+        const matchesColor = (img) => !colorName
+            || String(img.color ?? "").toLowerCase() === colorName.toLowerCase()
+            || (colorObj && String(img.color ?? "") === String(colorObj._id));
         blankImage = bm
             ? blank.images?.find(i => i.image === bm)
               ?? blank.images?.find(i => matchesColor(i) && side && i.boxes?.[side])
@@ -149,7 +157,10 @@ export async function GET(req) {
         box.forEach(b => { b.place = place; });
     }
 
-    const result = await createImage({ box, styleImage: blankImage.image, designImage, width });
+    // srcSide: render a single-image design's art onto the requested box(es) even if it isn't labeled for
+    // that side (front-only design shown on the back). Only valid for single-location designs.
+    const srcSide = sp.get("srcSide") || undefined;
+    const result = await createImage({ box, styleImage: blankImage.image, designImage, width, srcSide });
     if (!result) return new NextResponse(null, { status: 500 });
 
     const buffer = Buffer.from(result.replace(/^data:image\/\w+;base64,/, ""), "base64");

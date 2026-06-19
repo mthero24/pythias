@@ -105,6 +105,12 @@ const SchemaObj = new Schema(
     sizeGuide: {
       image: String,
       images: [String],
+      // Structured size chart shown on the storefront product page (filled in by the FC customer).
+      enabled: { type: Boolean, default: false },
+      unit: { type: String, default: "inches" },          // "All measurements in <unit>"
+      columns: [String],                                   // measurement headers, e.g. ["Chest","Length","Neck Size"]
+      rows: [{ size: String, values: [String] }],          // per-size measurements, values aligned to columns
+      measureNotes: [{ title: String, body: String }],     // "How to Measure …" explanations
     },
     videos: [String],
     sales: { type: Number, default: 0 },
@@ -115,6 +121,7 @@ const SchemaObj = new Schema(
       },
     ],
     printOnBack: { type: Boolean, default: true },
+    extraLocationPriceCents: { type: Number, default: 0 },   // surcharge added per print spot beyond the first
     hasExtra: { type: Boolean, default: false },
     extras: [String],
     averageWeights: {},

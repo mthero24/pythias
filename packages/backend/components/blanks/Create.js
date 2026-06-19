@@ -46,6 +46,7 @@ import {Footer} from "../reusable/Footer";
 import { ImageEditModal } from "./ImageEditModal";
 import Image from "next/image";
 import { UploadSizeGuide } from "./uploadSizeGuide";
+import SizeChartEditor from "./SizeChartEditor";
 import { UploadVideo } from "./uploadVideo";
 import { DeleteImageModal } from "./deleteImageModal";
 import { DeleteBlankModal } from "./deleteBlankModal";
@@ -501,6 +502,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
     const [bulletModalOpen, setBulletModalOpen] = useState(false);
     const [sizesModalOpen, setSizesModalOpen] = useState(false);
     const [sizeGuideModalOpen, setSizeGuideModalOpen] = useState(false);
+    const [sizeChartOpen, setSizeChartOpen] = useState(false);
     const [videoOpen, setVideoOpen] = useState(false);
     const [videoModalOpen, setVideoModalOpen] = useState(false);
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -604,6 +606,12 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                             <Grid2 size={{ xs: 12, sm: 6, md: 2 }}>
                                 <ManufacturerStyleField blank={blank} setBlank={setBlank} debouncedUpdate={debouncedUpdate} />
                             </Grid2>
+                            <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
+                                <TextField label="Extra print spot surcharge ($)" type="number" fullWidth
+                                    helperText="Added per print location beyond the first"
+                                    value={(blank.extraLocationPriceCents ?? 0) / 100}
+                                    onChange={(e) => { let bla = { ...blank }; bla.extraLocationPriceCents = Math.round((parseFloat(e.target.value) || 0) * 100); setBlank(bla); debouncedUpdate({ blank: bla }); }} />
+                            </Grid2>
 
                             <Grid2 size={{ xs: 12, sm: 6, md: 4 }}>
                                 <Typography variant="caption" color="text.secondary" sx={{ mb: 0.5, display: "block" }}>Vendor</Typography>
@@ -672,6 +680,19 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
                         </Grid2>
                     </Box>
                 </SectionCard>
+
+                {/* ── Size Chart (storefront product-page size guide) ── */}
+                <SizeChartEditor
+                    blank={blank} setBlank={setBlank} update={update} debouncedUpdate={debouncedUpdate}
+                    SectionCard={SectionCard} open={sizeChartOpen} onToggle={() => setSizeChartOpen(v => !v)}
+                    openImageUpload={() => {
+                        // Ensure sizeGuide.images exists so the uploader's push() doesn't throw on new blanks.
+                        if (!blank.sizeGuide || !Array.isArray(blank.sizeGuide.images)) {
+                            setBlank({ ...blank, sizeGuide: { ...(blank.sizeGuide || {}), images: blank.sizeGuide?.images || [] } });
+                        }
+                        setSizeGuideModalOpen(true);
+                    }}
+                />
 
                 {/* ── Bullet Points ── */}
                 <SectionCard

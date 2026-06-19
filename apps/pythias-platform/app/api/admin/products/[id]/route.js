@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { PlatformProduct } from "@pythias/mongo";
+import { PlatformProduct, computeProductFacets } from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
 import mongoose from "mongoose";
 import { notifyPartner } from "@/lib/notifyPartner";
@@ -28,6 +28,8 @@ export async function PATCH(req, { params }) {
     const { id } = await params;
     const { product } = await req.json();
     delete product.orgId;
+    // Recompute Atlas facet fields when variants change ($set bypasses the model's pre-save hook).
+    if (Array.isArray(product.variantsArray)) Object.assign(product, computeProductFacets({ variantsArray: product.variantsArray }));
 
     try {
         const updated = await PlatformProduct.findOneAndUpdate(
