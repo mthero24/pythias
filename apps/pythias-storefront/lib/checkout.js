@@ -198,7 +198,13 @@ export async function placeOrder({ orgId, site, customer, items, shippingAddress
             vertical: "pod",
         });
     }
-    if (itemDocs.length) await PlatformItem.insertMany(itemDocs);
+    // Insert the per-unit items AND link them back onto the order's `items` array — the
+    // platform/premier order views read items via `.populate("items")` (the array), not the
+    // item→order back-ref. Without this the seller's order shows with no line items.
+    if (itemDocs.length) {
+        const insertedItems = await PlatformItem.insertMany(itemDocs);
+        await PlatformOrder.updateOne({ _id: order._id }, { $set: { items: insertedItems.map((d) => d._id) } });
+    }
 
     let earned = 0, wasFirstOrder = false;
     if (customer) {
