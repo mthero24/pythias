@@ -227,7 +227,14 @@ export async function GET(req) {
     if (result) {
         const buffer = Buffer.from(result.replace(/^data:image\/\w+;base64,/, ""), "base64");
         return new NextResponse(buffer, {
-            headers: { "Content-Type": "image/jpeg", "Access-Control-Allow-Origin": "*" },
+            headers: {
+                "Content-Type": "image/jpeg",
+                "Access-Control-Allow-Origin": "*",
+                // The URL is content-addressed (design + blank + color + side, filename carries a render
+                // timestamp), so the output is immutable — let Cloudflare + the browser cache it hard
+                // instead of re-running sharp on every request (was the main LCP driver).
+                "Cache-Control": "public, max-age=31536000, s-maxage=31536000, immutable",
+            },
         });
     }
 
