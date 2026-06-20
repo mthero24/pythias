@@ -13,7 +13,7 @@ export async function GET(req, { params }) {
     if (!mongoose.Types.ObjectId.isValid(id)) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     const order = await PlatformOrder.findOne({ _id: id, orgId: auth.orgId, customerEmail: auth.customer.email })
-        .select("poNumber date status paid shippingInfo shippingCost taxRate shippingAddress fulfillmentGroups giftAddOns shippingMethod")
+        .select("poNumber date status paid shippingInfo shippingCost taxRate shippingAddress fulfillmentGroups giftAddOns shippingMethod discountAmount discountName rewardsRedeemedCents giftCardRedeemedCents")
         .lean();
     if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
 
@@ -55,6 +55,9 @@ export async function GET(req, { params }) {
     const subtotal = lines.reduce((s, l) => s + l.price * l.qty, 0);
     const shipping = order.shippingCost || 0;
     const tax = subtotal * (order.taxRate || 0);
+    const discount = order.discountAmount || 0;
+    const rewards = (order.rewardsRedeemedCents || 0) / 100;
+    const giftCard = (order.giftCardRedeemedCents || 0) / 100;
 
     const tracking = (order.shippingInfo?.labels ?? [])
         .filter((l) => l.trackingNumber)
@@ -72,7 +75,8 @@ export async function GET(req, { params }) {
             lines,
             giftAddOns,
             shippingMethod: order.shippingMethod ?? null,
-            totals: { subtotal, addOns: addOnsTotal, shipping, tax, total: subtotal + addOnsTotal + shipping + tax },
+            discountName: order.discountName ?? null,
+            totals: { subtotal, addOns: addOnsTotal, shipping, tax, discount, rewards, giftCard, total: Math.max(0, subtotal + addOnsTotal + shipping + tax - discount - rewards - giftCard) },
             tracking,
             // Only surface fulfillment grouping when the order is split across >1 fulfiller.
             fulfillment: (order.fulfillmentGroups?.length > 1)

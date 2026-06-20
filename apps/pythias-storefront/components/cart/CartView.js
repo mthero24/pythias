@@ -28,6 +28,20 @@ const stepBtn = { width: 30, height: 30, border: "none", background: "transparen
 export default function CartView({ addOns = [] }) {
     const { items, savedForLater, ready, setQty, remove, saveForLater, moveToCart, removeSaved, subtotalCents, lineKey, addOns: selected, setAddOn } = useCart();
     const { price: money } = useI18n();
+
+    // Automatic discount preview — priced server-side from the cart subtotal so the buyer sees the
+    // deal in the cart (shipping/tax still resolve at checkout, but the discount is known now).
+    const [discount, setDiscount] = useState({ cents: 0, title: null });
+    useEffect(() => {
+        if (!ready || !items.length) { setDiscount({ cents: 0, title: null }); return; }
+        let alive = true;
+        fetch("/api/checkout/summary", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items: items.map((i) => ({ productId: i.productId, sku: i.sku, qty: i.qty })), addOns: selected }) })
+            .then((r) => r.json())
+            .then((d) => { if (alive && !d.error) setDiscount({ cents: d.totals?.discountCents || 0, title: d.discount?.title || null }); })
+            .catch(() => {});
+        return () => { alive = false; };
+    }, [ready, JSON.stringify(items.map((i) => [i.productId, i.sku, i.qty])), JSON.stringify(selected)]); // eslint-disable-line
+
     if (!ready) return null;
 
     if (!items.length) {
@@ -45,7 +59,7 @@ export default function CartView({ addOns = [] }) {
     const toggleAddOns = addOns.filter((a) => a.type !== "message");
     const messageAddOns = addOns.filter((a) => a.type === "message");
     const addOnsCents = toggleAddOns.reduce((s, a) => s + (selected[a.id] ? (a.priceCents || 0) : 0), 0);
-    const totalCents = subtotalCents + addOnsCents;
+    const totalCents = Math.max(0, subtotalCents + addOnsCents - (discount.cents || 0));
     const card = { background: "#fff", border: "1px solid var(--sf-border, #eef1f5)", borderRadius: 16 };
 
     return (
@@ -133,6 +147,7 @@ export default function CartView({ addOns = [] }) {
                         <div style={{ fontWeight: 700, fontSize: "1.05rem", marginBottom: 16 }}>Order summary</div>
                         <Row label="Subtotal" value={money(subtotalCents)} />
                         {addOnsCents > 0 && <Row label="Gift add-ons" value={money(addOnsCents)} />}
+                        {discount.cents > 0 && <Row label={discount.title || "Discount"} value={<span style={{ color: "#16a34a", fontWeight: 700 }}>−{money(discount.cents)}</span>} />}
                         <Row label="Shipping" value={<span style={{ color: "var(--sf-muted,#64748b)", fontWeight: 500 }}>At checkout</span>} />
                         <Row label="Tax" value={<span style={{ color: "var(--sf-muted,#64748b)", fontWeight: 500 }}>At checkout</span>} />
                         <div style={{ borderTop: "1px solid var(--sf-border,#eef1f5)", margin: "12px 0", paddingTop: 12, display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>

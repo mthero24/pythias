@@ -320,7 +320,7 @@ function CheckoutForm({ storeName, badges = [] }) {
                 <div style={{ borderTop: "1px solid var(--sf-border,#eef1f5)", marginTop: 10, paddingTop: 10, display: "grid", gap: 5 }}>
                     <Row label="Subtotal" value={money(Math.max(0, (t.subtotalCents || 0) - addOnsCents))} />
                     {addOnsCents > 0 && <Row label="Gift add-ons" value={money(addOnsCents)} />}
-                    {t.discountCents > 0 && <Row label={`Discount${t.discountCode ? ` (${t.discountCode})` : ""}`} value={`−${money(t.discountCents)}`} />}
+                    {t.discountCents > 0 && <Row label={t.discountTitle || (t.discountCode ? `Discount (${t.discountCode})` : "Discount")} value={`−${money(t.discountCents)}`} />}
                     {t.giftCardApplied > 0 && <Row label="Gift card" value={`−${money(t.giftCardApplied)}`} />}
                     <Row label="Shipping" value={t.shippingCents ? money(t.shippingCents) : <span style={{ color: "#16a34a", fontWeight: 600 }}>Free</span>} />
                     <Row label="Tax" value={t.taxCents > 0 ? money(t.taxCents) : <span style={{ color: "#94a3b8" }}>Calculated at address</span>} />

@@ -54,6 +54,9 @@ export default function OrderConfirmation() {
             <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--sf-border,#eef1f5)", display: "grid", gap: 4, fontSize: "0.9rem" }}>
                 <Row label="Subtotal" value={money((t.subtotal || 0) * 100)} />
                 {t.addOns > 0 && <Row label="Gift add-ons" value={money(t.addOns * 100)} />}
+                {t.discount > 0 && <Row label={o.discountName || "Discount"} value={`−${money(t.discount * 100)}`} />}
+                {t.rewards > 0 && <Row label="Rewards" value={`−${money(t.rewards * 100)}`} />}
+                {t.giftCard > 0 && <Row label="Gift card" value={`−${money(t.giftCard * 100)}`} />}
                 <Row label={o.shippingMethod ? `Shipping (${o.shippingMethod})` : "Shipping"} value={t.shipping ? money(t.shipping * 100) : "Free"} />
                 {t.tax > 0 && <Row label="Tax" value={money(t.tax * 100)} />}
                 <Row label={<b>Total</b>} value={<b>{money((t.total || 0) * 100)}</b>} />

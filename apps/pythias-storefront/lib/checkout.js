@@ -94,7 +94,7 @@ export async function placeOrder({ orgId, site, customer, items, shippingAddress
         if (existing) return { orderId: String(existing._id), poNumber: existing.poNumber, duplicate: true };
     }
 
-    const { lines, subtotalCents, wholesaleTotalCents, shippingCents, rewardsApplied: redeemApplied, discountCents, discountCode, giftCardApplied, giftCardCode: gcCode, totalCents, addOnLines, shipsTo, shippingMethodLabel } =
+    const { lines, subtotalCents, wholesaleTotalCents, shippingCents, rewardsApplied: redeemApplied, discountCents, discountCode, discountTitle, giftCardApplied, giftCardCode: gcCode, totalCents, addOnLines, shipsTo, shippingMethodLabel } =
         await quoteCart({ orgId, site, customer, items, redeemCents, promoCode, giftCardCode, subscribe, taxCents, addOns, shippingCountry: shippingAddress?.country, shippingMethod });
     if (!lines.length) throw new Error("Cart is empty or unavailable");
     if (!shipsTo) { const err = new Error("This store doesn't ship to your country."); err.code = "ships_to"; throw err; }
@@ -137,7 +137,8 @@ export async function placeOrder({ orgId, site, customer, items, shippingAddress
         taxAmountCents: taxCents,
         total: totalCents / 100,
         discountAmount: (discountCents || 0) / 100,
-        discountName: discountCode || undefined,
+        // Automatic discounts have no code — keep the buyer-readable title so the order shows a name.
+        discountName: discountCode || discountTitle || undefined,
         rewardsRedeemedCents: redeemApplied,
         giftCardRedeemedCents: giftCardApplied || 0,
         giftCardCode: gcCode || undefined,

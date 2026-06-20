@@ -14,7 +14,7 @@ export async function GET(req) {
     if (!pi) return NextResponse.json({ error: false, order: null });
 
     const order = await PlatformOrder.findOne({ paymentRef: pi, orgId: site.orgId, source: "storefront" })
-        .select("poNumber date status shippingCost taxRate giftAddOns shippingMethod").lean();
+        .select("poNumber date status shippingCost taxRate giftAddOns shippingMethod discountAmount discountName rewardsRedeemedCents giftCardRedeemedCents").lean();
     if (!order) return NextResponse.json({ error: false, order: null });   // not placed yet — client retries
 
     const allItems = await PlatformItem.find({ order: order._id, orgId: site.orgId })
@@ -36,6 +36,9 @@ export async function GET(req) {
     const addOns = giftAddOns.reduce((s, g) => s + (g.priceCents || 0), 0) / 100;
     const shipping = order.shippingCost || 0;
     const tax = subtotal * (order.taxRate || 0);
+    const discount = order.discountAmount || 0;
+    const rewards = (order.rewardsRedeemedCents || 0) / 100;
+    const giftCard = (order.giftCardRedeemedCents || 0) / 100;
 
     return NextResponse.json({
         error: false,
@@ -43,7 +46,8 @@ export async function GET(req) {
             poNumber: order.poNumber ?? null,
             lines, giftAddOns,
             shippingMethod: order.shippingMethod ?? null,
-            totals: { subtotal, addOns, shipping, tax, total: subtotal + addOns + shipping + tax },
+            discountName: order.discountName ?? null,
+            totals: { subtotal, addOns, shipping, tax, discount, rewards, giftCard, total: Math.max(0, subtotal + addOns + shipping + tax - discount - rewards - giftCard) },
         },
     });
 }
