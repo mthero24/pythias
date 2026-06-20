@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import CustomDomainPanel from "./CustomDomainPanel";
 
 const card = { background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: 18 };
 const btn = { padding: "9px 15px", borderRadius: 9, border: "none", background: "#635bff", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: "0.85rem" };
@@ -7,12 +8,13 @@ const ghost = { ...btn, background: "#f1f5f9", color: "#334155" };
 const input = { padding: "9px 11px", border: "1px solid #cbd5e1", borderRadius: 8, fontSize: "0.9rem" };
 const money = (c) => `$${((c || 0) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
 
-export default function StoresClient({ editBase = "/storefront" }) {
+export default function StoresClient({ editBase = "/storefront", enableDomains = false }) {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [form, setForm] = useState({ name: "", subdomain: "" });
     const [busy, setBusy] = useState(false);
     const [msg, setMsg] = useState("");
+    const [domainsOpen, setDomainsOpen] = useState(null); // store id whose domain panel is expanded
 
     const load = async () => {
         try { const d = await (await fetch("/api/storefront/stores")).json(); if (!d.error) setData(d); }
@@ -60,17 +62,21 @@ export default function StoresClient({ editBase = "/storefront" }) {
 
             <div style={{ display: "grid", gap: 10, marginTop: 16 }}>
                 {(d.stores || []).map((s) => (
-                    <div key={s.id} style={{ ...card, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-                        <div>
-                            <b>{s.name}</b>
-                            {s.primary && <span style={{ marginLeft: 8, background: "#eef2ff", color: "#4338ca", fontSize: "0.68rem", fontWeight: 700, padding: "2px 8px", borderRadius: 999 }}>PRIMARY</span>}
-                            <span style={{ marginLeft: 8, fontSize: "0.7rem", color: s.status === "published" ? "#166534" : "#94a3b8" }}>{s.status}</span>
-                            <div style={{ color: "#64748b", fontSize: "0.82rem", marginTop: 2 }}>{s.customDomain || (s.subdomain ? `${s.subdomain}.${baseDomain}` : "—")}</div>
+                    <div key={s.id} style={card}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                            <div>
+                                <b>{s.name}</b>
+                                {s.primary && <span style={{ marginLeft: 8, background: "#eef2ff", color: "#4338ca", fontSize: "0.68rem", fontWeight: 700, padding: "2px 8px", borderRadius: 999 }}>PRIMARY</span>}
+                                <span style={{ marginLeft: 8, fontSize: "0.7rem", color: s.status === "published" ? "#166534" : "#94a3b8" }}>{s.status}</span>
+                                <div style={{ color: "#64748b", fontSize: "0.82rem", marginTop: 2 }}>{s.customDomain || (s.subdomain ? `${s.subdomain}.${baseDomain}` : "—")}</div>
+                            </div>
+                            <div style={{ display: "flex", gap: 8 }}>
+                                {enableDomains && <button onClick={() => setDomainsOpen(domainsOpen === s.id ? null : s.id)} style={ghost}>{domainsOpen === s.id ? "Close" : "Domain"}</button>}
+                                <a href={`${editBase}?store=${s.id}`} style={{ ...btn, textDecoration: "none", display: "inline-block" }}>Edit</a>
+                                {!s.primary && <button onClick={() => remove(s.id)} disabled={busy} style={ghost}>Remove</button>}
+                            </div>
                         </div>
-                        <div style={{ display: "flex", gap: 8 }}>
-                            <a href={`${editBase}?store=${s.id}`} style={{ ...btn, textDecoration: "none", display: "inline-block" }}>Edit</a>
-                            {!s.primary && <button onClick={() => remove(s.id)} disabled={busy} style={ghost}>Remove</button>}
-                        </div>
+                        {enableDomains && domainsOpen === s.id && <CustomDomainPanel storeId={s.id} />}
                     </div>
                 ))}
             </div>

@@ -18,6 +18,7 @@ import {
 } from "@pythias/mongo";
 import { generateArticle, generateArticleIdeas } from "../functions/contentGenerator.js";
 import { generateSceneImage, generateImage, generateImageDataUrl, sceneGenAvailable } from "../functions/sceneImage.js";
+import { createCustomHostname, getCustomHostname, deleteCustomHostname, mapHostnameStatus } from "../lib/cloudflareCustomHostnames.js";
 const randomCode = (prefix = "") => `${prefix}${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
 
 // Throw this for HTTP-mappable errors; route wrappers read err.status.
@@ -113,6 +114,91 @@ export async function removeStore(orgId, siteId) {
 }
 export async function setExtraStoreItemId(orgId, itemId) {
     await StorefrontSite.updateOne({ orgId, plan: { $ne: "none" } }, { $set: { "subscription.extraStoreItemId": itemId || undefined } });
+}
+
+// ── Custom domains (Cloudflare for SaaS) ──────────────────────────────────────
+// A seller connects their own domain → we register it with Cloudflare, which issues the
+// edge SSL cert and routes it to our fallback origin. resolveSite() serves the domain once
+// customDomain.status === "active". The seller adds ONE CNAME at their registrar (GoDaddy etc.).
+const HOSTNAME_RE = /^(?=.{1,253}$)(?!-)[a-z0-9-]{1,63}(?<!-)(\.(?!-)[a-z0-9-]{1,63}(?<!-))+$/;
+
+// The CNAME target sellers point their domain at — a proxied record in our zone that
+// Cloudflare intercepts (defaults to the storefront base host).
+function cnameTarget() {
+    return (process.env.STOREFRONT_CNAME_TARGET || process.env.STOREFRONT_BASE_DOMAIN || "pythias.store").toLowerCase();
+}
+
+async function _siteForDomain(orgId, siteId) {
+    const site = siteId
+        ? await StorefrontSite.findOne({ _id: siteId, orgId })
+        : (await StorefrontSite.findOne({ orgId, primary: true })) || (await StorefrontSite.findOne({ orgId }));
+    if (!site) throw httpError(404, "Store not found");
+    return site;
+}
+
+function customDomainView(site, cfResult) {
+    const cd = site.customDomain || {};
+    return {
+        hostname: cd.hostname || null,
+        status: cd.status || null,
+        verifiedAt: cd.verifiedAt || null,
+        // What to tell the seller to add at their DNS provider.
+        cname: cd.hostname ? { type: "CNAME", name: cd.hostname, value: cnameTarget() } : null,
+        ssl: cfResult ? { status: cfResult.ssl?.status || null, errors: cfResult.ssl?.validation_errors || [] } : null,
+    };
+}
+
+export async function addCustomDomain(orgId, { hostname, siteId } = {}) {
+    const host = String(hostname || "").toLowerCase().trim().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+    if (!HOSTNAME_RE.test(host)) throw httpError(400, "Enter a valid domain, e.g. shop.yourbrand.com");
+    const base = (process.env.STOREFRONT_BASE_DOMAIN || "pythias.store").toLowerCase();
+    if (host === base || host.endsWith("." + base)) throw httpError(400, "That's a Pythias address — enter your own custom domain.");
+
+    const site = await _siteForDomain(orgId, siteId);
+    if (!site.plan || site.plan === "none") {
+        // secondary stores inherit entitlement from the org's primary/paid site
+        const entitled = await StorefrontSite.findOne({ orgId, plan: { $ne: "none" } }).select("_id").lean();
+        if (!entitled) throw httpError(402, "Custom domains require a storefront plan.");
+    }
+
+    const clash = await StorefrontSite.findOne({ "customDomain.hostname": host, _id: { $ne: site._id } }).select("_id").lean();
+    if (clash) throw httpError(409, "That domain is already connected to another store.");
+
+    // Replacing a different domain on this store? Clean up the old Cloudflare hostname first.
+    if (site.customDomain?.cfHostnameId && site.customDomain.hostname !== host) {
+        try { await deleteCustomHostname(site.customDomain.cfHostnameId); } catch { /* ignore */ }
+    }
+
+    const result = await createCustomHostname(host);
+    site.customDomain = { hostname: host, status: mapHostnameStatus(result), cfHostnameId: result.id, verifiedAt: null };
+    await site.save();
+    return customDomainView(site, result);
+}
+
+export async function customDomainStatus(orgId, siteId) {
+    const site = await _siteForDomain(orgId, siteId);
+    if (!site.customDomain?.cfHostnameId) return customDomainView(site, null);
+
+    let result = null;
+    try { result = await getCustomHostname(site.customDomain.cfHostnameId); } catch { /* network blip — return last known */ }
+    if (result) {
+        const status = mapHostnameStatus(result);
+        if (status !== site.customDomain.status || (status === "active" && !site.customDomain.verifiedAt)) {
+            site.customDomain.status = status;
+            if (status === "active" && !site.customDomain.verifiedAt) site.customDomain.verifiedAt = new Date();
+            await site.save();
+        }
+    }
+    return customDomainView(site, result);
+}
+
+export async function removeCustomDomain(orgId, siteId) {
+    const site = await _siteForDomain(orgId, siteId);
+    if (site.customDomain?.cfHostnameId) {
+        try { await deleteCustomHostname(site.customDomain.cfHostnameId); } catch { /* ignore */ }
+    }
+    await StorefrontSite.updateOne({ _id: site._id }, { $unset: { customDomain: "" } });
+    return { ok: true };
 }
 
 // ── Marketing: campaigns ─────────────────────────────────────────────────────
