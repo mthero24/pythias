@@ -12,6 +12,7 @@ export default async function OrdersPage(req) {
     if (!session) redirect("/login");
 
     const orgId = session.user.orgId;
+    const { slug } = await req.params;
     const query = await req.searchParams;
     const page = query.page ? parseInt(query.page) : 1;
     const showAll = query.status === "all";
@@ -78,6 +79,7 @@ export default async function OrdersPage(req) {
             filter={query.filter}
             showAll={showAll}
             q={q}
+            base={`/${slug}`}
         />
     );
 }

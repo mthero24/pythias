@@ -475,7 +475,7 @@ const isMissingInfo = (o) =>
             (i.blank == undefined && i.styleV2 == undefined)
     );
 
-export function Main({ ords, pages, page, q, filter, showAll, source }) {
+export function Main({ ords, pages, page, q, filter, showAll, source, base = "" }) {
     const router = useRouter();
     const [orders] = useState(ords);
     const [search, setSearch] = useState(q ?? "");
@@ -490,7 +490,7 @@ export function Main({ ords, pages, page, q, filter, showAll, source }) {
         if (all) params.set("status", "all");
         if (sq?.trim()) params.set("q", sq.trim());
         const qs = params.toString();
-        return `/orders${qs ? `?${qs}` : ""}`;
+        return `${base}/orders${qs ? `?${qs}` : ""}`;
     };
 
     const performSearch = () => {
@@ -665,7 +665,7 @@ export function Main({ ords, pages, page, q, filter, showAll, source }) {
                                         px: 2, py: 1.25,
                                         cursor: "pointer",
                                     }}
-                                    onClick={() => router.push(`/orders/${o._id}`)}
+                                    onClick={() => router.push(`${base}/orders/${o._id}`)}
                                 >
                                     {/* PO Number */}
                                     <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0 }}>
@@ -871,7 +871,7 @@ export function Main({ ords, pages, page, q, filter, showAll, source }) {
             <CreateOrderModal
                 open={createOpen}
                 onClose={() => setCreateOpen(false)}
-                onCreated={(orderId) => router.push(`/orders/${orderId}`)}
+                onCreated={(orderId) => router.push(`${base}/orders/${orderId}`)}
             />
             <CustomOrderBuilder
                 open={customOrderOpen}

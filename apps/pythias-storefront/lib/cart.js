@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { PlatformProduct, Blank } from "@pythias/mongo";
+import { PlatformProduct, Blank, resolveVariantSize } from "@pythias/mongo";
 
 // Validate + price a cart against the org's real products (never trust client prices).
 // items: [{ productId, sku, qty }]  →  { lines, subtotalCents, errors }
@@ -74,13 +74,18 @@ export async function validateCart(orgId, items = []) {
         const wholesaleCents = Math.round((v.wholesalePrice || 0) * 100);  // cost basis (for seller payout)
         subtotalCents += priceCents * qty;
         wholesaleTotalCents += wholesaleCents * qty;
+        const vBlank = v.blank ? blankById[String(v.blank)] : null;
         lines.push({
             productId: String(p._id),
-            styleCode: p.code ?? "",
+            // Style/blank code for the production floor — prefer the blank's code; the product `code`
+            // is often empty for storefront catalog products.
+            styleCode: vBlank?.code || p.code || "",
             title: p.title,
             sku: v.sku ?? null,
             colorName: v.color?.name ?? v.ids?.colorName ?? "",
-            sizeName: v.ids?.sizeName ?? (typeof v.size === "string" ? v.size : ""),
+            // Resolve the size NAME (the variant often stores a size _id in `size`); resolveVariantSize
+            // maps it back via the blank's sizes ([{_id,name}]). Otherwise the order shows a raw _id.
+            sizeName: resolveVariantSize(v, vBlank?.sizes),
             image: v.image ?? p.productImages?.find((i) => i.image)?.image ?? null,
             // Fulfillment-routing refs: routeOrder matches providers on blank+color+sizeName;
             // sendToProvider ships the design artwork + print type.
