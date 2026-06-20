@@ -30,9 +30,14 @@ export default function SupplierClient() {
     };
     useEffect(() => { load(); }, []); // eslint-disable-line
 
+    const [enrollErr, setEnrollErr] = useState("");
     const enroll = async () => {
-        setBusy(true);
-        try { await fetch("/api/storefront/supplier", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ op: "enroll" }) }); await load(); }
+        setBusy(true); setEnrollErr("");
+        try {
+            const d = await (await fetch("/api/storefront/supplier", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ op: "enroll" }) })).json();
+            if (d.error) throw new Error(typeof d.error === "string" ? d.error : "Could not enroll");
+            await load();
+        } catch (e) { setEnrollErr(e.message); }
         finally { setBusy(false); }
     };
     const save = async (patch) => {
@@ -57,17 +62,63 @@ export default function SupplierClient() {
     const orders = data?.orders || { recent: [] };
 
     if (!status.enrolled) {
+        const elig = data?.eligibility || {};
+        const reqs = [
+            { ok: elig.tenureOk, title: `On Pythias for ${elig.monthsRequired ?? 3}+ months`,
+              detail: `You've been with us ${elig.tenureMonths ?? 0} month${elig.tenureMonths === 1 ? "" : "s"}.` },
+            { ok: elig.shipOk, title: `Average ship time ${elig.maxShipDays ?? 4} days or less`,
+              detail: !elig.haveShipData
+                  ? `We need a track record first — ${elig.minOrders ?? 5}+ shipped orders (you have ${elig.ordersSampled ?? 0}).`
+                  : `Your average is ${elig.shipAvgDays} day${elig.shipAvgDays === 1 ? "" : "s"} (over ${elig.ordersSampled} recent orders).` },
+        ];
         return (
             <div style={{ maxWidth: 720, margin: "0 auto", padding: "28px 20px" }}>
                 <h1 style={{ margin: 0 }}>Earn as a fulfiller 🤝</h1>
                 <p style={{ color: "#64748b", margin: "6px 0 0" }}>You sell on Pythias — now earn on the other side. Put your spare production capacity to work fulfilling <b>other sellers'</b> orders that route to you, and get paid per order. The same network that fulfills your sales can pay you to fulfill theirs.</p>
+
                 <div style={{ ...card, marginTop: 18 }}>
-                    <ul style={{ margin: "0 0 14px", paddingLeft: 18, color: "#475569", fontSize: "0.92rem", lineHeight: 1.7 }}>
+                    <b style={{ fontSize: "0.95rem" }}>How it works</b>
+                    <ul style={{ margin: "10px 0 0", paddingLeft: 18, color: "#475569", fontSize: "0.92rem", lineHeight: 1.7 }}>
                         <li>The routing engine sends you overflow orders that match your capacity & location.</li>
                         <li>You set your daily cap, handling fee, and can pause intake anytime.</li>
                         <li>Earnings (wholesale + handling) accrue per fulfilled order and pay out automatically.</li>
+                        <li>Other sellers' buyers count on fast delivery — so we verify your speed and your business before any order routes to you.</li>
                     </ul>
-                    <button onClick={enroll} disabled={busy} style={btn}>{busy ? "Enrolling…" : "Become a network fulfiller"}</button>
+                </div>
+
+                <div style={{ ...card, marginTop: 16 }}>
+                    <b style={{ fontSize: "0.95rem" }}>Who can join</b>
+                    <p style={{ color: "#64748b", fontSize: "0.86rem", margin: "4px 0 14px" }}>To protect the network's delivery promise, fulfillers must have a proven track record before they can take other sellers' orders:</p>
+                    <div style={{ display: "grid", gap: 12 }}>
+                        {reqs.map((r, i) => (
+                            <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                                <span style={{ flex: "0 0 auto", width: 24, height: 24, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.8rem", fontWeight: 800, background: r.ok ? "#dcfce7" : "#f1f5f9", color: r.ok ? "#166534" : "#94a3b8" }}>{r.ok ? "✓" : i + 1}</span>
+                                <div>
+                                    <div style={{ fontWeight: 700, fontSize: "0.9rem", color: r.ok ? "#166534" : "#334155" }}>{r.title}</div>
+                                    <div style={{ color: "#64748b", fontSize: "0.82rem" }}>{r.detail}</div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                <div style={{ ...card, marginTop: 16 }}>
+                    {elig.eligible ? (
+                        <>
+                            <div style={{ color: "#166534", fontWeight: 700, fontSize: "0.9rem", marginBottom: 8 }}>🎉 You qualify! Next, we'll verify your business (KYC), then you go live.</div>
+                            <button onClick={enroll} disabled={busy} style={btn}>{busy ? "Enrolling…" : "Become a network fulfiller"}</button>
+                        </>
+                    ) : (
+                        <>
+                            <div style={{ color: "#9a3412", fontWeight: 700, fontSize: "0.9rem", marginBottom: 6 }}>Not eligible yet</div>
+                            <ul style={{ margin: "0 0 12px", paddingLeft: 18, color: "#9a3412", fontSize: "0.86rem", lineHeight: 1.6 }}>
+                                {(elig.reasons || ["Keep selling and shipping fast — you'll unlock this soon."]).map((r, i) => <li key={i}>{r}</li>)}
+                            </ul>
+                            <button disabled style={{ ...btn, background: "#cbd5e1", cursor: "not-allowed" }}>Become a network fulfiller</button>
+                            <div style={{ color: "#94a3b8", fontSize: "0.76rem", marginTop: 8 }}>This page updates automatically as you hit the requirements.</div>
+                        </>
+                    )}
+                    {enrollErr && <div style={{ color: "#dc2626", fontSize: "0.84rem", marginTop: 8 }}>{enrollErr}</div>}
                 </div>
             </div>
         );

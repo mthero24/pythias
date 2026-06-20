@@ -2425,6 +2425,45 @@ export async function channelRoi(orgId, range = "30d") {
 // them as a routing provider (ProviderCapacity/Location), so other sellers' overflow orders can
 // route to their spare capacity. Same org both buys AND sells fulfillment — competitors keep
 // each tenant a closed island; the Pythias network lets them play both sides. Ties to FC overflow.
+// Eligibility to JOIN the fulfillment network: a seller must have been on Pythias at least 3 months AND
+// have an average ship time (order date → shipped) of 4 days or less over a real track record of orders.
+// This protects the network's delivery promise before routing other sellers' orders to them.
+const FULFILLER_MIN_MONTHS = 3;
+const FULFILLER_MAX_SHIP_DAYS = 4;
+const FULFILLER_MIN_ORDERS = 5;   // need a track record to measure shipping speed against
+
+export async function supplierEligibility(orgId) {
+    const oid = new mongoose.Types.ObjectId(orgId);
+    const since = new Date(Date.now() - 180 * 86400000);   // measure ship speed over the last 180 days
+    const [org, agg] = await Promise.all([
+        Organization.findById(oid).select("createdAt").lean(),
+        PlatformOrder.aggregate([
+            { $match: { orgId: oid, "shipping.shippedAt": { $ne: null }, date: { $gte: since } } },
+            { $project: { days: { $divide: [{ $subtract: ["$shipping.shippedAt", "$date"] }, 86400000] } } },
+            { $match: { days: { $gte: 0 } } },
+            { $group: { _id: null, avgDays: { $avg: "$days" }, count: { $sum: 1 } } },
+        ]).catch(() => []),
+    ]);
+    const created = org?.createdAt ? new Date(org.createdAt).getTime() : Date.now();
+    const tenureMonths = Math.max(0, Math.floor((Date.now() - created) / (30 * 86400000)));
+    const ordersSampled = agg?.[0]?.count || 0;
+    const shipAvgDays = agg?.[0]?.avgDays != null ? Math.round(agg[0].avgDays * 10) / 10 : null;
+
+    const tenureOk = tenureMonths >= FULFILLER_MIN_MONTHS;
+    const haveShipData = ordersSampled >= FULFILLER_MIN_ORDERS;
+    const shipOk = haveShipData && shipAvgDays != null && shipAvgDays <= FULFILLER_MAX_SHIP_DAYS;
+    const reasons = [];
+    if (!tenureOk) reasons.push(`Be on Pythias at least ${FULFILLER_MIN_MONTHS} months (you're at ${tenureMonths}).`);
+    if (!haveShipData) reasons.push(`Build a shipping track record — ${FULFILLER_MIN_ORDERS}+ shipped orders needed (you have ${ordersSampled}).`);
+    else if (!shipOk) reasons.push(`Keep your average ship time to ${FULFILLER_MAX_SHIP_DAYS} days or less (yours is ${shipAvgDays}).`);
+    return {
+        eligible: tenureOk && shipOk,
+        tenureMonths, monthsRequired: FULFILLER_MIN_MONTHS, tenureOk,
+        shipAvgDays, maxShipDays: FULFILLER_MAX_SHIP_DAYS, ordersSampled, minOrders: FULFILLER_MIN_ORDERS, shipOk, haveShipData,
+        reasons,
+    };
+}
+
 export async function supplierStatus(orgId) {
     const oid = new mongoose.Types.ObjectId(orgId);
     const [cap, loc, catalogCount, score] = await Promise.all([
@@ -2449,6 +2488,9 @@ export async function supplierStatus(orgId) {
 // stays false (routing skips them) until verifySupplierKyc flips it on.
 export async function enrollAsSupplier(orgId) {
     const oid = new mongoose.Types.ObjectId(orgId);
+    // Gate: must meet the network's tenure + shipping-speed bar before enrolling.
+    const elig = await supplierEligibility(orgId);
+    if (!elig.eligible) throw httpError(403, elig.reasons.join(" ") || "You're not eligible to become a fulfiller yet.");
     const existing = await ProviderCapacity.findOne({ providerId: oid }).select("kycStatus").lean();
     const verified = existing?.kycStatus === "verified";
     await ProviderCapacity.updateOne(

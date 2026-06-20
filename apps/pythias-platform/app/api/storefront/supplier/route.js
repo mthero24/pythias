@@ -8,8 +8,11 @@ export async function GET() {
     if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     try {
         const status = await storefront.supplierStatus(orgId);
-        const orders = status.enrolled ? await storefront.supplierOrders(orgId) : null;
-        return NextResponse.json({ error: false, status, orders });
+        const [orders, eligibility] = await Promise.all([
+            status.enrolled ? storefront.supplierOrders(orgId) : null,
+            status.enrolled ? null : storefront.supplierEligibility(orgId),
+        ]);
+        return NextResponse.json({ error: false, status, orders, eligibility });
     } catch (e) { return svcError(e); }
 }
 export async function POST(req) {

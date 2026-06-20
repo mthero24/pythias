@@ -96,7 +96,6 @@ const STOREFRONT_ITEMS = [
     { label: "Reviews",          path: "reviews",                icon: <RateReviewIcon fontSize="small" />,    storefront: true },
     { label: "Network Protection", path: "network",              icon: <ShieldIcon fontSize="small" />,        storefront: true },
     { label: "Merchant of Record", path: "mor",                  icon: <GavelIcon fontSize="small" />,         storefront: true },
-    { label: "Earn as Fulfiller",  path: "supplier",             icon: <HandshakeIcon fontSize="small" />,     storefront: true },
     { label: "Marketing",        path: "marketing",              icon: <CampaignIcon fontSize="small" />,      storefront: true },
     { label: "Automations",      path: "automations",            icon: <AltRouteIcon fontSize="small" />,      storefront: true },
     { label: "Sales Channels",   path: "channels",               icon: <PodcastsIcon fontSize="small" />,      storefront: true },
@@ -117,6 +116,19 @@ function buildSections(base, org) {
     if (!sections.some(s => s.items.some(i => i.storefront))) {
         sections = [...sections];
         sections.splice(Math.min(1, sections.length), 0, { label: "Storefront", items: [...STOREFRONT_ITEMS] });
+    }
+
+    // Fulfillment Network ("earn as a fulfiller") — its OWN section, separate from the storefront
+    // product. Hidden for Commerce Cloud orgs (they OUTSOURCE fulfillment — they don't ship their own
+    // orders, so they can't build the shipping track record the program requires). Shown to fulfillment
+    // orgs; the info page is open and enrollment is gated in-page by tenure + shipping-speed eligibility.
+    if (org?.orgType !== "commerce") {
+        sections = [...sections];
+        const fulfillerSection = { label: "Fulfillment Network", items: [
+            { label: "Earn as Fulfiller", path: "supplier", icon: <HandshakeIcon fontSize="small" /> },
+        ] };
+        const helpIdx = sections.findIndex(s => s.label === "Help");
+        if (helpIdx >= 0) sections.splice(helpIdx, 0, fulfillerSection); else sections.push(fulfillerSection);
     }
 
     // Gate the storefront product: if this org hasn't subscribed, hide every storefront-only
