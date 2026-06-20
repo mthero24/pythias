@@ -35,6 +35,7 @@ export default function StoresClient({ editBase = "/storefront" }) {
 
     if (loading) return <div style={{ padding: 28 }}>Loading stores…</div>;
     const d = data || {};
+    const baseDomain = d.baseDomain || "pythias.store";
     const usedOfIncluded = `${Math.min(d.count || 0, d.includedStores || 0)} / ${d.includedStores || 0}`;
     const nextIsExtra = (d.count || 0) >= (d.includedStores || 0);
 
@@ -64,7 +65,7 @@ export default function StoresClient({ editBase = "/storefront" }) {
                             <b>{s.name}</b>
                             {s.primary && <span style={{ marginLeft: 8, background: "#eef2ff", color: "#4338ca", fontSize: "0.68rem", fontWeight: 700, padding: "2px 8px", borderRadius: 999 }}>PRIMARY</span>}
                             <span style={{ marginLeft: 8, fontSize: "0.7rem", color: s.status === "published" ? "#166534" : "#94a3b8" }}>{s.status}</span>
-                            <div style={{ color: "#64748b", fontSize: "0.82rem", marginTop: 2 }}>{s.customDomain || (s.subdomain ? `${s.subdomain}.pythias.store` : "—")}</div>
+                            <div style={{ color: "#64748b", fontSize: "0.82rem", marginTop: 2 }}>{s.customDomain || (s.subdomain ? `${s.subdomain}.${baseDomain}` : "—")}</div>
                         </div>
                         <div style={{ display: "flex", gap: 8 }}>
                             <a href={`${editBase}?store=${s.id}`} style={{ ...btn, textDecoration: "none", display: "inline-block" }}>Edit</a>
@@ -81,7 +82,7 @@ export default function StoresClient({ editBase = "/storefront" }) {
                     <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Store name" style={{ ...input, flex: 1, minWidth: 160 }} />
                     <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                         <input value={form.subdomain} onChange={(e) => setForm({ ...form, subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "") })} placeholder="subdomain" style={{ ...input, width: 150 }} />
-                        <span style={{ color: "#94a3b8", fontSize: "0.84rem" }}>.pythias.store</span>
+                        <span style={{ color: "#94a3b8", fontSize: "0.84rem" }}>.{baseDomain}</span>
                     </div>
                     <button type="submit" disabled={busy} style={btn}>{busy ? "Adding…" : nextIsExtra ? `Add store (+${money(d.extraStoreCents)}/mo)` : "Add store"}</button>
                 </div>

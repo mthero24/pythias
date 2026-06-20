@@ -83,6 +83,7 @@ export async function listStores(orgId) {
     return {
         plan, includedStores: lim?.includedStores || 0, extraStoreCents: lim?.extraStoreCents || 0,
         count, extraBilled: lim ? Math.max(0, count - lim.includedStores) : 0,
+        baseDomain: process.env.STOREFRONT_BASE_DOMAIN || process.env.STOREFRONT_PUBLIC_BASE || "pythias.store",
         stores: sites.map((s) => ({ id: String(s._id), name: s.name || "Store", subdomain: s.subdomain || null, customDomain: s.customDomain?.hostname || null, primary: !!s.primary, status: s.status, publishedAt: s.publishedAt || null })),
     };
 }
@@ -1162,7 +1163,7 @@ async function brandForOrg(orgId) {
 
     const org = await Organization.findById(orgId).select("name").lean();
     const products = await PlatformProduct.find({ orgId }).select("title slug").limit(40).lean();
-    const host = site.customDomain?.hostname || (site.subdomain ? `${site.subdomain}.pythias.store` : null);
+    const host = site.customDomain?.hostname || (site.subdomain ? `${site.subdomain}.${process.env.STOREFRONT_BASE_DOMAIN || process.env.STOREFRONT_PUBLIC_BASE || "pythias.store"}` : null);
     const name = site.businessInfo?.legalName || org?.name || site.subdomain || "our store";
 
     const productTitles = products.map((p) => p.title).filter(Boolean).slice(0, 25);
