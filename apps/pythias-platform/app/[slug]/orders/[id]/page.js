@@ -32,6 +32,7 @@ export default async function OrderPage(req) {
         <OrderMain
             ord={JSON.parse(JSON.stringify(order))}
             blanks={JSON.parse(JSON.stringify(blanks))}
+            base={`/${params.slug}`}
         />
     );
 }

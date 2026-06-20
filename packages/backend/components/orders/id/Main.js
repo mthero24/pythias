@@ -69,7 +69,7 @@ const isItemMissing = (i) =>
     i.color == undefined ||
     (i.blank == undefined && i.styleV2 == undefined);
 
-export function Main({ ord, blanks, source }) {
+export function Main({ ord, blanks, source, base = "" }) {
     const [order, setOrder] = useState(ord);
     const [item, setItem] = useState(null);
     const [blank, setBlank] = useState(null);
@@ -172,9 +172,9 @@ export function Main({ ord, blanks, source }) {
 
     const handleItemUpdate = (i) => {
         let b, s, c;
-        if (i.blank) b = blanks.filter(bl => bl._id.toString() === i.blank.toString())[0];
-        if (b && i.size) s = b.sizes.filter(si => si._id.toString() === i.size.toString())[0];
-        if (b && i.color) c = b.colors.filter(co => co._id.toString() === i.color.toString())[0];
+        if (i.blank) b = (blanks || []).filter(bl => bl?._id?.toString() === i.blank?.toString())[0];
+        if (b && i.size) s = (b.sizes || []).filter(si => si?._id?.toString() === i.size?.toString())[0];
+        if (b && i.color) c = (b.colors || []).filter(co => co?._id?.toString() === i.color?.toString())[0];
         setItem(i);
         setBlank(b);
         setSize(s);
@@ -201,7 +201,7 @@ export function Main({ ord, blanks, source }) {
             }}>
                 <Stack direction="row" alignItems="center" justifyContent="space-between" flexWrap="wrap" gap={1}>
                     <Stack direction="row" alignItems="center" spacing={1.5}>
-                        <Button variant="text" size="small" startIcon={<ArrowBackIcon />} href="/orders" sx={{ color: "text.secondary", px: 1 }}>
+                        <Button variant="text" size="small" startIcon={<ArrowBackIcon />} href={`${base}/orders`} sx={{ color: "text.secondary", px: 1 }}>
                             Orders
                         </Button>
                         <Typography variant="caption" color="text.disabled">/</Typography>
@@ -362,7 +362,7 @@ export function Main({ ord, blanks, source }) {
                                                                 </Tooltip>
                                                                 {i.designRef && (
                                                                     <Tooltip title="Open design">
-                                                                        <IconButton size="small" component="a" href={`/admin/design/${i.designRef}`} target="_blank">
+                                                                        <IconButton size="small" component="a" href={`${base}/admin/design/${i.designRef}`} target="_blank">
                                                                             <OpenInNewIcon sx={{ fontSize: 16 }} />
                                                                         </IconButton>
                                                                     </Tooltip>
