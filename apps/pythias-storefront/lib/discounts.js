@@ -41,6 +41,19 @@ export async function bestAutomaticDiscount(orgId, subtotalCents) {
     return best ? { ok: true, ...best, automatic: true } : { ok: false };
 }
 
+// Active automatic discount for DISPLAY (badge / strikethrough on cards, PDP, cart popup).
+// Ignores minSubtotal (that's enforced at checkout by bestAutomaticDiscount) — this is purely so
+// buyers SEE the deal. Returns the strongest active one's { type, value, title } or null.
+export async function activeAutomaticDiscount(orgId) {
+    const autos = await StorefrontDiscount.find({ orgId, automatic: true, active: true }).lean();
+    const now = new Date();
+    const live = autos.filter((d) => (!d.expiresAt || new Date(d.expiresAt) >= now) && (d.maxUses == null || (d.usedCount || 0) < d.maxUses));
+    if (!live.length) return null;
+    live.sort((a, b) => (b.type === "percent" ? b.value : -1) - (a.type === "percent" ? a.value : -1));
+    const d = live[0];
+    return { type: d.type, value: d.value, title: d.title || null };
+}
+
 // Count a redemption (called once an order is placed with this code).
 export async function consumeDiscount(orgId, code) {
     if (!code) return;

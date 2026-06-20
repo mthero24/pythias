@@ -1,4 +1,5 @@
 import { StorefrontSite } from "@pythias/mongo";
+import { activeAutomaticDiscount } from "@/lib/discounts";
 
 // Resolve the storefront for an incoming request host.
 //   brand.pythias.store  → subdomain lookup
@@ -30,5 +31,7 @@ export async function resolveSite(rawHost) {
     if (!site) return null;
     // Don't serve disabled sites publicly.
     if (site.status === "disabled") return null;
+    // Attach the active automatic discount (display-only) so cards/PDP/cart popup can show the deal.
+    site.autoDiscount = await activeAutomaticDiscount(site.orgId).catch(() => null);
     return site;
 }

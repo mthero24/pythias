@@ -32,7 +32,7 @@ export default function SiteScripts({ site }) {
             }} />
             {/* Client-readable storefront flags (read by cart/checkout/express-pay components). */}
             <script dangerouslySetInnerHTML={{ __html:
-                `window.__SF__=Object.assign(window.__SF__||{},{cartModal:${site?.catalog?.addToCartModal === true},stripePk:${JSON.stringify(stripePk)},currency:${JSON.stringify(currency)},accent:${JSON.stringify(accent)},floatingControls:${floatingControls},announcement:${JSON.stringify(ann)}});` }} />
+                `window.__SF__=Object.assign(window.__SF__||{},{cartModal:${site?.catalog?.addToCartModal === true},stripePk:${JSON.stringify(stripePk)},currency:${JSON.stringify(currency)},accent:${JSON.stringify(accent)},floatingControls:${floatingControls},announcement:${JSON.stringify(ann)},autoDiscount:${JSON.stringify(site?.autoDiscount || null)}});` }} />
 
             {a.ga4Id && (
                 <>

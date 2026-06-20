@@ -1,4 +1,5 @@
 "use client";
+import { useState, useEffect } from "react";
 import { useCart } from "./CartProvider";
 import { useI18n } from "@/components/i18n/I18nProvider";
 
@@ -7,6 +8,10 @@ import { useI18n } from "@/components/i18n/I18nProvider";
 export default function CartModal() {
     const { modal, closeModal, count, subtotalCents } = useCart();
     const { price: money } = useI18n();
+    // Store-wide automatic discount (display-only). The discount is itemized at cart/checkout; here we
+    // just show the buyer the discounted line price beside the struck-through original.
+    const [autoPct, setAutoPct] = useState(0);
+    useEffect(() => { try { const d = window.__SF__?.autoDiscount; if (d?.type === "percent" && d.value > 0) setAutoPct(Math.min(100, d.value)); } catch { /* ignore */ } }, []);
     if (!modal) return null;
 
     const meta = [modal.color, modal.size].filter(Boolean).join(" · ");
@@ -29,7 +34,13 @@ export default function CartModal() {
                         {meta && <div style={{ fontSize: "0.82rem", color: "#64748b" }}>{meta}</div>}
                         <div style={{ fontSize: "0.82rem", color: "#64748b" }}>Qty {modal.qty}</div>
                     </div>
-                    {modal.priceCents > 0 && <div style={{ fontWeight: 700, whiteSpace: "nowrap" }}>{money(modal.priceCents * modal.qty)}</div>}
+                    {modal.priceCents > 0 && (
+                        <div style={{ whiteSpace: "nowrap", textAlign: "right" }}>
+                            {autoPct > 0
+                                ? <><span style={{ fontWeight: 700, color: "#dc2626" }}>{money(Math.round(modal.priceCents * (1 - autoPct / 100)) * modal.qty)}</span> <span style={{ color: "#94a3b8", textDecoration: "line-through", fontSize: "0.82rem" }}>{money(modal.priceCents * modal.qty)}</span></>
+                                : <span style={{ fontWeight: 700 }}>{money(modal.priceCents * modal.qty)}</span>}
+                        </div>
+                    )}
                 </div>
 
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.9rem", marginBottom: 14, color: "#334155", borderTop: "1px solid rgba(0,0,0,0.08)", paddingTop: 12 }}>

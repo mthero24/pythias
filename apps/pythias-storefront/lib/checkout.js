@@ -38,14 +38,20 @@ export async function quoteCart({ orgId, site, customer, items, redeemCents, pro
 
     // Subscribe & save replaces other code/automatic discounts; otherwise an explicit code wins,
     // else the best AUTOMATIC (codeless) discount applies.
-    let promo = { ok: false }, discountCents = 0, freeShipping = false, subscribeDiscount = false;
+    let promo = { ok: false }, discountCents = 0, freeShipping = false, subscribeDiscount = false, discountError = null;
     if (subscribe && site?.subscriptions?.enabled) {
         discountCents = Math.round((subtotalCents * (site.subscriptions.discountPercent || 0)) / 100);
         subscribeDiscount = true;
     } else {
-        promo = promoCode ? await validateDiscount(orgId, promoCode, subtotalCents) : await bestAutomaticDiscount(orgId, subtotalCents);
+        // Only ONE discount applies to an order — the GREATER of an entered code vs the best automatic
+        // discount (a buyer entering a code never loses a bigger automatic deal, and they don't stack).
+        const coded = promoCode ? await validateDiscount(orgId, promoCode, subtotalCents) : { ok: false };
+        const auto = await bestAutomaticDiscount(orgId, subtotalCents);
+        const weight = (r) => (r?.ok ? (r.discountCents || 0) + (r.freeShipping ? 1 : 0) : -1);
+        promo = weight(coded) >= weight(auto) ? coded : auto;
         discountCents = promo.ok ? promo.discountCents : 0;
         freeShipping = !!(promo.ok && promo.freeShipping);
+        if (promoCode && !coded.ok) discountError = coded.reason;   // surface an invalid code even if an auto discount applied
     }
 
     const rewardsApplied = customer ? computeRedeemable(site, customer.rewardsBalance || 0, subtotalCents, redeemCents) : 0;
@@ -72,7 +78,7 @@ export async function quoteCart({ orgId, site, customer, items, redeemCents, pro
         addOnsCents, addOnLines,
         discountCents, discountCode: promo.ok ? (promo.code || null) : null,
         discountTitle: subscribeDiscount ? "Subscribe & save" : (promo.ok && promo.automatic ? (promo.title || "Discount") : null),
-        freeShipping, discountError: promoCode && !promo.ok ? promo.reason : null,
+        freeShipping, discountError,
         giftCardApplied, giftCardCode: giftCardCodeOut, giftCardBalance,
         totalCents, errors,
     };

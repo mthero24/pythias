@@ -134,6 +134,10 @@ export default function ProductView({ productId, title, images = [], variants = 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [gallery, printRender, selectedPlacement, isNative, color]);
     useEffect(() => { setActiveIdx(0); }, [color, placeKey]);
+    // Store-wide automatic discount (display-only; from window.__SF__). Checkout re-applies it once, so we
+    // adjust only the SHOWN price below — priceCents still feeds cart/express-pay at full value.
+    const [autoPct, setAutoPct] = useState(0);
+    useEffect(() => { try { const d = window.__SF__?.autoDiscount; if (d?.type === "percent" && d.value > 0) setAutoPct(Math.min(100, d.value)); } catch { /* ignore */ } }, []);
 
     const basePriceCents = match?.price ? Math.round(match.price * 100)
         : (() => { const ps = variants.map((v) => v.price).filter((n) => typeof n === "number" && n > 0); return ps.length ? Math.round(Math.min(...ps) * 100) : 0; })();
@@ -147,6 +151,12 @@ export default function ProductView({ productId, title, images = [], variants = 
     const compareAtCents = salePct > 0 ? basePriceCents : (match?.compareAt > 0 ? Math.round(match.compareAt * 100) : 0);
     const onSale = compareAtCents > saleBaseCents;
     const savePct = onSale ? Math.round((1 - saleBaseCents / compareAtCents) * 100) : 0;
+    // Display price with the store-wide auto discount folded in — original struck through, discounted
+    // price beside it. Does NOT change priceCents (cart/express stay full; checkout applies it once).
+    const dispPriceCents = autoPct > 0 && priceCents > 0 ? Math.round(priceCents * (1 - autoPct / 100)) : priceCents;
+    const dispCompareCents = autoPct > 0 && priceCents > 0 ? (compareAtCents || priceCents) : compareAtCents;
+    const dispOnSale = dispCompareCents > dispPriceCents;
+    const dispSavePct = dispOnSale ? Math.round((1 - dispPriceCents / dispCompareCents) * 100) : 0;
     const r5 = rating?.count > 0 ? Math.round(rating.avg) : 0;
 
     const pickPlacement = (opt) => setPlaceKey(opt.key);   // carousel follows via viewGallery + reset effect
@@ -242,11 +252,11 @@ export default function ProductView({ productId, title, images = [], variants = 
                         {[colors.length > 1 && `${colors.length} colors`, siblings.length > 0 && `${styleCount} styles`].filter(Boolean).join(" · ")}
                     </div>
                 )}
-                {priceCents > 0 && (
+                {dispPriceCents > 0 && (
                     <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 18, flexWrap: "wrap" }}>
-                        <span style={{ fontWeight: 800, fontSize: "1.6rem", color: onSale ? "#dc2626" : "var(--sf-secondary)" }}>{money(priceCents)}</span>
-                        {onSale && <span style={{ color: "#94a3b8", textDecoration: "line-through", fontSize: "1.05rem" }}>{money(compareAtCents)}</span>}
-                        {onSale && <span style={{ background: "#fee2e2", color: "#b91c1c", fontWeight: 800, fontSize: "0.75rem", padding: "3px 9px", borderRadius: 999 }}>Save {savePct}%</span>}
+                        <span style={{ fontWeight: 800, fontSize: "1.6rem", color: dispOnSale ? "#dc2626" : "var(--sf-secondary)" }}>{money(dispPriceCents)}</span>
+                        {dispOnSale && <span style={{ color: "#94a3b8", textDecoration: "line-through", fontSize: "1.05rem" }}>{money(dispCompareCents)}</span>}
+                        {dispOnSale && <span style={{ background: "#fee2e2", color: "#b91c1c", fontWeight: 800, fontSize: "0.75rem", padding: "3px 9px", borderRadius: 999 }}>Save {dispSavePct}%</span>}
                     </div>
                 )}
 
@@ -389,7 +399,7 @@ export default function ProductView({ productId, title, images = [], variants = 
                     {img && <img src={img} alt="" style={{ width: 46, height: 46, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />}
                     <div style={{ minWidth: 0, flex: 1 }}>
                         <div style={{ fontWeight: 700, fontSize: "0.9rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</div>
-                        <div style={{ fontSize: "0.82rem", color: "var(--sf-secondary)", fontWeight: 700 }}>{money(priceCents)}{[color, size].filter(Boolean).length ? ` · ${[color, size].filter(Boolean).join(" / ")}` : ""}</div>
+                        <div style={{ fontSize: "0.82rem", color: "var(--sf-secondary)", fontWeight: 700 }}>{money(dispPriceCents)}{[color, size].filter(Boolean).length ? ` · ${[color, size].filter(Boolean).join(" / ")}` : ""}</div>
                     </div>
                     <button onClick={addToCart} disabled={!match} style={{ flexShrink: 0, padding: "12px 22px", borderRadius: 10, border: "none", background: "var(--sf-accent,#f59e0b)", color: "#fff", fontWeight: 700, fontSize: "0.95rem", cursor: match ? "pointer" : "not-allowed" }}>
                         {added ? "Added ✓" : "Add to cart"}

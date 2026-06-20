@@ -14,9 +14,17 @@ export default function ProductCard({ product, rating, urlMode = "slug", preferC
     const [img, setImg] = useState((preferColor && colorImageOf(preferColor)) || product.image || (product.colorImages || []).find((c) => c.image)?.image || null);
     // Reflect filter changes on the card; a swatch click still overrides locally until the filter changes.
     useEffect(() => { if (preferColor) { const ci = colorImageOf(preferColor); if (ci) setImg(ci); } }, [preferColor]);
-    const from = typeof product.priceCents === "number" && product.priceCents > 0 ? product.priceCents / 100 : null;
-    const compareAt = product.onSale && product.compareAtCents > product.priceCents ? product.compareAtCents / 100 : null;
-    const savePct = compareAt ? Math.round((1 - product.priceCents / product.compareAtCents) * 100) : 0;
+    // Store-wide automatic discount (display-only; published to window.__SF__ by SiteScripts). Checkout
+    // re-applies it once, so we adjust only the DISPLAYED price — never the price added to cart.
+    const [autoPct, setAutoPct] = useState(0);
+    useEffect(() => { try { const d = window.__SF__?.autoDiscount; if (d?.type === "percent" && d.value > 0) setAutoPct(Math.min(100, d.value)); } catch { /* ignore */ } }, []);
+    const baseCents = typeof product.priceCents === "number" && product.priceCents > 0 ? product.priceCents : 0;
+    const saleCompareCents = product.onSale && product.compareAtCents > baseCents ? product.compareAtCents : 0;
+    const dispCents = autoPct > 0 && baseCents > 0 ? Math.round(baseCents * (1 - autoPct / 100)) : baseCents;
+    const compareCents = saleCompareCents || (autoPct > 0 && baseCents > 0 ? baseCents : 0);
+    const from = dispCents > 0 ? dispCents / 100 : null;
+    const compareAt = compareCents > dispCents ? compareCents / 100 : null;
+    const savePct = compareAt ? Math.round((1 - dispCents / compareCents) * 100) : 0;
     const r = rating?.count > 0 ? Math.round(rating.avg) : 0;
     const swap = (e, src) => { e.preventDefault(); if (src) setImg(src); };
 
