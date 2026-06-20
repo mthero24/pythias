@@ -109,7 +109,9 @@ const STOREFRONT_ITEMS = [
 function buildSections(base, org) {
     let sections = org?.orgType === "commerce"
         ? buildCommerceSections(base)
-        : buildFulfillmentSections(base);
+        : org?.orgType === "storefront"
+            ? buildStorefrontSections(base)
+            : buildFulfillmentSections(base);
 
     // Storefront is offered to every org. Commerce orgs embed the items in Catalog; for other org
     // types, add a dedicated Storefront section so the gate (below) can surface it / its learn link.
@@ -122,7 +124,7 @@ function buildSections(base, org) {
     // product. Hidden for Commerce Cloud orgs (they OUTSOURCE fulfillment — they don't ship their own
     // orders, so they can't build the shipping track record the program requires). Shown to fulfillment
     // orgs; the info page is open and enrollment is gated in-page by tenure + shipping-speed eligibility.
-    if (org?.orgType !== "commerce") {
+    if (org?.orgType !== "commerce" && org?.orgType !== "storefront") {
         sections = [...sections];
         const fulfillerSection = { label: "Fulfillment Network", items: [
             { label: "Earn as Fulfiller", path: "supplier", icon: <HandshakeIcon fontSize="small" /> },
@@ -133,7 +135,8 @@ function buildSections(base, org) {
 
     // Gate the storefront product: if this org hasn't subscribed, hide every storefront-only
     // item and surface a single "Learn about Storefront" link (→ welcome/signup page).
-    if (!org?.storefrontEnabled) {
+    // Storefront-only orgs (orgType "storefront") ARE the storefront product — never gate them.
+    if (!org?.storefrontEnabled && org?.orgType !== "storefront") {
         sections = sections.map(section => {
             if (!section.items.some(i => i.storefront)) return section;
             const idx = section.items.findIndex(i => i.storefront);
@@ -298,6 +301,50 @@ function buildCommerceSections(base) {
     ];
 }
 
+// Storefront Cloud: a standalone-storefront org. Focused on the storefront product —
+// no production floor (fulfillment) and no provider-routing (commerce); the seller
+// self-fulfills / exports orders to their own systems.
+function buildStorefrontSections(base) {
+    return [
+        { label: "Overview", items: [{ label: "Dashboard", path: "dashboard", icon: <DashboardIcon fontSize="small" />, exact: true }] },
+        { label: "Storefront", items: [...STOREFRONT_ITEMS] },
+        {
+            label: "Catalog",
+            items: [
+                { label: "Products",         path: "products",               icon: <InventoryIcon fontSize="small" /> },
+                { label: "Designs",          path: "admin/designs",          icon: <BrushIcon fontSize="small" /> },
+                { label: "Design Templates", path: "admin/design-templates", icon: <DesignServicesIcon fontSize="small" /> },
+                { label: "Brands",           path: "admin/brands",           icon: <SellIcon fontSize="small" /> },
+            ],
+        },
+        {
+            label: "Orders",
+            items: [
+                { label: "Orders",  path: "orders",  icon: <ShoppingCartIcon fontSize="small" /> },
+                { label: "Payouts", path: "payouts", icon: <PaymentIcon fontSize="small" /> },
+            ],
+        },
+        {
+            label: "Account",
+            items: [
+                { label: "Reports",       path: "reports",       icon: <BarChartIcon fontSize="small" /> },
+                { label: "Integrations",  path: "integrations",  icon: <IntegrationInstructionsIcon fontSize="small" /> },
+                { label: "Users",         path: "users",         icon: <PeopleIcon fontSize="small" /> },
+                { label: "Settings",      path: "settings",      icon: <SettingsIcon fontSize="small" /> },
+                { label: "Billing",       path: "billing",       icon: <PaymentIcon fontSize="small" /> },
+                { label: "Support",       path: "support",       icon: <SupportAgentIcon fontSize="small" /> },
+            ],
+        },
+        {
+            label: "Help",
+            items: [
+                { label: "Guides", path: "guides", icon: <MenuBookIcon fontSize="small" /> },
+                { label: "Setup Guides", href: "https://pythiastechnologies.com/setup-guides/integrations", icon: <IntegrationInstructionsIcon fontSize="small" />, target: "_blank" },
+            ],
+        },
+    ];
+}
+
 export default function Navbar() {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const { data: session } = useSession();
@@ -306,7 +353,9 @@ export default function Navbar() {
     const base = org?.slug ? `/${org.slug}` : "";
 
     const isCommerce = org?.orgType === "commerce";
-    const logo = isCommerce ? CommerceLogoImg : LogoImg;
+    const isStorefront = org?.orgType === "storefront";
+    // string path (not a static import) so the build doesn't fail before the asset is added
+    const logo = isCommerce ? CommerceLogoImg : isStorefront ? "/storefront-logo.png" : LogoImg;
 
     const initials = session?.user
         ? ((session.user.firstName?.[0] ?? "") + (session.user.lastName?.[0] ?? "")).toUpperCase() || session.user.userName?.[0]?.toUpperCase() || "?"
@@ -318,7 +367,7 @@ export default function Navbar() {
                 position="static"
                 elevation={0}
                 sx={{
-                    backgroundColor: isCommerce ? "#2c2c3a" : "#0f172a",
+                    backgroundColor: isCommerce ? "#2c2c3a" : isStorefront ? "#1c2333" : "#0f172a",
                     borderBottom: "1px solid rgba(255,255,255,0.07)",
                     color: "#fff",
                     mb: 2,
@@ -389,7 +438,8 @@ export default function Navbar() {
 function NavDrawer({ open, onClose, initials, base, pathname, session, org }) {
     const sections = buildSections(base, org);
     const isCommerce = org?.orgType === "commerce";
-    const drawerBg = isCommerce ? "#32323f" : SIDEBAR_BG;
+    const isStorefront = org?.orgType === "storefront";
+    const drawerBg = isCommerce ? "#32323f" : isStorefront ? "#1c2333" : SIDEBAR_BG;
 
     const isActive = (item) =>
         item.exact ? pathname === item.href : pathname?.startsWith(item.href);
@@ -413,7 +463,7 @@ function NavDrawer({ open, onClose, initials, base, pathname, session, org }) {
                 <Box sx={{ mb: 1.5, display: "flex", justifyContent: "center" }}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                        src={org?.orgType === "commerce" ? "/commerce-cloud-logo.png" : "/fullfilment_cloud_transparant.png"}
+                        src={isCommerce ? "/commerce-cloud-logo.png" : isStorefront ? "/storefront-logo.png" : "/fullfilment_cloud_transparant.png"}
                         alt="Pythias Technologies"
                         style={{ width: "80%", maxWidth: 200, height: "auto" }}
                     />

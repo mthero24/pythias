@@ -6,7 +6,8 @@ const schema = new mongoose.Schema({
     slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
     // "fulfillment" = Fulfillment Cloud (has own production floor)
     // "commerce"    = Commerce Cloud (orders routed to fulfillment providers)
-    orgType: { type: String, enum: ["fulfillment", "commerce"], default: "fulfillment" },
+    // "storefront"  = Storefront Cloud (standalone storefront; seller self-fulfills / exports orders to their own systems)
+    orgType: { type: String, enum: ["fulfillment", "commerce", "storefront"], default: "fulfillment" },
     tier: {
         type: String,
         // Fulfillment Cloud: starter, professional, business, scale, enterprise
