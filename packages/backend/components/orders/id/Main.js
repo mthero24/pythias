@@ -323,7 +323,7 @@ export function Main({ ord, blanks, source, base = "" }) {
                                                             <RetryImage
                                                                 src={source === "PO"
                                                                     ? `https://images4.tshirtpalace.com/images/productImages/SKU--${(i.colorName || "").toLowerCase()}-${(i.styleCode || "").toLowerCase()}-${imageKeys[0]}.webp?url=${i.design[imageKeys[0]]}&width=150`
-                                                                    : `/api/renderImages/${i.styleCode}-${i.colorName}-${imageKeys[0]}.jpg?blank=${i.styleCode}&colorName=${i.colorName}&design=${i.design[imageKeys[0]]}&width=150&side=${imageKeys[0]}${placeQS(imageKeys[0])}`}
+                                                                    : `/api/renderImages/${i.styleCode}-${i.colorName}-${imageKeys[0]}.jpg?blank=${i.styleCode}&colorName=${i.colorName}&design=${i.design[imageKeys[0]]}&width=150&side=${imageKeys[0]}${placeQS(imageKeys[0])}${base ? `&orgSlug=${base.slice(1)}` : ""}`}
                                                                 alt={i.sku}
                                                                 width={72}
                                                                 height={72}

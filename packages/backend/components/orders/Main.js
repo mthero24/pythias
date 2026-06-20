@@ -794,7 +794,7 @@ export function Main({ ords, pages, page, q, filter, showAll, source, base = "" 
                                                                 <RetryImage
                                                                     src={source === "PO"
                                                                         ? `https://images4.tshirtpalace.com/images/productImages/SKU--${(item.colorName || "").toLowerCase()}-${(item.styleCode || "").toLowerCase()}-${imageKeys[0]}.webp?url=${item.design[imageKeys[0]]}&width=100`
-                                                                        : `/api/renderImages/${item.styleCode}-${item.colorName}-${imageKeys[0]}.jpg?blank=${item.styleCode}&colorName=${item.colorName}&design=${item.design[imageKeys[0]]}&width=100&side=${imageKeys[0]}${placeQS(imageKeys[0])}`}
+                                                                        : `/api/renderImages/${item.styleCode}-${item.colorName}-${imageKeys[0]}.jpg?blank=${item.styleCode}&colorName=${item.colorName}&design=${item.design[imageKeys[0]]}&width=100&side=${imageKeys[0]}${placeQS(imageKeys[0])}${base ? `&orgSlug=${base.slice(1)}` : ""}`}
                                                                     alt={item.sku}
                                                                     style={{ width: "100%", height: "100%", objectFit: "contain" }}
                                                                 />
