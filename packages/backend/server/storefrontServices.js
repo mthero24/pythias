@@ -148,6 +148,25 @@ function customDomainView(site, cfResult) {
     };
 }
 
+// Register the seller's custom domain as a Stripe Payment Method Domain so wallets (Apple Pay /
+// Google Pay / Link / PayPal) work on it. Uses the MARKETPLACE Stripe account (STOREFRONT_STRIPE_SECRET —
+// the one that processes buyer payments), not the platform billing account. Best-effort + idempotent.
+async function registerPaymentMethodDomain(domain) {
+    const key = process.env.STOREFRONT_STRIPE_SECRET;
+    if (!key || !domain) return;
+    const stripe = (await import("stripe")).default(key);
+    const existing = await stripe.paymentMethodDomains.list({ domain_name: domain, limit: 1 });
+    if (existing.data.length) return;   // already registered
+    await stripe.paymentMethodDomains.create({ domain_name: domain });
+}
+async function unregisterPaymentMethodDomain(domain) {
+    const key = process.env.STOREFRONT_STRIPE_SECRET;
+    if (!key || !domain) return;
+    const stripe = (await import("stripe")).default(key);
+    const existing = await stripe.paymentMethodDomains.list({ domain_name: domain, limit: 1 });
+    if (existing.data[0]) await stripe.paymentMethodDomains.update(existing.data[0].id, { enabled: false });
+}
+
 export async function addCustomDomain(orgId, { hostname, siteId } = {}) {
     const host = String(hostname || "").toLowerCase().trim().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
     if (!HOSTNAME_RE.test(host)) throw httpError(400, "Enter a valid domain, e.g. shop.yourbrand.com");
@@ -183,10 +202,13 @@ export async function customDomainStatus(orgId, siteId) {
     try { result = await getCustomHostname(site.customDomain.cfHostnameId); } catch { /* network blip — return last known */ }
     if (result) {
         const status = mapHostnameStatus(result);
-        if (status !== site.customDomain.status || (status === "active" && !site.customDomain.verifiedAt)) {
+        const goingActive = status === "active" && !site.customDomain.verifiedAt;
+        if (status !== site.customDomain.status || goingActive) {
             site.customDomain.status = status;
-            if (status === "active" && !site.customDomain.verifiedAt) site.customDomain.verifiedAt = new Date();
+            if (goingActive) site.customDomain.verifiedAt = new Date();
             await site.save();
+            // Domain is now live → register it for wallets (Apple Pay etc.). Best-effort.
+            if (goingActive) registerPaymentMethodDomain(site.customDomain.hostname).catch(() => {});
         }
     }
     return customDomainView(site, result);
@@ -197,6 +219,7 @@ export async function removeCustomDomain(orgId, siteId) {
     if (site.customDomain?.cfHostnameId) {
         try { await deleteCustomHostname(site.customDomain.cfHostnameId); } catch { /* ignore */ }
     }
+    if (site.customDomain?.hostname) unregisterPaymentMethodDomain(site.customDomain.hostname).catch(() => {});  // disable wallets for it
     await StorefrontSite.updateOne({ _id: site._id }, { $unset: { customDomain: "" } });
     return { ok: true };
 }
