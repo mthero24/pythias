@@ -637,11 +637,11 @@ export default function CreateYourOwn({ blanks = [] }) {
     const productsBody = (<>
         <div style={lbl}>Choose a product</div>
         <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search styles…" style={{ ...field, width: "100%" }} />
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10, marginTop: 14 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 10, marginTop: 14 }}>
             {blanks.filter((b) => b.name.toLowerCase().includes(search.toLowerCase())).map((b) => {
                 const on = b.id === blank?.id;
                 return (
-                    <button key={b.id} onClick={() => { changeBlank(b); setTool(null); }} style={{ border: "2px solid " + (on ? "var(--sf-accent, #635bff)" : "#eef2f7"), borderRadius: 14, background: "#fff", padding: 8, cursor: "pointer", textAlign: "center" }}>
+                    <button key={b.id} onClick={() => { changeBlank(b); setTool(null); }} style={{ minWidth: 0, border: "2px solid " + (on ? "var(--sf-accent, #635bff)" : "#eef2f7"), borderRadius: 14, background: "#fff", padding: 8, cursor: "pointer", textAlign: "center" }}>
                         <div style={{ width: "100%", aspectRatio: "1", background: "#f8fafc", borderRadius: 10, overflow: "hidden" }}>
                             {b.image && <img src={`${b.image}?width=200&height=200`} alt={b.name} style={{ width: "100%", height: "100%", objectFit: "contain" }} />}
                         </div>
