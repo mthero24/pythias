@@ -58,7 +58,9 @@ export async function quoteCart({ orgId, site, customer, items, redeemCents, pro
 
     // Shipping: the available methods for the buyer's country + the rate for the one they picked. A
     // country the seller doesn't ship to yields no options → shipsTo:false (checkout is blocked upstream).
-    const ship = shippingOptions(site, { subtotalCents, itemCount, country: shippingCountry });
+    // Free-shipping-over-$ threshold applies to the POST-discount subtotal — a discount can drop an
+    // order below it (e.g. $100 free-ship threshold, $100 cart − $12 discount = $88 → not free).
+    const ship = shippingOptions(site, { subtotalCents: Math.max(0, subtotalCents - discountCents), itemCount, country: shippingCountry });
     const chosen = ship.options.find((o) => o.id === shippingMethod) || ship.options[0] || null;
     const shippingCents = freeShipping ? 0 : (chosen?.amountCents || 0);
 
