@@ -23,8 +23,23 @@ function getSessionId() {
     return s;
 }
 
+// Only count REAL buyer visits — exclude localhost/dev, the editor's draft-preview (?preview/?pv),
+// and any iframe-embedded render (the builder's live preview). Otherwise dev + editor sessions skew
+// the field metrics (e.g. an 78s "LCP" from previewing an unpublished store on localhost).
+function isRealVisit() {
+    try {
+        const h = location.hostname;
+        if (h === "localhost" || h.startsWith("127.") || h === "::1" || h.endsWith(".localhost")) return false;
+        const sp = new URLSearchParams(location.search);
+        if (sp.has("preview") || sp.has("pv")) return false;
+        if (window.self !== window.top) return false;   // embedded = editor/builder preview
+    } catch { return false; }
+    return true;
+}
+
 // Reliable fire-and-forget send (survives page unload).
 function beacon(payload) {
+    if (!isRealVisit()) return;
     try {
         const body = JSON.stringify(payload);
         if (navigator.sendBeacon) navigator.sendBeacon(ENDPOINT, new Blob([body], { type: "application/json" }));
