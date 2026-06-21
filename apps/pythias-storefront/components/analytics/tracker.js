@@ -75,6 +75,11 @@ export default function AnalyticsTracker() {
     useEffect(() => {
         const vitals = {};
         const observers = [];
+        // LCP recorded at/after the page is first hidden is invalid — a tab loaded in the background
+        // (or sent there) reports the paint as the moment it finally surfaces, which logged absurd
+        // 800s+ "LCP" values that skewed the rollup. web-vitals' rule: ignore LCP once the page has
+        // been hidden (firstHiddenTime = 0 if it loaded hidden).
+        let firstHiddenTime = document.visibilityState === "hidden" ? 0 : Infinity;
         const obs = (type, cb, opts) => {
             try { const o = new PerformanceObserver(cb); o.observe({ type, buffered: true, ...opts }); observers.push(o); } catch { /* unsupported */ }
         };
@@ -87,7 +92,7 @@ export default function AnalyticsTracker() {
             if (fcp) vitals.fcp = Math.round(fcp.startTime);
         } catch { /* ignore */ }
 
-        obs("largest-contentful-paint", (l) => { const e = l.getEntries().at(-1); if (e) vitals.lcp = Math.round(e.startTime); });
+        obs("largest-contentful-paint", (l) => { const e = l.getEntries().at(-1); if (e && e.startTime < firstHiddenTime) vitals.lcp = Math.round(e.startTime); });
         let cls = 0;
         obs("layout-shift", (l) => { for (const e of l.getEntries()) if (!e.hadRecentInput) cls += e.value; vitals.cls = Math.round(cls * 1000) / 1000; });
         let inp = 0;
@@ -97,12 +102,15 @@ export default function AnalyticsTracker() {
         const flush = () => {
             if (flushed || !Object.keys(vitals).length) return;
             flushed = true;
+            // Safety net: a >60s LCP is never a real foreground paint — drop it so one stray
+            // backgrounded tab can't skew the average (we saw a single session report ~846s).
+            if (vitals.lcp > 60000) delete vitals.lcp;
             observers.forEach((o) => { try { o.takeRecords?.(); o.disconnect(); } catch { /* ignore */ } });
             beacon({ type: "vitals", sessionId: getSessionId(), path: window.location.pathname, vitals });
             // Time on page (does not count as another pageview).
             beacon({ type: "duration", sessionId: getSessionId(), durationMs: Date.now() - startRef.current });
         };
-        const onHide = () => { if (document.visibilityState === "hidden") flush(); };
+        const onHide = () => { if (document.visibilityState === "hidden") { firstHiddenTime = Math.min(firstHiddenTime, performance.now()); flush(); } };
         document.addEventListener("visibilitychange", onHide);
         window.addEventListener("pagehide", flush);
         return () => { document.removeEventListener("visibilitychange", onHide); window.removeEventListener("pagehide", flush); flush(); };
