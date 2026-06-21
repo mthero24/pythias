@@ -344,7 +344,11 @@ export function Main({ ord, blanks, source, base = "" }) {
                                                 ? `&xPct=${p.xPct ?? 0}&yPct=${p.yPct ?? 0}&wPct=${p.wPct}&hPct=${p.hPct}`
                                                 : "";
                                         };
-                                        const blankObj = blanks.filter(b => b._id === i.blank)[0];
+                                        const blankObj = blanks.filter(b => String(b._id) === String(i.blank))[0];
+                                        // Render the mockup with the RESOLVED blank's own code. On a fulfiller (premier) the
+                                        // item's styleCode is the seller's code, but the local blank has a different code —
+                                        // using it lets renderImages find the garment + composite the design (passed by URL).
+                                        const renderCode = blankObj?.code || i.styleCode;
                                         const blankImage = i.isBlank && i.blank && i.color
                                             ? blankObj?.images?.filter(im => im.color === i.color)[0]?.image?.replace("images1.pythiastechnologies.com", "images2.pythiastechnologies.com/origin")
                                             : null;
@@ -374,7 +378,7 @@ export function Main({ ord, blanks, source, base = "" }) {
                                                             <RetryImage
                                                                 src={source === "PO"
                                                                     ? `https://images4.tshirtpalace.com/images/productImages/SKU--${(i.colorName || "").toLowerCase()}-${(i.styleCode || "").toLowerCase()}-${imageKeys[0]}.webp?url=${i.design[imageKeys[0]]}&width=150`
-                                                                    : `/api/renderImages/${i.styleCode}-${i.colorName}-${imageKeys[0]}.jpg?blank=${i.styleCode}&colorName=${i.colorName}&design=${i.design[imageKeys[0]]}&width=150&side=${imageKeys[0]}${placeQS(imageKeys[0])}${base ? `&orgSlug=${base.slice(1)}` : ""}`}
+                                                                    : `/api/renderImages/${renderCode}-${i.colorName}-${imageKeys[0]}.jpg?blank=${renderCode}&colorName=${i.colorName}&design=${i.design[imageKeys[0]]}&width=150&side=${imageKeys[0]}${placeQS(imageKeys[0])}${base ? `&orgSlug=${base.slice(1)}` : ""}`}
                                                                 alt={i.sku}
                                                                 width={72}
                                                                 height={72}

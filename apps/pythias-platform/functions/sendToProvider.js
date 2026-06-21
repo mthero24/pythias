@@ -49,7 +49,7 @@ export async function sendOrderToProvider(providerSlug, order, items) {
     const cfg = PROVIDER_INGEST[providerSlug];
     if (!cfg?.url || !cfg?.secret) return { skipped: true, reason: "no_ingest_config" };
 
-    const { Organization, PlatformBlank } = await import("@pythias/mongo");
+    const { Organization, PlatformBlank, ProviderCatalog } = await import("@pythias/mongo");
 
     // The seller's return address — provider ships blind under the seller's brand.
     let returnAddress = order.returnAddress ?? null;
@@ -58,42 +58,61 @@ export async function sendOrderToProvider(providerSlug, order, items) {
         returnAddress = org?.returnAddress ?? null;
     }
 
-    // Resolve each item's garment to its MANUFACTURER STYLE — the provider-agnostic
-    // identity. The provider maps the manufacturer style to its own blank.
+    // Resolve each item's MANUFACTURER STYLE (provider-agnostic garment id) + CANONICAL blank, so we
+    // can price the order at the PROVIDER's wholesale (Premier's order must show what THEY earn, not the
+    // seller's retail) and attach a ready-to-display image (Premier's DB can't re-render the seller's design).
     const blankIds = [...new Set(items.map(i => i.blank?.toString()).filter(Boolean))];
     const blanks = blankIds.length
-        ? await PlatformBlank.find({ _id: { $in: blankIds } }).select("manufacturerStyle code").lean()
+        ? await PlatformBlank.find({ _id: { $in: blankIds } }).select("manufacturerStyle code type blanks").lean()
         : [];
-    const mfrOf = Object.fromEntries(blanks.map(b => [b._id.toString(), (b.manufacturerStyle?.trim() || b.code || "")]));
+    const bMap = Object.fromEntries(blanks.map(b => [b._id.toString(), b]));
+    const mfrOf = (id) => { const b = bMap[id]; return (b?.manufacturerStyle?.trim() || b?.code || ""); };
+    const canonicalOf = (id) => { const b = bMap[id]; return (b?.type === "alias" && b?.blanks?.length) ? String(b.blanks[0]) : id; };
+
+    // Provider wholesale per (canonical, color, size) from ProviderCatalog (cents) = the provider's revenue.
+    const provOrg = await Organization.findOne({ slug: providerSlug }).select("_id").lean();
+    const wholesale = new Map();
+    if (provOrg) {
+        for (const i of items) {
+            const key = `${canonicalOf(i.blank?.toString())}|${i.color}|${i.sizeName}`;
+            if (wholesale.has(key)) continue;
+            const cat = await ProviderCatalog.findOne({ providerId: provOrg._id, blankId: canonicalOf(i.blank?.toString()), colorId: i.color, size: i.sizeName, active: true }).select("wholesalePrice").lean();
+            wholesale.set(key, cat?.wholesalePrice != null ? cat.wholesalePrice / 100 : null);
+        }
+    }
+    const wholesaleOf = (i) => wholesale.get(`${canonicalOf(i.blank?.toString())}|${i.color}|${i.sizeName}`);
+
+    let providerTotal = 0;
+    const payloadItems = items.map((i) => {
+        const w = wholesaleOf(i);
+        const price = w != null ? w : (i.price || 0);   // fall back to line price if not in the catalog
+        providerTotal += price;
+        return {
+            sku:       i.sku,
+            manufacturerStyle: mfrOf(i.blank?.toString()) || i.styleCode || "",
+            styleCode: i.styleCode,
+            colorName: i.colorName,
+            sizeName:  i.sizeName,
+            // Design artwork map travels with the order — the provider renders the mockup from this +
+            // its own blank (no need to push product/image data into its DB).
+            design:    i.design,
+            personalization: i.personalization || undefined,
+            printType: i.type,
+            price,                 // provider wholesale — what Premier earns, not the seller's retail
+            quantity:  1,
+        };
+    });
 
     const payload = {
         poNumber:        order.poNumber,
         orderId:         order.orderId,
         customerEmail:   order.customerEmail,
-        total:           order.total,
-        shippingCost:    order.shippingCost,
-        discountAmount:  order.discountAmount,
-        discountName:    order.discountName,
+        total:           Math.round(providerTotal * 100) / 100,   // provider's wholesale total
         shippingType:    order.shippingType,
         shipByDate:      order.shipByDate,
         shippingAddress: order.shippingAddress,
         returnAddress,
-        items: items.map((i) => ({
-            sku:       i.sku,
-            // Manufacturer style is the provider-agnostic garment key; styleCode kept as fallback.
-            manufacturerStyle: mfrOf[i.blank?.toString()] || i.styleCode || "",
-            styleCode: i.styleCode,
-            colorName: i.colorName,
-            sizeName:  i.sizeName,
-            design:    i.design,
-            // Buyer "create your own" artwork + per-side normalized placement; the provider builds the
-            // design map + print placement from this when there's no pre-made design.
-            personalization: i.personalization || undefined,
-            printType: i.type,
-            price:     i.price,
-            discount:  i.discount,
-            quantity:  1,
-        })),
+        items: payloadItems,
     };
 
     try {
