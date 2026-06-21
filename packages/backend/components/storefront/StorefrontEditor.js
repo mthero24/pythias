@@ -2279,13 +2279,14 @@ function SeoTab({ work, set }) {
     const setB = (k, v) => set((w) => { w.businessInfo = { ...w.businessInfo, [k]: v }; });
 
     const analyticsFields = [
-        ["ga4Id", "Google tag / GA4 (G-…)"], ["gtmId", "Google Tag Manager (GTM-…)"],
+        ["ga4Id", "Google tag / GA4 (G-…)"], ["ga4ApiSecret", "GA4 API secret (optional — server-side, blocker-proof)"], ["gtmId", "Google Tag Manager (GTM-…)"],
         ["metaPixelId", "Meta pixel ID"], ["tiktokPixelId", "TikTok pixel ID"],
         ["snapPixelId", "Snap pixel ID"], ["pinterestTagId", "Pinterest tag ID"],
     ];
     // Where to find each tracking/pixel ID (shown as an in-editor guide).
     const PIXEL_GUIDE = [
         { name: "Google Analytics (GA4)", id: "G-XXXXXXX", url: "https://analytics.google.com", steps: "Admin (gear, bottom-left) → Data streams → tap your web stream → copy the Measurement ID at the top (starts with G-)." },
+        { name: "GA4 API secret (optional — server-side tracking)", id: "Measurement Protocol secret", url: "https://analytics.google.com", steps: "Same web stream → Measurement Protocol API secrets → Create → copy the Secret value. Paste it beside your GA4 ID and we track server-side — bypassing ad blockers, Brave & Pi-hole so you don't lose ~10–40% of visitors. Recommended." },
         { name: "Google Tag Manager", id: "GTM-XXXXXX", url: "https://tagmanager.google.com", steps: "Open your container — the ID (GTM-…) is shown at the top of the workspace, next to the container name." },
         { name: "Meta (Facebook/Instagram) Pixel", id: "15-16 digit number", url: "https://business.facebook.com/events_manager", steps: "Events Manager → Data sources → select your pixel/dataset → the Dataset/Pixel ID (a long number) is under the name. Create one with “Connect data source → Web” if you have none." },
         { name: "TikTok Pixel", id: "Letters + numbers", url: "https://ads.tiktok.com", steps: "Ads Manager → Assets → Events → Web events → Manage → your pixel → copy the Pixel ID." },
