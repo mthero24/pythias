@@ -5,6 +5,7 @@ import { getToken } from "next-auth/jwt";
 import { logActivity, userFromToken, logChange, storefront } from "@pythias/backend/server";
 import { notifyPartner } from "@/lib/notifyPartner";
 import { shapeOrder } from "@/lib/partnerShape";
+import { cancelRoutedOrder } from "@/functions/sendToProvider";
 
 async function cancelMarketplace(order) {
     if (!order.marketplaceConnectionId) return null;
@@ -80,6 +81,12 @@ export async function POST(req) {
     });
 
     notifyPartner(orgId, "order.cancelled", shapeOrder({ ...order, status: "cancelled", canceled: true }));
+
+    // Commerce Cloud: propagate the cancellation to the fulfiller so they stop production on their copy.
+    if (order.source === "storefront") {
+        try { await cancelRoutedOrder(order._id, { poNumber: order.poNumber, reason: "cancelled_by_seller" }); }
+        catch (e) { console.warn("[cancel] provider propagation failed:", e.message); }
+    }
 
     // Refund the buyer too, if requested (storefront orders only — the marketplace Stripe key + payout
     // live in the storefront app, so the money moves there via refundStorefrontOrder).

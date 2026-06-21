@@ -138,3 +138,27 @@ export async function POST(request) {
 
     return NextResponse.json({ success: true, orderId: order._id.toString(), poNumber: data.poNumber, items: itemIds.length }, { status: 201 });
 }
+
+// Cancel a Commerce Cloud order here when the seller cancelled it (or an accepted return) on the
+// platform — stops production. Won't touch an order that already shipped. Body: { poNumber, reason }
+export async function DELETE(request) {
+    const secret = request.headers.get("x-pythias-secret");
+    if (!process.env.PROVIDER_INGEST_SECRET || secret !== process.env.PROVIDER_INGEST_SECRET) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const data = await request.json().catch(() => null);
+    if (!data?.poNumber) return NextResponse.json({ error: "poNumber is required" }, { status: 400 });
+
+    const order = await Order.findOne({ poNumber: data.poNumber, marketplace: "Commerce Cloud" });
+    if (!order) return NextResponse.json({ success: true, notFound: true });
+    if (order.canceled || order.status === "cancelled") return NextResponse.json({ success: true, alreadyCancelled: true });
+    if (["shipped", "delivered", "out for delivery"].includes(String(order.status).toLowerCase())) {
+        return NextResponse.json({ success: false, alreadyShipped: true });
+    }
+
+    order.status = "cancelled"; order.canceled = true;
+    await order.save();
+    await Item.updateMany({ order: order._id }, { status: "cancelled", canceled: true });
+    logActivity({ action: "order_cancelled", entity: "order", entityId: order._id, entityName: data.poNumber, userName: "commerce-cloud", provider: "premierPrinting" });
+    return NextResponse.json({ success: true, cancelled: true, orderId: order._id.toString() });
+}

@@ -97,12 +97,16 @@ export function Main({ ord, blanks, source, base = "" }) {
     const [refundErr, setRefundErr] = useState("");
     const [refundAmount, setRefundAmount] = useState("");   // dollars; blank = full remaining
 
-    // Refunds only apply to storefront (Commerce Cloud) orders — that's where the payment lives.
-    const isStorefront = order.source === "storefront";
+    // Refunds apply to Commerce Cloud orders. On the platform (seller) the payment is on this order;
+    // on premier (fulfiller) the copy has no paymentRef — the route refunds via the platform by poNumber.
+    const isCommerceOrder = order.source === "storefront" || order.marketplace === "Commerce Cloud";
     const orderTotalCents = Math.round((order.total || 0) * 100);
+    const shippingCents = Math.round((order.shippingCost || 0) * 100);
     const refundedCents = order.refundedCents || 0;
-    const refundableCents = Math.max(0, orderTotalCents - refundedCents);
-    const canRefund = isStorefront && !!order.paymentRef && refundableCents > 0;
+    const shippedNow = ["shipped", "delivered", "out for delivery", "partially_shipped"].includes((order.status || "").toLowerCase());
+    const refundableCents = Math.max(0, orderTotalCents - refundedCents);                    // hard cap (can include shipping)
+    const noShipRefundCents = Math.max(0, orderTotalCents - shippingCents - refundedCents);  // items + tax, shipping withheld
+    const canRefund = isCommerceOrder && refundableCents > 0;
 
     useEffect(() => {
         const shippedStatuses = ["Shipped", "shipped", "Out For Delivery"];
@@ -157,7 +161,7 @@ export function Main({ ord, blanks, source, base = "" }) {
     const cancelOrder = async () => {
         setCancelling(true); setCancelErr("");
         try {
-            const doRefund = isStorefront && cancelRefund && refundableCents > 0;
+            const doRefund = isCommerceOrder && cancelRefund && refundableCents > 0;
             const res = await axios.post("/api/orders/cancel", { id: order._id, refund: doRefund, refundAmountCents: doRefund ? refundableCents : undefined });
             const rf = res.data?.refund;
             setOrder(prev => ({ ...prev, status: "cancelled", canceled: true, ...(rf && rf.refundedCents != null ? { refundedCents: rf.refundedCents, refunded: rf.fullyRefunded } : {}) }));
@@ -264,7 +268,7 @@ export function Main({ ord, blanks, source, base = "" }) {
                             </Button>
                         )}
                         {canRefund && (
-                            <Button size="small" variant="outlined" color="warning" startIcon={<ReplayIcon />} onClick={() => { setRefundErr(""); setRefundAmount(""); setRefundOpen(true); }} sx={{ fontSize: "0.75rem" }}>
+                            <Button size="small" variant="outlined" color="warning" startIcon={<ReplayIcon />} onClick={() => { setRefundErr(""); setRefundAmount(((shippedNow ? noShipRefundCents : refundableCents) / 100).toFixed(2)); setRefundOpen(true); }} sx={{ fontSize: "0.75rem" }}>
                                 Refund
                             </Button>
                         )}
@@ -733,7 +737,7 @@ export function Main({ ord, blanks, source, base = "" }) {
                                 : "This order will be cancelled in our system and in ShipStation."
                         }
                     </Typography>
-                    {isStorefront && refundableCents > 0 && (
+                    {isCommerceOrder && refundableCents > 0 && (
                         <FormControlLabel
                             sx={{ mt: 1, display: "block" }}
                             control={<Checkbox checked={cancelRefund} onChange={(e) => setCancelRefund(e.target.checked)} />}
@@ -763,9 +767,14 @@ export function Main({ ord, blanks, source, base = "" }) {
                 </DialogTitle>
                 <DialogContent>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                        Refund <strong>{order.poNumber}</strong>. Leave the amount blank to refund the full remaining balance
-                        (${(refundableCents / 100).toFixed(2)}{refundedCents > 0 ? `; $${(refundedCents / 100).toFixed(2)} already refunded` : ""}).
+                        Refund <strong>{order.poNumber}</strong>{refundedCents > 0 ? ` — $${(refundedCents / 100).toFixed(2)} already refunded` : ""}.{" "}
+                        {shippedNow ? "This order shipped, so shipping isn't included by default." : "Not shipped yet — a full refund includes tax + shipping."}
                     </Typography>
+                    <Stack direction="row" sx={{ flexWrap: "wrap", gap: 1, mb: 1.5 }}>
+                        <Button size="small" variant="outlined" onClick={() => setRefundAmount((refundableCents / 100).toFixed(2))}>Full ${(refundableCents / 100).toFixed(2)}</Button>
+                        {shippingCents > 0 && <Button size="small" variant="outlined" onClick={() => setRefundAmount((noShipRefundCents / 100).toFixed(2))}>No shipping ${(noShipRefundCents / 100).toFixed(2)}</Button>}
+                        {shippingCents > 0 && <Button size="small" variant="outlined" onClick={() => setRefundAmount((Math.min(shippingCents, refundableCents) / 100).toFixed(2))}>Shipping only ${(Math.min(shippingCents, refundableCents) / 100).toFixed(2)}</Button>}
+                    </Stack>
                     <TextField
                         size="small" fullWidth autoFocus
                         label="Refund amount (USD)"

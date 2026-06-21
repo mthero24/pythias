@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { StorefrontReturn, PlatformOrder, PlatformItem, StorefrontCustomer, RewardLedger, StorefrontSite } from "@pythias/mongo";
 import { assertInternal } from "@/lib/internal";
 import { storefrontStripe } from "@/lib/stripe";
-import { routeOrderViaPlatform } from "@/lib/routing";
+import { routeOrderViaPlatform, cancelAtProviderViaPlatform } from "@/lib/routing";
 import { enqueueReturnStatus } from "@/lib/emailFlows";
 import { logError } from "@pythias/backend/server";
 
@@ -23,7 +23,7 @@ export async function POST(req) {
     if (sellerNote != null) ret.sellerNote = sellerNote;
 
     try {
-        if (action === "approve") ret.status = "approved";
+        if (action === "approve") { ret.status = "approved"; await cancelAtProviderViaPlatform(ret.orderId).catch(() => {}); }   // accepted → stop production at the fulfiller
         else if (action === "reject") ret.status = "rejected";
         else if (action === "receive") ret.status = "received";
 
@@ -42,6 +42,7 @@ export async function POST(req) {
                 }
             }
             ret.refundCents = cents; ret.status = "refunded";
+            await cancelAtProviderViaPlatform(ret.orderId).catch(() => {});   // stop production at the fulfiller if not yet shipped
 
         } else if (action === "credit") {
             const order = await PlatformOrder.findById(ret.orderId).select("total").lean();

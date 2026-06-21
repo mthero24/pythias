@@ -2,7 +2,7 @@ import { Items, Order, ApiKeyIntegrations } from "@pythias/mongo";
 import { cancelOrder as cancelShipStation, cancelOrderFaire, cancelOrderMirakl } from "@pythias/integrations";
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
-import { logActivity, userFromToken, logChange, storefront } from "@pythias/backend/server";
+import { logActivity, userFromToken, logChange } from "@pythias/backend/server";
 
 async function cancelMarketplace(order) {
     if (!order.marketplaceConnectionId) return null;
@@ -76,12 +76,23 @@ export async function POST(req) {
         userName, email, provider: "premierPrinting",
     });
 
-    // Refund the buyer too, if requested (storefront orders only). Premier is the fulfiller, so the
-    // order's own (seller) org owns the payment; refundStorefrontOrder moves the money in the storefront app.
+    // Refund the buyer too, if requested. Premier is the fulfiller on its own DB; the payment lives in
+    // the seller's order on the platform, so route the refund there by poNumber.
     let refundResult = null;
-    if (refund && order.source === "storefront") {
-        try { refundResult = await storefront.refundStorefrontOrder(order.orgId, { orderId: id, amountCents: refundAmountCents, reason: "cancellation", by: email }); }
-        catch (e) { refundResult = { error: e.message }; }
+    if (refund && order.marketplace === "Commerce Cloud" && order.poNumber) {
+        const key = process.env.PYTHIAS_INTERNAL_KEY;
+        const base = process.env.PLATFORM_INTERNAL_BASE || "http://127.0.0.1:3010";
+        if (!key) { refundResult = { error: "Refunds not configured" }; }
+        else {
+            try {
+                const r = await fetch(`${base}/api/internal/refund-by-po`, {
+                    method: "POST", headers: { "Content-Type": "application/json", "x-pythias-internal-key": key },
+                    body: JSON.stringify({ poNumber: order.poNumber, amountCents: refundAmountCents, reason: "cancellation", by: email }),
+                });
+                refundResult = await r.json().catch(() => ({}));
+                if (!r.ok) refundResult = { error: refundResult.error || `HTTP ${r.status}` };
+            } catch (e) { refundResult = { error: e.message }; }
+        }
     }
 
     return NextResponse.json({

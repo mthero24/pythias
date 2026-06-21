@@ -23,3 +23,24 @@ export async function routeOrderViaPlatform(orderId) {
         return { ok: false, error: e.message };
     }
 }
+
+// Propagate a cancellation to whichever fulfiller a Commerce Cloud order was routed to (so they stop
+// production). Used when a return is accepted. Best-effort; the provider no-ops if already shipped.
+export async function cancelAtProviderViaPlatform(orderId) {
+    const key = process.env.PYTHIAS_INTERNAL_KEY;
+    if (!key) return { ok: false, error: "PYTHIAS_INTERNAL_KEY not set" };
+    try {
+        const res = await fetch(`${PLATFORM_BASE}/api/internal/cancel-at-provider`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "x-pythias-internal-key": key },
+            body: JSON.stringify({ orderId: String(orderId) }),
+            signal: AbortSignal.timeout(20000),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) return { ok: false, status: res.status, error: data.error || `HTTP ${res.status}` };
+        return { ok: true, ...data };
+    } catch (e) {
+        logError({ error: e, app: "storefront", provider: "storefront", source: "lib/routing cancelAtProviderViaPlatform", context: { orderId: String(orderId) } });
+        return { ok: false, error: e.message };
+    }
+}

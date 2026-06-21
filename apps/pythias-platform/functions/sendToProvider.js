@@ -14,6 +14,37 @@ export function providerHasIngest(slug) {
     return !!(cfg?.url && cfg?.secret);
 }
 
+// Tell a provider to cancel a Commerce Cloud order it received (seller cancelled, or accepted return).
+// Provider keys its copy on poNumber; it won't cancel one that already shipped.
+export async function cancelOrderAtProvider(providerSlug, { poNumber, reason } = {}) {
+    const cfg = PROVIDER_INGEST[providerSlug];
+    if (!cfg?.url || !cfg?.secret) return { skipped: true, reason: "no_ingest_config" };
+    if (!poNumber) return { skipped: true, reason: "no_poNumber" };
+    try {
+        const res = await fetch(cfg.url, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json", "x-pythias-secret": cfg.secret },
+            body: JSON.stringify({ poNumber, reason: reason || "cancelled" }),
+            signal: AbortSignal.timeout(15000),
+        });
+        if (!res.ok) { const body = await res.text().catch(() => ""); return { ok: false, status: res.status, error: body || `HTTP ${res.status}` }; }
+        return { ok: true, ...(await res.json().catch(() => ({}))) };
+    } catch (e) { return { ok: false, error: e.message }; }
+}
+
+// Resolve which provider an order was routed to (RoutingLog) and cancel it there. Safe no-op if the
+// order was never routed/handed off. Used by order cancel + accepted returns on Commerce Cloud.
+export async function cancelRoutedOrder(orderId, { poNumber, reason } = {}) {
+    const { RoutingLog, Organization, PlatformOrder } = await import("@pythias/mongo");
+    const log = await RoutingLog.findOne({ orderId, handoffStatus: "sent" }).sort({ _id: -1 }).lean();
+    if (!log?.selectedProviderId) return { skipped: true, reason: "not_routed" };
+    const prov = await Organization.findById(log.selectedProviderId).select("slug").lean();
+    if (!prov?.slug) return { skipped: true, reason: "no_provider_slug" };
+    let po = poNumber;
+    if (!po) { const o = await PlatformOrder.findById(orderId).select("poNumber").lean(); po = o?.poNumber; }
+    return cancelOrderAtProvider(prov.slug, { poNumber: po, reason });
+}
+
 export async function sendOrderToProvider(providerSlug, order, items) {
     const cfg = PROVIDER_INGEST[providerSlug];
     if (!cfg?.url || !cfg?.secret) return { skipped: true, reason: "no_ingest_config" };

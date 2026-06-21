@@ -21,10 +21,16 @@ export async function POST(req) {
     if (order.source !== "storefront") return NextResponse.json({ error: "Not a storefront order" }, { status: 400 });
 
     const totalCents = Math.round((order.total || 0) * 100);
+    const shippingCents = Math.round((order.shippingCost || 0) * 100);
     const already = order.refundedCents || 0;
-    const remaining = Math.max(0, totalCents - already);
-    // Default to the full remaining balance; clamp a requested amount to what's left.
-    const cents = Math.min(remaining, Math.max(0, Math.round(Number(amountCents) || remaining)));
+    const shipped = ["shipped", "delivered", "out for delivery", "partially_shipped"].includes((order.status || "").toLowerCase());
+    // Stripe can refund up to the full amount paid — that's the hard cap (a seller can still refund
+    // shipping as a goodwill override). But the DEFAULT full refund withholds shipping once the order
+    // has shipped (the label is already paid for); an UNSHIPPED order refunds everything incl. tax + shipping.
+    const maxRefundable = Math.max(0, totalCents - already);
+    const defaultRefund = Math.max(0, (shipped ? Math.max(0, totalCents - shippingCents) : totalCents) - already);
+    const requested = Number(amountCents);
+    const cents = Math.min(maxRefundable, Math.max(0, Math.round(requested > 0 ? requested : defaultRefund)));
     if (cents <= 0) return NextResponse.json({ error: already > 0 ? "Order already fully refunded" : "Nothing to refund" }, { status: 400 });
 
     try {
