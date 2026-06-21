@@ -84,7 +84,7 @@ export async function POST(req) {
 
     // Commerce Cloud: propagate the cancellation to the fulfiller so they stop production on their copy.
     if (order.source === "storefront") {
-        try { await cancelRoutedOrder(order._id, { poNumber: order.poNumber, reason: "cancelled_by_seller" }); }
+        try { const r = await cancelRoutedOrder(order._id, { poNumber: order.poNumber, reason: "cancelled_by_seller" }); console.log("[cancel] provider propagation:", order.poNumber, JSON.stringify(r)); }
         catch (e) { console.warn("[cancel] provider propagation failed:", e.message); }
     }
 

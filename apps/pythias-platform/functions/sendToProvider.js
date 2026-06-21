@@ -36,7 +36,7 @@ export async function cancelOrderAtProvider(providerSlug, { poNumber, reason } =
 // order was never routed/handed off. Used by order cancel + accepted returns on Commerce Cloud.
 export async function cancelRoutedOrder(orderId, { poNumber, reason } = {}) {
     const { RoutingLog, Organization, PlatformOrder } = await import("@pythias/mongo");
-    const log = await RoutingLog.findOne({ orderId, handoffStatus: "sent" }).sort({ _id: -1 }).lean();
+    const log = await RoutingLog.findOne({ orderId, selectedProviderId: { $ne: null } }).sort({ _id: -1 }).lean();
     if (!log?.selectedProviderId) return { skipped: true, reason: "not_routed" };
     const prov = await Organization.findById(log.selectedProviderId).select("slug").lean();
     if (!prov?.slug) return { skipped: true, reason: "no_provider_slug" };
