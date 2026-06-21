@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { Organization, UsageLedger, StorefrontSite } from "@pythias/mongo";
+import { Organization, UsageLedger, StorefrontSite, PaymentReceived } from "@pythias/mongo";
 import { getLimits } from "@/lib/tiers";
 import { getStripe } from "@/lib/stripe";
 import { logError } from "@pythias/backend/server";
@@ -35,6 +35,19 @@ export async function POST(req) {
                     }
                     break;
                 }
+                // One-off onboarding / setup fee paid → record as received money (platform revenue).
+                if (s.metadata?.type === "onboarding" && s.payment_status === "paid" && s.metadata?.orgId) {
+                    const amt = s.amount_total || 0;
+                    if (amt > 0) {
+                        await PaymentReceived.findOneAndUpdate(
+                            { stripeSessionId: s.id },
+                            { $setOnInsert: { orgId: s.metadata.orgId, amountCents: amt, currency: s.currency || "usd", type: "onboarding", stripeSessionId: s.id, description: "Onboarding / setup fee", paidAt: new Date() } },
+                            { upsert: true }
+                        );
+                        if (s.customer) await Organization.findByIdAndUpdate(s.metadata.orgId, { $set: { stripeCustomerId: s.customer } });
+                    }
+                    break;
+                }
                 if (s.metadata?.kind !== "wallet_topup" || s.payment_status !== "paid") break;
                 const amount = parseInt(s.metadata.amountCents, 10) || 0;
                 const set = { "wallet.lastRechargedAt": new Date() };
@@ -50,6 +63,12 @@ export async function POST(req) {
                         $inc: { "wallet.balance": amount },
                         $set: set,
                     });
+                    // Money received (prepaid wallet) — tagged "wallet" so finance can exclude it from platform revenue.
+                    await PaymentReceived.findOneAndUpdate(
+                        { stripeSessionId: s.id },
+                        { $setOnInsert: { orgId: s.metadata.orgId, amountCents: amount, currency: s.currency || "usd", type: "wallet", stripeSessionId: s.id, description: "Wallet top-up", paidAt: new Date() } },
+                        { upsert: true }
+                    );
                 }
                 break;
             }
@@ -107,6 +126,29 @@ export async function POST(req) {
                     { invoiced: true, stripeInvoiceId: invoice.id },
                     { upsert: true }
                 );
+
+                // Record the TRUE money received (subscription base fee + any overage on this invoice).
+                // Idempotent on stripeInvoiceId so webhook retries don't double-count.
+                const paidAmount = invoice.amount_paid || 0;
+                if (paidAmount > 0) {
+                    const reason = invoice.billing_reason || "";
+                    const recurring = (invoice.lines?.data || []).some((l) => l.price?.recurring);
+                    const type = reason.includes("subscription") || recurring ? "subscription" : "overage";
+                    await PaymentReceived.findOneAndUpdate(
+                        { stripeInvoiceId: invoice.id },
+                        { $setOnInsert: {
+                            orgId: org._id,
+                            amountCents: paidAmount,
+                            currency: invoice.currency || "usd",
+                            type,
+                            period,
+                            stripeInvoiceId: invoice.id,
+                            description: invoice.lines?.data?.[0]?.description || reason || "Platform invoice",
+                            paidAt: new Date(((invoice.status_transitions?.paid_at) || invoice.created) * 1000),
+                        } },
+                        { upsert: true }
+                    );
+                }
                 // Reset monthly order counter after invoice
                 await Organization.findByIdAndUpdate(org._id, {
                     'usage.ordersThisMonth': 0,

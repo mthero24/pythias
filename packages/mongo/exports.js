@@ -66,6 +66,7 @@ export { default as Settings } from "./models/Settings";
 export { default as Organization } from "./models/Organization";
 export { PartnerApiKey } from "./models/PartnerApiKey";
 export { default as UsageLedger } from "./models/UsageLedger";
+export { default as PaymentReceived } from "./models/PaymentReceived";
 export { default as OrgIntegrations } from "./models/OrgIntegrations";
 export { default as KlingVideoPlatform } from "./models/KlingVideoPlatform";
 export { default as KlingInvoicePlatform } from "./models/KlingInvoicePlatform";
