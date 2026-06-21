@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Order, Item, Blank } from "@pythias/mongo";
 import { logActivity } from "@pythias/backend/server";
 import { generatePieceID } from "@pythias/integrations";
+import { updateInventory, recomputeStockStatus } from "@/functions/pullOrders";
 
 // Ingest endpoint for orders routed to Premier by the Pythias platform (Commerce Cloud).
 // Server-to-server: authenticated by a shared secret, NOT a user session.
@@ -134,6 +135,10 @@ export async function POST(request) {
 
     order.items = itemIds;
     await order.save();
+
+    // Attach inventory + compute stock status (inStock / attached / ordered) — same as a normal pulled order.
+    try { await updateInventory(); await recomputeStockStatus(); }
+    catch (e) { console.warn("[CC ingest] inventory recompute failed:", e.message); }
 
     logActivity({ action: "order_received", entity: "order", entityId: order._id, entityName: data.poNumber || "", userName: "commerce-cloud", provider: "premierPrinting" });
 
