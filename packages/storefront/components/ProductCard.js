@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { productHref } from "../lib/url";
+import { cfImg } from "../lib/cfImage";
 
 // Product card for the FeaturedProducts section and the catalog/search/collection grids. Expects a
 // shaped product (productCardData): image, priceCents, colorImages [{name,hex,image}], altImage.
@@ -68,7 +69,7 @@ export default function ProductCard({ product, rating, urlMode = "slug", preferC
             style={{ display: "block", textDecoration: "none", color: "inherit", transition: "transform 200ms ease", transform: hovering ? "translateY(-4px)" : "none" }}>
             <div style={{ position: "relative", aspectRatio: "1/1", background: "#f3f4f6", borderRadius: 12, overflow: "hidden",
                 boxShadow: hovering ? "0 14px 30px rgba(16,24,40,0.16)" : "0 1px 3px rgba(16,24,40,0.06)", transition: "box-shadow 200ms ease" }}>
-                {displayed && <img src={displayed} alt={product.title}
+                {displayed && <img src={cfImg(displayed, 400)} alt={product.title}
                     style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 450ms ease", transform: hovering ? "scale(1.06)" : "scale(1)" }} />}
 
                 {/* Top-left badges: Sale / New / styles (one priority badge + styles) */}
@@ -113,7 +114,7 @@ export default function ProductCard({ product, rating, urlMode = "slug", preferC
                             style={{ width: 20, height: 20, borderRadius: "50%", cursor: "pointer", flexShrink: 0, padding: 0,
                                 border: "1px solid rgba(0,0,0,0.2)",
                                 boxShadow: img && img === c.image ? "0 0 0 2px var(--sf-accent,#f59e0b)" : "none",
-                                background: c.hex ? c.hex : (c.image ? `#fff url(${c.image}) center/cover no-repeat` : "#ddd") }} />
+                                background: c.hex ? c.hex : (c.image ? `#fff url(${cfImg(c.image, 80)}) center/cover no-repeat` : "#ddd") }} />
                     ))}
                     {colorImages.length > 6 && <span style={{ fontSize: "0.72rem", color: "#94a3b8" }}>+{colorImages.length - 6} more</span>}
                 </div>
@@ -144,7 +145,7 @@ export default function ProductCard({ product, rating, urlMode = "slug", preferC
                         {styleProducts.map((s) => (
                             <a key={s.id} href={productHref(s, urlMode)} style={{ textDecoration: "none", color: "inherit" }}>
                                 <div style={{ aspectRatio: "1/1", background: "#f3f4f6", borderRadius: 8, overflow: "hidden" }}>
-                                    {s.image && <img src={s.image} alt={s.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
+                                    {s.image && <img src={cfImg(s.image, 200)} alt={s.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
                                 </div>
                                 <div style={{ marginTop: 6, fontSize: "0.85rem", fontWeight: 600 }}>{s.label}</div>
                                 {typeof s.priceCents === "number" && s.priceCents > 0 && (
