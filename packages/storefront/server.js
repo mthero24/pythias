@@ -113,12 +113,26 @@ const RESOLVERS = {
     collection,
 };
 
+// Short-TTL in-process cache for section data (the heavy featured/collection product queries).
+// Keyed by orgId + section type + settings → no cross-tenant mixing; published-catalog data only
+// (no draft), so ~60s staleness is fine. Bounded size so memory can't grow unbounded across orgs.
+const SECTION_TTL = 60_000;
+const SECTION_MAX = 800;
+const sectionCache = new Map();   // key -> { value, exp }
+function sectionCacheSet(key, value) {
+    if (sectionCache.size >= SECTION_MAX) sectionCache.delete(sectionCache.keys().next().value);
+    sectionCache.set(key, { value, exp: Date.now() + SECTION_TTL });
+}
+
 export async function resolveSectionData(sections = [], ctx = {}) {
     return Promise.all(
         sections.map(async (s) => {
             const fn = RESOLVERS[s?.type];
             if (!fn) return null;
-            try { return await fn(s.settings ?? {}, ctx); }
+            const key = `${ctx.orgId}|${s.type}|${JSON.stringify(s.settings ?? {})}`;
+            const hit = sectionCache.get(key);
+            if (hit && hit.exp > Date.now()) return hit.value;
+            try { const v = await fn(s.settings ?? {}, ctx); sectionCacheSet(key, v); return v; }
             catch { return null; }
         })
     );

@@ -44,14 +44,23 @@ export async function bestAutomaticDiscount(orgId, subtotalCents) {
 // Active automatic discount for DISPLAY (badge / strikethrough on cards, PDP, cart popup).
 // Ignores minSubtotal (that's enforced at checkout by bestAutomaticDiscount) — this is purely so
 // buyers SEE the deal. Returns the strongest active one's { type, value, title } or null.
+const _autoDiscCache = new Map();   // orgId -> { value, exp } — short TTL so it doesn't run every page view
 export async function activeAutomaticDiscount(orgId) {
+    const k = String(orgId || "");
+    const hit = _autoDiscCache.get(k);
+    if (hit && hit.exp > Date.now()) return hit.value;
     const autos = await StorefrontDiscount.find({ orgId, automatic: true, active: true }).lean();
     const now = new Date();
     const live = autos.filter((d) => (!d.expiresAt || new Date(d.expiresAt) >= now) && (d.maxUses == null || (d.usedCount || 0) < d.maxUses));
-    if (!live.length) return null;
-    live.sort((a, b) => (b.type === "percent" ? b.value : -1) - (a.type === "percent" ? a.value : -1));
-    const d = live[0];
-    return { type: d.type, value: d.value, title: d.title || null };
+    let value = null;
+    if (live.length) {
+        live.sort((a, b) => (b.type === "percent" ? b.value : -1) - (a.type === "percent" ? a.value : -1));
+        const d = live[0];
+        value = { type: d.type, value: d.value, title: d.title || null };
+    }
+    if (_autoDiscCache.size > 1000) _autoDiscCache.delete(_autoDiscCache.keys().next().value);
+    _autoDiscCache.set(k, { value, exp: Date.now() + 60_000 });
+    return value;
 }
 
 // Count a redemption (called once an order is placed with this code).
