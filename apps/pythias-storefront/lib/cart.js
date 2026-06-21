@@ -75,6 +75,11 @@ export async function validateCart(orgId, items = []) {
         subtotalCents += priceCents * qty;
         wholesaleTotalCents += wholesaleCents * qty;
         const vBlank = v.blank ? blankById[String(v.blank)] : null;
+        // Resolve the size NAME (the variant often stores a size _id in `size`); resolveVariantSize
+        // maps it back via the blank's sizes ([{_id,name}]). Otherwise the order shows a raw _id.
+        const sizeName = resolveVariantSize(v, vBlank?.sizes);
+        // The blank's size subdoc _id (production/premier keys size by _id, not the label).
+        const sizeMatch = (vBlank?.sizes || []).find((s) => String(s.name) === String(sizeName));
         lines.push({
             productId: String(p._id),
             // Style/blank code for the production floor — prefer the blank's code; the product `code`
@@ -83,9 +88,8 @@ export async function validateCart(orgId, items = []) {
             title: p.title,
             sku: v.sku ?? null,
             colorName: v.color?.name ?? v.ids?.colorName ?? "",
-            // Resolve the size NAME (the variant often stores a size _id in `size`); resolveVariantSize
-            // maps it back via the blank's sizes ([{_id,name}]). Otherwise the order shows a raw _id.
-            sizeName: resolveVariantSize(v, vBlank?.sizes),
+            sizeName,
+            sizeId: sizeMatch?._id ? String(sizeMatch._id) : null,
             image: v.image ?? p.productImages?.find((i) => i.image)?.image ?? null,
             // Fulfillment-routing refs: routeOrder matches providers on blank+color+sizeName;
             // sendToProvider ships the design artwork + print type.

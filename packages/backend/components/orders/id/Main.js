@@ -264,6 +264,12 @@ export function Main({ ord, blanks, source, base = "" }) {
                                             { label: "Discount", value: `-$${(order.discountAmount).toFixed(2)}` },
                                             { label: "Discount Name", value: order.discountName || "—" },
                                         ] : []),
+                                        ...(order.shippingCost != null ? [
+                                            { label: "Shipping", value: `$${(order.shippingCost || 0).toFixed(2)}${order.shippingMethod ? ` (${order.shippingMethod})` : ""}` },
+                                        ] : []),
+                                        ...(order.taxAmountCents ? [
+                                            { label: "Tax", value: `$${(order.taxAmountCents / 100).toFixed(2)}` },
+                                        ] : []),
                                     ].map(({ label, value }) => (
                                         <Grid2 key={label} size={{ xs: 6, sm: 4 }}>
                                             <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 0.25, textTransform: "uppercase", letterSpacing: 0.5, fontWeight: 600 }}>{label}</Typography>

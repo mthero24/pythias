@@ -173,6 +173,8 @@ export async function placeOrder({ orgId, site, customer, items, shippingAddress
                 quantity: "1",                       // required (string)
                 order: order._id, orgId, marketplace: "Commerce Cloud", poNumber, orderId: poNumber,
                 styleCode: l.styleCode, colorName: l.colorName, sizeName: l.sizeName,
+                // The blank's size subdoc _id (production keys size by _id; sizeName is the label).
+                ...(l.sizeId ? { size: l.sizeId } : {}),
                 // Routing refs (so routeOrder can match a provider) + artwork for the provider.
                 blank: l.blankId || null,
                 color: l.colorId || null,
