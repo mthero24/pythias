@@ -60,6 +60,7 @@ const schema = new mongoose.Schema(
       ref: "Color",
     },
     isBlank: { type: Boolean, default: false },
+    isCommerceCloud: { type: Boolean, default: false },   // routed from Commerce Cloud — design travels as a map (no local Design doc)
     sizeName: String,
     styleCode: String,
     colorName: String,

@@ -60,6 +60,8 @@ export async function POST(request) {
     }
 
     const now = new Date();
+    // Commerce Cloud orders without an explicit ship-by get a 4-day production deadline.
+    const shipBy = data.shipByDate ? new Date(data.shipByDate) : new Date(now.getTime() + 4 * 864e5);
     const orderId = data.orderId || `CC-${Date.now()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
 
     const order = new Order({
@@ -70,7 +72,7 @@ export async function POST(request) {
         status:        "awaiting_shipment",
         paid:          true,
         date:          now,
-        shipByDate:    data.shipByDate ? new Date(data.shipByDate) : null,
+        shipByDate:    shipBy,
         shippingType:  data.shippingType || "Standard",
         total:         data.total ?? 0,
         shippingCost:  data.shippingCost ?? 0,
@@ -108,6 +110,7 @@ export async function POST(request) {
                 status:      "awaiting_shipment",
                 paid:        true,
                 custom:      isCustom,
+                isCommerceCloud: true,
                 order:       order._id,
                 orderId,
                 poNumber:    data.poNumber,
@@ -126,7 +129,7 @@ export async function POST(request) {
                 personalization: line.personalization || undefined,   // carries per-side normalized placement
                 designRef:   null,
                 date:        now,
-                shipByDate:  data.shipByDate ? new Date(data.shipByDate) : null,
+                shipByDate:  shipBy,
             });
             await item.save();
             itemIds.push(item._id);

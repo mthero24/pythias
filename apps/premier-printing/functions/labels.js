@@ -8,8 +8,10 @@ export async function LabelsData(){
             blank: { $ne: undefined },
             colorName: { $ne: null },
             sizeName: { $ne: null },
-            designRef: { $ne: null },
             design: { $ne: null },
+            // Normal items need a resolved designRef; Commerce Cloud items carry the design as a map
+            // (no Design doc in this DB) — isCommerceCloud overrides the designRef requirement.
+            $or: [{ designRef: { $ne: null } }, { isCommerceCloud: true }],
             labelPrinted: false,
             canceled: false,
             shipped: false,
@@ -25,8 +27,10 @@ export async function LabelsData(){
             blank: { $ne: undefined },
             colorName: { $ne: null },
             sizeName: { $ne: null },
-            designRef: { $ne: null },
             design: { $ne: null },
+            // Normal items need a resolved designRef; Commerce Cloud items carry the design as a map
+            // (no Design doc in this DB) — isCommerceCloud overrides the designRef requirement.
+            $or: [{ designRef: { $ne: null } }, { isCommerceCloud: true }],
             labelPrinted: false,
             canceled: false,
             shipped: false,
