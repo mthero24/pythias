@@ -9,6 +9,7 @@ const bumpExperiment = (orgId, experimentId, variant, inc) => {
 };
 import { resolveSite } from "@/lib/resolveSite";
 import { dayKey, deviceFromUA, domainOf, cleanPath } from "@/lib/analytics";
+import { sendGa4 } from "@/lib/ga4";
 
 const countryOf = (req) => (req.headers.get("cf-ipcountry") || req.headers.get("x-vercel-ip-country") || req.headers.get("x-country") || "").toUpperCase() || undefined;
 const bumpProduct = (orgId, date, productId, inc) => {
@@ -56,6 +57,8 @@ export async function POST(req) {
                 if (prior > 1) await StorefrontSession.updateOne({ sessionId }, { $set: { returning: true } });
             }
             await StorefrontPathStat.updateOne({ orgId, date: dayKey(now), path }, { $inc: { views: 1 } }, { upsert: true });
+            // Mirror to GA4 server-side (blocker-proof; the gtag loader is unreliable per-ID).
+            await sendGa4(site, sessionId, [{ name: "page_view", params: { page_location: `https://${req.headers.get("host") || ""}${path}`, page_referrer: b.referrer || undefined } }]);
             return QUIET();
         }
 
@@ -109,6 +112,23 @@ export async function POST(req) {
                 if (b.event === "purchase" && Array.isArray(b.experiments)) {
                     for (const e of b.experiments) await bumpExperiment(orgId, e.id, e.variant, { conversions: 1 });
                 }
+            }
+            // Mirror commerce events to GA4 server-side (purchase carries revenue + items).
+            const GA4_EVENT = { add_to_cart: "add_to_cart", begin_checkout: "begin_checkout", purchase: "purchase" }[b.event];
+            if (GA4_EVENT) {
+                const params = {};
+                if (b.event === "purchase") {
+                    if (b.orderId) params.transaction_id = String(b.orderId);
+                    params.value = (Number(b.revenueCents) || 0) / 100;
+                    params.currency = "USD";
+                }
+                if (Array.isArray(b.items)) params.items = b.items.map((it) => ({
+                    item_id: String(it.sku || it.productId || it.id || ""),
+                    item_name: it.title || it.name || undefined,
+                    quantity: Math.max(1, Number(it.qty) || 1),
+                    price: it.priceCents != null ? Number(it.priceCents) / 100 : (it.price != null ? Number(it.price) : undefined),
+                }));
+                await sendGa4(site, sessionId, [{ name: GA4_EVENT, params }]);
             }
             return QUIET();
         }
