@@ -34,6 +34,7 @@ async function resolveLocalBlank(manufacturerStyle, styleCode, colorName, sizeNa
     const sizeEntry = (blank.sizes ?? []).find((s) => eq(s.name, sizeName) || eq(s.sku, sizeName)) ?? null;
     return {
         blank: blank._id,
+        code:  blank.code,
         color: color?._id ?? null,
         size:  sizeEntry?._id ?? null,
         sizeName: sizeEntry?.name ?? sizeName ?? "",
@@ -113,7 +114,7 @@ export async function POST(request) {
                 blank:       local.blank || null,
                 color:       local.color || null,
                 size:        local.size  || null,
-                styleCode:   line.styleCode || "",
+                styleCode:   local.code || line.styleCode || "",   // premier's OWN blank code (seller's was "YT", premier's is "YC")
                 colorName:   line.colorName || "",
                 sizeName:    local.sizeName || line.sizeName || "",
                 price:       line.price ?? 0,
