@@ -60,7 +60,7 @@ export async function PATCH(request, { params }) {
     }
 
     await order.save();
-    logActivity({ action: "custom_order_update", entity: "order", entityId: order._id, entityName: order.poNumber || "", userName, email });
+    logActivity({ action: "custom_order_update", entity: "order", entityId: order._id, entityName: order.poNumber || "", userName, email, orgId });
     const populated = await Order.findById(order._id).populate("items").lean();
     return NextResponse.json({ order: populated });
 }
@@ -73,6 +73,6 @@ export async function DELETE(request, { params }) {
     if (!order) return NextResponse.json({ error: "Not found" }, { status: 404 });
     await Item.deleteMany({ order: order._id, orgId });
     await order.deleteOne();
-    logActivity({ action: "custom_order_delete", entity: "order", entityId: params.id, entityName: "", userName, email });
+    logActivity({ action: "custom_order_delete", entity: "order", entityId: params.id, entityName: "", userName, email, orgId });
     return NextResponse.json({ ok: true });
 }

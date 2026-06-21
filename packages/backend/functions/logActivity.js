@@ -22,6 +22,7 @@ export async function logActivity({
     userName = "unknown",
     email = "",
     provider = "premierPrinting",
+    orgId = null,
     count = 1,
 }) {
     try {
@@ -33,6 +34,7 @@ export async function logActivity({
             userName,
             email,
             provider,
+            ...(orgId ? { orgId } : {}),
             count,
             timestamp: new Date(),
         });
@@ -46,9 +48,10 @@ export async function logActivity({
  * Returns { userName, email } with safe fallbacks.
  */
 export function userFromToken(token) {
-    if (!token) return { userName: "unknown", email: "" };
+    if (!token) return { userName: "unknown", email: "", orgId: null };
     return {
         userName: token.userName || token.name || token.email?.split("@")[0] || token.sub || "unknown",
         email: token.email || "",
+        orgId: token.orgId || null,
     };
 }

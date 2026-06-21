@@ -74,7 +74,7 @@ export async function POST(req=NextApiRequest){
             }
         }
         await item.save()
-        logActivity({ action: "item_repull", entity: "order", entityId: item.order, entityName: item.pieceId || "", userName, email });
+        logActivity({ action: "item_repull", entity: "order", entityId: item.order, entityName: item.pieceId || "", userName, email, orgId });
         if (data.reason === "Pulling Error") {
             logChange({ entityType: "item", entityId: item._id, entityName: item.pieceId, action: "repull", userName, email, provider: "premierPrinting" });
         }

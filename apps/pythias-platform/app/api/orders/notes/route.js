@@ -13,7 +13,7 @@ export async function POST(req = NextApiRequest) {
     const note = { userName: token.userName, date: new Date(), note: data.note };
     order.notes.push(note);
     order = await order.save();
-    logActivity({ action: "order_note", entity: "order", entityId: order._id, entityName: order.poNumber || "", userName, email });
+    logActivity({ action: "order_note", entity: "order", entityId: order._id, entityName: order.poNumber || "", userName, email, orgId });
     logChange({ entityType: "order", entityId: order._id, entityName: order.poNumber || "", action: "note_added", before: null, after: note, userName, email, provider: "premierPrinting" });
     return NextResponse.json({ error: false, order });
 }

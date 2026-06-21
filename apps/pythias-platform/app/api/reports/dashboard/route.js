@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
-import { PlatformOrder, PlatformItem, PlatformBlank } from "@pythias/mongo";
+import { PlatformOrder, PlatformItem, PlatformBlank, PaymentReceived } from "@pythias/mongo";
 
 const activeExpr   = { $and: [{ $ne: ["$cancelled", true] }] };
 const revenueExpr  = { $subtract: [{ $add: [{ $ifNull: ["$productCost", 0] }, { $ifNull: ["$shippingCost", 0] }] }, { $ifNull: ["$discountAmount", 0] }] };
@@ -99,7 +99,15 @@ export async function GET(req) {
             itemsByMarketplaceAndStyle[mp][style] = (itemsByMarketplaceAndStyle[mp][style] || 0) + row.count;
         }
 
+        // TRUE platform cost — what this seller ACTUALLY PAID Pythias in the period (PaymentReceived,
+        // excludes prepaid wallet top-ups). Lets Reports show real profit = revenue − COGS − platform cost.
+        const platformCostAgg = await PaymentReceived.aggregate([
+            { $match: { orgId, type: { $ne: "wallet" }, paidAt: dateFilter } },
+            { $group: { _id: null, total: { $sum: "$amountCents" } } },
+        ]);
+
         const summary       = summaryAgg[0] ?? { totalRevenue: 0, orderCount: 0, canceledCount: 0, totalShipping: 0 };
+        summary.platformCostCents = platformCostAgg[0]?.total ?? 0;
         const byMarketplace = byMarketplaceAgg;
 
         return NextResponse.json({

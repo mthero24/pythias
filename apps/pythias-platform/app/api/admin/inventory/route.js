@@ -90,7 +90,7 @@ export async function POST(req = NextApiRequest) {
     data.inventory.inStock = [...data.inventory.inStock, ...updateItems];
     await Inventory.findOneAndUpdate({ _id: data.inventory._id, orgId }, data.inventory).catch(e => { console.log(e) });
     recomputeForInventory(data.inventory._id, orgId); // fire-and-forget
-    logActivity({ action: "inventory_update", entity: "inventory", entityId: data.inventory._id, entityName: `${data.inventory.style_code} ${data.inventory.color_name} ${data.inventory.size_name}`, userName, email });
+    logActivity({ action: "inventory_update", entity: "inventory", entityId: data.inventory._id, entityName: `${data.inventory.style_code} ${data.inventory.color_name} ${data.inventory.size_name}`, userName, email, orgId });
     return NextResponse.json({ error: false, inventory: data.inventory })
 }
 

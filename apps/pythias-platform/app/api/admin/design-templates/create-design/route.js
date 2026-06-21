@@ -113,7 +113,7 @@ export async function POST(req) {
       ...(Object.keys(embroideryFiles).length > 0 && { embroideryFiles }),
     });
 
-    logActivity({ action: "design_create", entity: "design", entityId: design._id, entityName: sku, userName, email });
+    logActivity({ action: "design_create", entity: "design", entityId: design._id, entityName: sku, userName, email, orgId });
     logChange({ entityType: "design", entityId: design._id, entityName: sku, action: "create", userName, email, provider: "premierPrinting" });
 
     return NextResponse.json({ error: false, design: { _id: design._id, sku: design.sku } });

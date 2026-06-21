@@ -216,7 +216,7 @@ const assignUpcForPlatform = async (raw, variantsFlat) => {
 export async function DELETE(req) {
     const token = await getToken({ req });
     if (!token?.orgId) return NextResponse.json({ error: true, msg: "Unauthorized" }, { status: 401 });
-    const { userName, email } = userFromToken(token);
+    const { userName, email, orgId } = userFromToken(token);
 
     const url = new URL(req.url);
     const productId = url.searchParams.get("product");
@@ -225,7 +225,7 @@ export async function DELETE(req) {
     try {
         const product = await PlatformProduct.findOneAndDelete({ _id: productId, orgId: token.orgId });
         if (!product) return NextResponse.json({ error: true, msg: "Product not found" }, { status: 404 });
-        logActivity({ action: "product_delete", entity: "product", count: 1, userName, email });
+        logActivity({ action: "product_delete", entity: "product", count: 1, userName, email, orgId });
         return NextResponse.json({ error: false });
     } catch (e) {
         console.error("[products DELETE]", e);
@@ -236,7 +236,7 @@ export async function DELETE(req) {
 export async function POST(req) {
     const token = await getToken({ req });
     if (!token?.orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    const { userName, email } = userFromToken(token);
+    const { userName, email, orgId } = userFromToken(token);
 
     const body = await req.json();
 
@@ -264,7 +264,7 @@ export async function POST(req) {
                 saved.push(product);
             }
 
-            logActivity({ action: "product_update", entity: "product", count: saved.length, userName, email });
+            logActivity({ action: "product_update", entity: "product", count: saved.length, userName, email, orgId });
             await Promise.all(saved.map(p =>
                 logChange({
                     entityType: "product", entityId: p._id, entityName: p.sku || "",
@@ -289,7 +289,7 @@ export async function POST(req) {
 
     try {
         const saved = await PlatformProduct.create(product);
-        logActivity({ action: "product_update", entity: "product", count: 1, userName, email });
+        logActivity({ action: "product_update", entity: "product", count: 1, userName, email, orgId });
         notifyPartner(token.orgId, "product.updated", shapeProduct(saved.toObject ? saved.toObject() : saved));
         return NextResponse.json({ error: false, product: JSON.parse(JSON.stringify(saved)) });
     } catch (e) {

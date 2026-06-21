@@ -15,7 +15,7 @@ export async function POST(req) {
         { $set: { shippingAddress } },
         { new: true, select: "shippingAddress" }
     ).lean();
-    logActivity({ action: "order_address_update", entity: "order", entityId: id, entityName: before.poNumber || "", userName, email });
+    logActivity({ action: "order_address_update", entity: "order", entityId: id, entityName: before.poNumber || "", userName, email, orgId });
     logChange({ entityType: "order", entityId: id, entityName: before.poNumber || "", action: "address_update", before: before.shippingAddress, after: shippingAddress, userName, email, provider: "premierPrinting" });
     return NextResponse.json({ shippingAddress: order.shippingAddress });
 }

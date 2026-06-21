@@ -505,7 +505,8 @@ function CostsTab({ summary, byMarketplace, cogsByMarketplace, ordersData, onPag
         byMarketplace.reduce((s, mp) => s + mp.revenue * (feeRates[(mp.marketplace || "").toLowerCase()] ?? 0), 0),
     [byMarketplace, feeRates]);
     const totalCogs = useMemo(() => Object.values(cogsByMarketplace).reduce((s, v) => s + v, 0), [cogsByMarketplace]);
-    const net = summary.totalRevenue - summary.totalShipping - totalFees - totalCogs;
+    const platformCost = (summary.platformCostCents || 0) / 100;   // what they ACTUALLY paid Pythias this period (not projected/upcoming)
+    const net = summary.totalRevenue - summary.totalShipping - totalFees - totalCogs - platformCost;
     const revFormatter = (v) => `$${(v ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 
     const mpRows = useMemo(() =>
@@ -569,7 +570,8 @@ function CostsTab({ summary, byMarketplace, cogsByMarketplace, ordersData, onPag
                 <Grid2 size={{ xs: 6, sm: 4, md: 2 }}><KpiCard label="Shipping Costs" value={fmt(summary.totalShipping)} color="warning.main" /></Grid2>
                 <Grid2 size={{ xs: 6, sm: 4, md: 2 }}><KpiCard label="Est. MP Fees"   value={fmt(totalFees)}             color="error.main" /></Grid2>
                 <Grid2 size={{ xs: 6, sm: 4, md: 2 }}><KpiCard label="Blank COGS"     value={fmt(totalCogs)}             color="warning.main" /></Grid2>
-                <Grid2 size={{ xs: 6, sm: 4, md: 2 }}><KpiCard label="Net Revenue"    value={fmt(net)}                   color={net >= 0 ? "success.main" : "error.main"} /></Grid2>
+                <Grid2 size={{ xs: 6, sm: 4, md: 2 }}><KpiCard label="Platform Cost"  value={fmt(platformCost)}          color="error.main" sub="actually paid" /></Grid2>
+                <Grid2 size={{ xs: 6, sm: 4, md: 2 }}><KpiCard label="Net Profit"     value={fmt(net)}                   color={net >= 0 ? "success.main" : "error.main"} /></Grid2>
             </Grid2>
 
             <Grid2 container spacing={2} sx={{ mb: 3 }}>
@@ -581,7 +583,8 @@ function CostsTab({ summary, byMarketplace, cogsByMarketplace, ordersData, onPag
                                     { id: 0, value: summary.totalShipping, label: "Shipping",   color: "#ff9800" },
                                     { id: 1, value: totalFees,             label: "MP Fees",    color: "#f44336" },
                                     { id: 2, value: totalCogs,             label: "Blank COGS", color: "#9c27b0" },
-                                    { id: 3, value: Math.max(0, net),      label: "Net",        color: "#4caf50" },
+                                    { id: 3, value: platformCost,          label: "Platform",   color: "#3f51b5" },
+                                    { id: 4, value: Math.max(0, net),      label: "Net",        color: "#4caf50" },
                                 ].filter(d => d.value > 0), innerRadius: 40, outerRadius: 80, paddingAngle: 2 }]}
                                 height={220}
                                 slotProps={{ legend: { direction: "row", position: { vertical: "bottom", horizontal: "middle" } } }}

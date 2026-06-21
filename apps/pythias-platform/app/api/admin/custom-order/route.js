@@ -121,7 +121,7 @@ export async function POST(request) {
     order.items = itemIds;
     await order.save();
 
-    logActivity({ action: "custom_order_create", entity: "order", entityId: order._id, entityName: data.poNumber || "", userName, email });
+    logActivity({ action: "custom_order_create", entity: "order", entityId: order._id, entityName: data.poNumber || "", userName, email, orgId });
     const populated = await Order.findById(order._id).populate("items").lean();
     return NextResponse.json({ order: populated });
 }

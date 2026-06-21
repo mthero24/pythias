@@ -70,7 +70,7 @@ export async function POST(req = NextApiRequest) {
         });
         order.markModified("shippingInfo.labels");
         await order.save();
-        logActivity({ action: "label_refunded", entity: "order", entityId: order._id, entityName: order.poNumber || order.orderId || "", userName, email });
+        logActivity({ action: "label_refunded", entity: "order", entityId: order._id, entityName: order.poNumber || order.orderId || "", userName, email, orgId });
         logChange({ entityType: "order", entityId: order._id, entityName: order.poNumber || order.orderId || "", action: "label_refunded", before: { refunded: false }, after: { refunded: true, trackingNumber: tn, provider }, userName, email, provider: "premierPrinting" });
     }
 

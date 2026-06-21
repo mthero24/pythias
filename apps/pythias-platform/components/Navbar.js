@@ -58,6 +58,7 @@ import WarehouseIcon from "@mui/icons-material/Warehouse";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrackChangesIcon from "@mui/icons-material/TrackChanges";
 import TimelineIcon from "@mui/icons-material/Timeline";
+import HistoryIcon from "@mui/icons-material/History";
 import GavelIcon from "@mui/icons-material/Gavel";
 import TuneIcon from "@mui/icons-material/Tune";
 import OndemandVideoIcon from "@mui/icons-material/OndemandVideo";
@@ -210,6 +211,7 @@ function buildFulfillmentSections(base) {
             items: [
                 { label: "Reports",             path: "reports",             icon: <BarChartIcon fontSize="small" /> },
                 { label: "Analytics",           path: "admin/analytics",     icon: <TimelineIcon fontSize="small" /> },
+                { label: "Activity",            path: "admin/activity",      icon: <HistoryIcon fontSize="small" /> },
                 { label: "Sales",               path: "admin/sales",         icon: <TrendingUpIcon fontSize="small" /> },
                 { label: "Integrations",        path: "integrations",        icon: <IntegrationInstructionsIcon fontSize="small" /> },
                 { label: "Track Labels",        path: "admin/track-labels",  icon: <TrackChangesIcon fontSize="small" /> },
@@ -282,6 +284,7 @@ function buildCommerceSections(base) {
             items: [
                 { label: "Reports",      path: "reports",          icon: <BarChartIcon fontSize="small" /> },
                 { label: "Analytics",    path: "admin/analytics",  icon: <TimelineIcon fontSize="small" /> },
+                { label: "Activity",     path: "admin/activity",   icon: <HistoryIcon fontSize="small" /> },
                 { label: "Sales",        path: "admin/sales",      icon: <TrendingUpIcon fontSize="small" /> },
                 { label: "Integrations", path: "integrations",     icon: <IntegrationInstructionsIcon fontSize="small" /> },
                 { label: "Licenses",     path: "admin/license",    icon: <GavelIcon fontSize="small" /> },

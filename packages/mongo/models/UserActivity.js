@@ -9,12 +9,14 @@ const schema = new mongoose.Schema({
     entityId:   { type: String, default: "" },
     entityName: { type: String, default: "" },
     provider:   { type: String, default: "premierPrinting" }, // which app
+    orgId:      { type: mongoose.Schema.Types.ObjectId, ref: "Organization", index: true }, // platform: which seller org (unset on single-tenant premier)
     count:      { type: Number, default: 1 },
     timestamp:  { type: Date, default: Date.now, index: true },
 });
 
 schema.index({ userName: 1, timestamp: -1 });
 schema.index({ provider: 1, timestamp: -1 });
+schema.index({ orgId: 1, timestamp: -1 });
 schema.index({ action: 1, timestamp: -1 });
 
 export default PremierPrinting.model("UserActivity", schema);

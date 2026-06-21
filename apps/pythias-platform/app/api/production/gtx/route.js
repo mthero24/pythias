@@ -182,7 +182,7 @@ export async function POST(req) {
                     item.printerQue = { printer, scan: Date.now() };
                     item.lastScan = { station: `GTX ${printer}`, date: new Date(), user: token?.sub };
                     await item.save();
-                    logActivity({ action: "gtx_scan", entity: "gtx", entityId: item._id, entityName: item.pieceId, userName, email });
+                    logActivity({ action: "gtx_scan", entity: "gtx", entityId: item._id, entityName: item.pieceId, userName, email, orgId });
                 } catch (e) {
                     logError({ error: e, app: "platform", provider: "platform", source: "api/production/gtx POST scan", context: { orgId, pieceId: id, action } });
                     errors[id] = e.message;
@@ -224,7 +224,7 @@ export async function POST(req) {
             if (!item.steps) item.steps = [];
             item.steps.push({ status: `On Printer ${printer}`, date: new Date() });
             await item.save();
-            logActivity({ action: "gtx_send_to_printer", entity: "gtx", entityId: item._id, entityName: item.pieceId, userName, email });
+            logActivity({ action: "gtx_send_to_printer", entity: "gtx", entityId: item._id, entityName: item.pieceId, userName, email, orgId });
             return NextResponse.json({ error: false, msg: "sent to printer" });
         }
 
@@ -256,7 +256,7 @@ export async function POST(req) {
                 nextItem.steps.push({ status: `On Printer ${printer}`, date: new Date() });
                 await nextItem.save();
             }
-            logActivity({ action: "gtx_dryer", entity: "gtx", entityId: onPrinter._id, entityName: onPrinter.pieceId, userName, email });
+            logActivity({ action: "gtx_dryer", entity: "gtx", entityId: onPrinter._id, entityName: onPrinter.pieceId, userName, email, orgId });
             return NextResponse.json({ error: false, msg: "sent to dryer" });
         }
 

@@ -174,7 +174,7 @@ export async function POST(req) {
             }
 
             const logAction = action || "blank_update";
-            logActivity({ action: logAction, entity: "blank", entityId: blank._id, entityName: blank.code || blank.name || "", userName, email });
+            logActivity({ action: logAction, entity: "blank", entityId: blank._id, entityName: blank.code || blank.name || "", userName, email, orgId });
             await logChange({ entityType: "blank", entityId: blank._id, entityName: blank.code || blank.name || "", action: logAction, before: beforeBlank, after: blank, userName, email, provider: "platform" });
         } else {
             if (blank.printLocations?.length > 0 && blank.sizes?.length > 0 && blank.type !== "alias") blank = updateEnvelopes(blank);
@@ -187,7 +187,7 @@ export async function POST(req) {
             saved = await PlatformBlank.create(blank);
             if (saved.type !== "alias") await generateInventory(saved, orgId);
 
-            logActivity({ action: "blank_create", entity: "blank", entityId: saved._id, entityName: saved.code || saved.name || "", userName, email });
+            logActivity({ action: "blank_create", entity: "blank", entityId: saved._id, entityName: saved.code || saved.name || "", userName, email, orgId });
             await logChange({ entityType: "blank", entityId: saved._id, entityName: saved.code || saved.name || "", action: "create", before: null, after: saved, userName, email, provider: "platform" });
         }
 
@@ -207,7 +207,7 @@ export async function DELETE(req) {
     const id = req.nextUrl.searchParams.get("id");
     const deleted = await PlatformBlank.findOneAndDelete({ _id: id, orgId }).lean();
     PlatformInventory.deleteMany({ blank: id, orgId }); // fire-and-forget
-    logActivity({ action: "blank_delete", entity: "blank", entityId: id, entityName: deleted?.code || deleted?.name || "", userName, email });
+    logActivity({ action: "blank_delete", entity: "blank", entityId: id, entityName: deleted?.code || deleted?.name || "", userName, email, orgId });
     logChange({ entityType: "blank", entityId: id, entityName: deleted?.code || deleted?.name || "", action: "delete", before: deleted, after: null, userName, email, provider: "platform" });
     return NextResponse.json({ error: false });
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 import { UserActivity } from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
 // This route provides activity data for the admin dashboard, including user actions and timelines.
@@ -20,6 +21,9 @@ export async function GET(req) {
 
     const match = { provider, timestamp: { $gte: since } };
     if (userName) match.userName = userName;
+    // Scope to the caller's org — a seller sees only their own org's activity. Super-admins
+    // (role "admin") see everything; single-tenant apps (premier) have no orgId so stay unscoped.
+    if (token.orgId && token.role !== "admin") match.orgId = new mongoose.Types.ObjectId(token.orgId);
 
     try {
         // Summary: total count per user per action

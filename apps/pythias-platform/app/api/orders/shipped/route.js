@@ -19,7 +19,7 @@ export async function POST(req = NextApiRequest) {
         order.trackingInfo.labels.push({ trackingNumber: data.trackingNumber, provider: data.provider });
     }
     order = await order.save();
-    logActivity({ action: "order_shipped", entity: "order", entityId: order._id, entityName: order.poNumber || "", userName, email });
+    logActivity({ action: "order_shipped", entity: "order", entityId: order._id, entityName: order.poNumber || "", userName, email, orgId });
     logChange({ entityType: "order", entityId: order._id, entityName: order.poNumber || "", action: "order_shipped", before: { status: beforeStatus }, after: { status: "shipped", trackingNumber: data.trackingNumber || null }, userName, email, provider: "premierPrinting" });
     notifyPartner(orgId, "order.shipped", shapeOrder(order.toObject()));
     return NextResponse.json({ error: false, order });

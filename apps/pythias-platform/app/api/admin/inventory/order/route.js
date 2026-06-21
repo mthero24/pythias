@@ -72,7 +72,7 @@ export async function PUT(req = NextApiRequest) {
         if (order.locations.filter(l => l.received == false).length == 0) order.received = true
         order.markModified("locations received")
         await order.save()
-        logActivity({ action: "inventory_order_receive", entity: "inventory_order", entityId: order._id, entityName: order.poNumber || "", userName, email });
+        logActivity({ action: "inventory_order_receive", entity: "inventory_order", entityId: order._id, entityName: order.poNumber || "", userName, email, orgId });
         logChange({ entityType: "inventory_order", entityId: order._id, entityName: order.poNumber || "", action: "receive", userName, email });
     }
     let orders = await InventoryOrders.find({ orgId, received: { $in: [null, false] } }).populate("locations.items.inventory")
@@ -122,7 +122,7 @@ export async function POST(req = NextApiRequest) {
         }
     }
     await order.save()
-    logActivity({ action: "inventory_order_create", entity: "inventory_order", entityId: order._id, entityName: order.poNumber || "", userName, email });
+    logActivity({ action: "inventory_order_create", entity: "inventory_order", entityId: order._id, entityName: order.poNumber || "", userName, email, orgId });
     logChange({ entityType: "inventory_order", entityId: order._id, entityName: order.poNumber || "", action: "create", userName, email });
     let inventory = await Inventory.find({ orgId }).populate("color").select("color color_name pending_quantity size_name style_code blank quantity order_at_quantity quantity_to_order location")
     let blanks = await Blanks.find({ orgId }).populate("colors").select("code name colors sizes department")

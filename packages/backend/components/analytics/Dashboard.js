@@ -76,7 +76,7 @@ function TrafficChart({ data }) {
     );
 }
 
-export function AnalyticsDashboard() {
+export function AnalyticsDashboard({ speedOnly = false } = {}) {
     const [range, setRange] = useState("7d");
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -98,7 +98,7 @@ export function AnalyticsDashboard() {
     return (
         <Box sx={{ p: 3 }}>
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3, flexWrap: "wrap", gap: 2 }}>
-                <Typography variant="h5" fontWeight={700}>Analytics</Typography>
+                <Typography variant="h5" fontWeight={700}>{speedOnly ? "Platform Speed" : "Analytics"}</Typography>
                 <ToggleButtonGroup size="small" value={range} exclusive onChange={(_, v) => { if (v) setRange(v); }}>
                     <ToggleButton value="1d">Today</ToggleButton>
                     <ToggleButton value="7d">7 Days</ToggleButton>
@@ -111,6 +111,7 @@ export function AnalyticsDashboard() {
                 <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}><CircularProgress /></Box>
             ) : !data ? null : (
                 <>
+                    {!speedOnly && (<>
                     <Box sx={{ display: "flex", gap: 2, mb: 4, flexWrap: "wrap" }}>
                         <StatCard icon={<TrendingUpIcon />} label="Human Pageviews" value={s.humanViews.toLocaleString()} sub={`${s.totalViews.toLocaleString()} total`} />
                         <StatCard icon={<PeopleIcon />} label="Sessions" value={s.humanSessions.toLocaleString()} sub={`${s.avgPagesPerSession} pages/session`} color="#0ea5e9" />
@@ -168,6 +169,17 @@ export function AnalyticsDashboard() {
                             </Table>
                         </Paper>
                     </Box>
+                    </>)}
+
+                    {speedOnly && (
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>How fast the Pythias platform loads for you — lower is better.</Typography>
+                    )}
+
+                    {speedOnly && data.vitalsPerPage.length === 0 && (
+                        <Paper variant="outlined" sx={{ p: 4, textAlign: "center", mb: 4 }}>
+                            <Typography color="text.secondary">No platform speed data collected yet — check back soon.</Typography>
+                        </Paper>
+                    )}
 
                     {data.vitalsPerPage.length > 0 && (
                         <Paper variant="outlined" sx={{ mb: 4 }}>
@@ -207,7 +219,7 @@ export function AnalyticsDashboard() {
                         </Paper>
                     )}
 
-                    {data.botReasons.length > 0 && (
+                    {!speedOnly && data.botReasons.length > 0 && (
                         <Paper variant="outlined" sx={{ mb: 4, p: 2 }}>
                             <Typography variant="subtitle1" fontWeight={700} mb={1.5}>Bot Detection Breakdown</Typography>
                             <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>

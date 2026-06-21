@@ -41,7 +41,7 @@ export async function POST(req) {
     if (!token?.permissions?.designs) {
         return NextResponse.json({ error: true, msg: "You do not have permission to edit designs." }, { status: 403 });
     }
-    const { userName, email } = userFromToken(token);
+    const { userName, email, orgId } = userFromToken(token);
 
     try {
         const formData = await req.formData();
@@ -106,6 +106,7 @@ export async function POST(req) {
             entityName: `CSV import — ${created} created, ${updated} updated`,
             userName,
             email,
+            orgId,
         });
 
         return NextResponse.json({ error: false, created, updated, errors });

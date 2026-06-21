@@ -71,7 +71,7 @@ export async function POST(req) {
     await Order.findOneAndUpdate({ _id: id, orgId }, { status: "cancelled", canceled: true });
     await Items.updateMany({ order: order._id, orgId }, { status: "cancelled", canceled: true });
 
-    logActivity({ action: "order_cancelled", entity: "order", entityId: order._id, entityName: order.poNumber || "", userName, email });
+    logActivity({ action: "order_cancelled", entity: "order", entityId: order._id, entityName: order.poNumber || "", userName, email, orgId });
     logChange({
         entityType: "order", entityId: order._id, entityName: order.poNumber || "",
         action: "order_cancelled",
