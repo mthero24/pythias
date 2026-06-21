@@ -2,7 +2,7 @@ import { Items, Order, ApiKeyIntegrations } from "@pythias/mongo";
 import { cancelOrder as cancelShipStation, cancelOrderFaire, cancelOrderMirakl } from "@pythias/integrations";
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
-import { logActivity, userFromToken, logChange } from "@pythias/backend/server";
+import { logActivity, userFromToken, logChange, storefront } from "@pythias/backend/server";
 
 async function cancelMarketplace(order) {
     if (!order.marketplaceConnectionId) return null;
@@ -38,7 +38,7 @@ export async function POST(req) {
     if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { userName, email } = userFromToken(token);
 
-    const { id } = await req.json();
+    const { id, refund, refundAmountCents } = await req.json();
     if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
     const order = await Order.findById(id).lean();
@@ -76,8 +76,17 @@ export async function POST(req) {
         userName, email, provider: "premierPrinting",
     });
 
+    // Refund the buyer too, if requested (storefront orders only). Premier is the fulfiller, so the
+    // order's own (seller) org owns the payment; refundStorefrontOrder moves the money in the storefront app.
+    let refundResult = null;
+    if (refund && order.source === "storefront") {
+        try { refundResult = await storefront.refundStorefrontOrder(order.orgId, { orderId: id, amountCents: refundAmountCents, reason: "cancellation", by: email }); }
+        catch (e) { refundResult = { error: e.message }; }
+    }
+
     return NextResponse.json({
         success: true,
         marketplaceUpdated: !!marketplaceResult?.success,
+        refund: refundResult,
     });
 }

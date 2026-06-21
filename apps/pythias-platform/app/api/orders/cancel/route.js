@@ -2,7 +2,7 @@ import { PlatformItem as Items, PlatformOrder as Order, ApiKeyIntegrations } fro
 import { cancelOrder as cancelShipStation, cancelOrderFaire, cancelOrderMirakl } from "@pythias/integrations";
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
-import { logActivity, userFromToken, logChange } from "@pythias/backend/server";
+import { logActivity, userFromToken, logChange, storefront } from "@pythias/backend/server";
 import { notifyPartner } from "@/lib/notifyPartner";
 import { shapeOrder } from "@/lib/partnerShape";
 
@@ -41,7 +41,7 @@ export async function POST(req) {
     const { userName, email } = userFromToken(token);
     const orgId = token?.orgId;
 
-    const { id } = await req.json();
+    const { id, refund, refundAmountCents } = await req.json();
     if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
     const order = await Order.findOne({ _id: id, orgId }).lean();
@@ -81,8 +81,17 @@ export async function POST(req) {
 
     notifyPartner(orgId, "order.cancelled", shapeOrder({ ...order, status: "cancelled", canceled: true }));
 
+    // Refund the buyer too, if requested (storefront orders only — the marketplace Stripe key + payout
+    // live in the storefront app, so the money moves there via refundStorefrontOrder).
+    let refundResult = null;
+    if (refund && order.source === "storefront") {
+        try { refundResult = await storefront.refundStorefrontOrder(orgId, { orderId: id, amountCents: refundAmountCents, reason: "cancellation", by: email }); }
+        catch (e) { refundResult = { error: e.message }; }
+    }
+
     return NextResponse.json({
         success: true,
         marketplaceUpdated: !!marketplaceResult?.success,
+        refund: refundResult,
     });
 }

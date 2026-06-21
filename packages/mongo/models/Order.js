@@ -235,6 +235,16 @@ const schema = new mongoose.Schema({
     transferId:     { type: String },
     paidAt:         { type: Date },
   },
+  // Refunds against this order (on cancel or for customer service; partial allowed). The Stripe
+  // refund + seller-payout clawback execute in the storefront app (it holds the marketplace key).
+  refundedCents: { type: Number, default: 0 },
+  refunds: [{
+    amountCents:    { type: Number },
+    reason:         { type: String },
+    stripeRefundId: { type: String },
+    by:             { type: String },              // admin who issued it
+    at:             { type: Date, default: Date.now },
+  }],
 });
 // Idempotency: at most one order per Stripe PaymentIntent.
 schema.index({ orgId: 1, paymentRef: 1 }, { unique: true, sparse: true });

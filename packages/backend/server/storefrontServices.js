@@ -24,6 +24,26 @@ const randomCode = (prefix = "") => `${prefix}${crypto.randomBytes(4).toString("
 // Throw this for HTTP-mappable errors; route wrappers read err.status.
 export function httpError(status, message) { const e = new Error(message); e.status = status; return e; }
 
+// Refund a storefront order's payment (full, or partial for customer service). The Stripe refund +
+// seller-payout clawback execute in the storefront app (it holds the marketplace key); here we just
+// verify the order belongs to this org and forward. Returns { ok, refundId, refundedCents, fullyRefunded }.
+export async function refundStorefrontOrder(orgId, { orderId, amountCents, reason, by } = {}) {
+    if (!orderId) throw httpError(400, "orderId is required");
+    const key = INTERNAL_KEY();
+    if (!key) throw httpError(503, "Refunds are not configured");
+    const order = await PlatformOrder.findOne({ _id: orderId, orgId }).select("_id source").lean();
+    if (!order) throw httpError(404, "Order not found");
+    if (order.source !== "storefront") throw httpError(400, "Only storefront orders can be refunded here");
+    const res = await fetch(`${STOREFRONT_BASE()}/api/internal/refund`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-pythias-internal-key": key },
+        body: JSON.stringify({ orderId: String(orderId), amountCents, reason, by }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw httpError(res.status, data.error || "Refund failed");
+    return data;
+}
+
 // Fields the editor's draft → publish flow manages. NOTE: `redirects` and `termContent` are intentionally
 // excluded — they're written straight to the live site by their services (migrator / term generator) and
 // must not be round-tripped through the draft (a stale autosave would clobber them).

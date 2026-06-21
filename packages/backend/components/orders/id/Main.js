@@ -3,6 +3,7 @@ import {
     Box, Typography, Button, Grid2, Dialog, DialogTitle, DialogContent, DialogActions,
     Link, TextField, IconButton, Container, Stack, Card, CardContent, Chip,
     Divider, Collapse, Tooltip, Avatar, CircularProgress, Snackbar, Alert,
+    Checkbox, FormControlLabel,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useState, useEffect } from "react";
@@ -89,6 +90,19 @@ export function Main({ ord, blanks, source, base = "" }) {
     const [cancelErr, setCancelErr] = useState("");
     const [repulling, setRepulling] = useState(false);
     const [repullSnack, setRepullSnack] = useState({ open: false, msg: "", severity: "success" });
+    // Storefront refunds (cancel-with-refund + standalone customer-service refund).
+    const [cancelRefund, setCancelRefund] = useState(true);
+    const [refundOpen, setRefundOpen] = useState(false);
+    const [refundBusy, setRefundBusy] = useState(false);
+    const [refundErr, setRefundErr] = useState("");
+    const [refundAmount, setRefundAmount] = useState("");   // dollars; blank = full remaining
+
+    // Refunds only apply to storefront (Commerce Cloud) orders — that's where the payment lives.
+    const isStorefront = order.source === "storefront";
+    const orderTotalCents = Math.round((order.total || 0) * 100);
+    const refundedCents = order.refundedCents || 0;
+    const refundableCents = Math.max(0, orderTotalCents - refundedCents);
+    const canRefund = isStorefront && !!order.paymentRef && refundableCents > 0;
 
     useEffect(() => {
         const shippedStatuses = ["Shipped", "shipped", "Out For Delivery"];
@@ -143,13 +157,32 @@ export function Main({ ord, blanks, source, base = "" }) {
     const cancelOrder = async () => {
         setCancelling(true); setCancelErr("");
         try {
-            await axios.post("/api/orders/cancel", { id: order._id });
-            setOrder(prev => ({ ...prev, status: "cancelled", canceled: true }));
-            setCancelOpen(false);
+            const doRefund = isStorefront && cancelRefund && refundableCents > 0;
+            const res = await axios.post("/api/orders/cancel", { id: order._id, refund: doRefund, refundAmountCents: doRefund ? refundableCents : undefined });
+            const rf = res.data?.refund;
+            setOrder(prev => ({ ...prev, status: "cancelled", canceled: true, ...(rf && rf.refundedCents != null ? { refundedCents: rf.refundedCents, refunded: rf.fullyRefunded } : {}) }));
+            if (rf?.error) setCancelErr(`Order cancelled, but the refund failed: ${rf.error}`);
+            else setCancelOpen(false);
         } catch (e) {
             setCancelErr(e.response?.data?.error ?? "Failed to cancel order");
         } finally {
             setCancelling(false);
+        }
+    };
+
+    // Standalone refund (customer service) — full or partial, without cancelling.
+    const refundOrder = async () => {
+        setRefundBusy(true); setRefundErr("");
+        try {
+            const dollars = parseFloat(refundAmount);
+            const amountCents = (refundAmount && dollars > 0) ? Math.round(dollars * 100) : undefined; // blank = full remaining
+            const res = await axios.post("/api/orders/refund", { orderId: order._id, amountCents, reason: "customer_service" });
+            setOrder(prev => ({ ...prev, refundedCents: res.data.refundedCents, refunded: res.data.fullyRefunded }));
+            setRefundOpen(false); setRefundAmount("");
+        } catch (e) {
+            setRefundErr(e.response?.data?.error ?? "Refund failed");
+        } finally {
+            setRefundBusy(false);
         }
     };
 
@@ -230,6 +263,11 @@ export function Main({ ord, blanks, source, base = "" }) {
                                 Cancel Order
                             </Button>
                         )}
+                        {canRefund && (
+                            <Button size="small" variant="outlined" color="warning" startIcon={<ReplayIcon />} onClick={() => { setRefundErr(""); setRefundAmount(""); setRefundOpen(true); }} sx={{ fontSize: "0.75rem" }}>
+                                Refund
+                            </Button>
+                        )}
                         <Button size="small" variant="outlined" startIcon={<NoteAddIcon />} onClick={() => setNote(true)} sx={{ fontSize: "0.75rem" }}>
                             Add Note
                         </Button>
@@ -269,6 +307,9 @@ export function Main({ ord, blanks, source, base = "" }) {
                                         ] : []),
                                         ...(order.taxAmountCents ? [
                                             { label: "Tax", value: `$${(order.taxAmountCents / 100).toFixed(2)}` },
+                                        ] : []),
+                                        ...(order.refundedCents > 0 ? [
+                                            { label: "Refunded", value: `-$${(order.refundedCents / 100).toFixed(2)}${order.refunded ? " (full)" : ""}` },
                                         ] : []),
                                     ].map(({ label, value }) => (
                                         <Grid2 key={label} size={{ xs: 6, sm: 4 }}>
@@ -692,6 +733,13 @@ export function Main({ ord, blanks, source, base = "" }) {
                                 : "This order will be cancelled in our system and in ShipStation."
                         }
                     </Typography>
+                    {isStorefront && refundableCents > 0 && (
+                        <FormControlLabel
+                            sx={{ mt: 1, display: "block" }}
+                            control={<Checkbox checked={cancelRefund} onChange={(e) => setCancelRefund(e.target.checked)} />}
+                            label={`Refund the customer $${(refundableCents / 100).toFixed(2)}`}
+                        />
+                    )}
                     {cancelErr && <Typography variant="body2" color="error" sx={{ mt: 1 }}>{cancelErr}</Typography>}
                 </DialogContent>
                 <DialogActions sx={{ px: 3, pb: 2 }}>
@@ -703,6 +751,40 @@ export function Main({ ord, blanks, source, base = "" }) {
                         startIcon={cancelling ? <CircularProgress size={14} color="inherit" /> : <CancelIcon />}
                     >
                         {cancelling ? "Cancelling…" : "Yes, Cancel"}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Refund (customer service) dialog — full or partial, without cancelling */}
+            <Dialog open={refundOpen} onClose={() => !refundBusy && setRefundOpen(false)} maxWidth="xs" fullWidth>
+                <DialogTitle sx={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 1 }}>
+                    <ReplayIcon color="warning" fontSize="small" />
+                    Refund Customer
+                </DialogTitle>
+                <DialogContent>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                        Refund <strong>{order.poNumber}</strong>. Leave the amount blank to refund the full remaining balance
+                        (${(refundableCents / 100).toFixed(2)}{refundedCents > 0 ? `; $${(refundedCents / 100).toFixed(2)} already refunded` : ""}).
+                    </Typography>
+                    <TextField
+                        size="small" fullWidth autoFocus
+                        label="Refund amount (USD)"
+                        placeholder={(refundableCents / 100).toFixed(2)}
+                        value={refundAmount}
+                        onChange={(e) => setRefundAmount(e.target.value.replace(/[^0-9.]/g, ""))}
+                        InputProps={{ startAdornment: <Typography sx={{ mr: 0.5 }}>$</Typography> }}
+                    />
+                    {refundErr && <Typography variant="body2" color="error" sx={{ mt: 1 }}>{refundErr}</Typography>}
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 2 }}>
+                    <Button onClick={() => setRefundOpen(false)} disabled={refundBusy}>Close</Button>
+                    <Button
+                        variant="contained" color="warning"
+                        onClick={refundOrder}
+                        disabled={refundBusy}
+                        startIcon={refundBusy ? <CircularProgress size={14} color="inherit" /> : <ReplayIcon />}
+                    >
+                        {refundBusy ? "Refunding…" : "Issue Refund"}
                     </Button>
                 </DialogActions>
             </Dialog>

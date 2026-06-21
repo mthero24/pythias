@@ -18,10 +18,13 @@ export async function GET(req, { params }) {
     if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
 
     const allItems = await PlatformItem.find({ order: order._id, orgId: auth.orgId })
-        .select("styleCode colorName sizeName price design personalization product color name addOn addOnType giftMessage").lean();
+        .select("styleCode colorName sizeName price design personalization product color name addOn addOnType giftMessage labelPrinted").lean();
     // Gift add-ons are their own items — keep them out of the product line list and surface separately.
     const items = allItems.filter((i) => !i.addOn);
     const addOnItems = allItems.filter((i) => i.addOn);
+    // Once any production label has printed, the order is in production — buyers can't self-serve a
+    // return/cancel online (the UI shows "contact us"; the API enforces it too).
+    const inProduction = allItems.some((i) => i.labelPrinted);
 
     // Resolve a representative image per item — product mockup for pre-made, placement proof/artwork
     // for custom. Batch-load the referenced products once.
@@ -71,6 +74,7 @@ export async function GET(req, { params }) {
             date: order.date ?? order.createdAt ?? null,
             status: order.status ?? "pending",
             paid: !!order.paid,
+            inProduction,
             shippingAddress: order.shippingAddress ?? null,
             lines,
             giftAddOns,

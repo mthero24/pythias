@@ -155,6 +155,16 @@ function RequestReturn({ order }) {
 
     if (done) return <div style={{ ...card, color: "#166534", background: "#dcfce7", border: "none" }}>Return <b>{done.rmaNumber}</b> requested — track it under <a href="/account/returns" style={{ color: "#166534", fontWeight: 700 }}>Returns</a>.</div>;
 
+    // Once the order is in production, self-serve returns/cancellations are closed — direct them to us.
+    if (order.inProduction) return (
+        <div style={card}>
+            <h3 style={{ margin: "0 0 6px", fontSize: "1rem" }}>Need to return or cancel?</h3>
+            <p style={{ margin: 0, color: "#64748b", fontSize: "0.9rem" }}>
+                This order is already in production, so it can’t be returned or cancelled online. Please <a href="/account/messages" style={{ color: "var(--sf-accent, #f59e0b)", fontWeight: 700 }}>contact us</a> and we’ll take care of it for you.
+            </p>
+        </div>
+    );
+
     return (
         <div style={card}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>

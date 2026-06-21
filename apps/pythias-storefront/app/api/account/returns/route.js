@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 import crypto from "crypto";
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
-import { PlatformOrder, StorefrontReturn, StorefrontSite } from "@pythias/mongo";
+import { PlatformOrder, PlatformItem, StorefrontReturn, StorefrontSite } from "@pythias/mongo";
 import { getAuthedCustomer } from "@/lib/account";
 
 const shape = (r) => ({
@@ -31,6 +31,12 @@ export async function POST(req) {
 
     const order = await PlatformOrder.findOne({ _id: b.orderId, orgId, customerEmail: customer.email }).select("poNumber date").lean();
     if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
+
+    // Once any item's production label has printed, the order is in production — buyers can no longer
+    // self-serve a return/cancel online; they must contact the store (which can still refund manually).
+    if (await PlatformItem.exists({ order: order._id, orgId, labelPrinted: true })) {
+        return NextResponse.json({ error: "This order is already in production, so it can't be returned or cancelled online. Please contact us and we'll take care of it for you." }, { status: 409 });
+    }
 
     const site = await StorefrontSite.findOne({ orgId }).select("returns").lean();
     if (site?.returns && site.returns.enabled === false) return NextResponse.json({ error: "Returns are not accepted for this store" }, { status: 400 });
