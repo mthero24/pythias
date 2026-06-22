@@ -462,7 +462,7 @@ function SalesTab({ summary, ordersData, revenueByDay, ordersByDayByMarketplace 
 
 // ─── Production tab ───────────────────────────────────────────────────────────
 
-const STEP_PRIORITY = { "Printed": 1, "Label Printed": 1, "DTF Load": 2, "Embroidery Load": 2, "DTF Find": 3, "Folded": 4, "Shipped": 6, "PreShipped": 6 };
+const STEP_PRIORITY = { "Printed": 1, "Label Printed": 1, "label Printed": 1, "DTF Load": 2, "Embroidery Load": 2, "DTF Find": 3, "Folded": 4, "Shipped": 6, "PreShipped": 6 };
 function stepPriority(status) {
     if (!status) return 0;
     if (status.startsWith("In Bin")) return 5;

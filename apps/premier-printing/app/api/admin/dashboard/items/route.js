@@ -120,7 +120,7 @@ export async function GET(req) {
                                                         in: {
                                                             status: "$$s.status",
                                                             priority: { $switch: { branches: [
-                                                                { case: { $in: ["$$s.status", ["Printed", "Label Printed"]] }, then: 1 },
+                                                                { case: { $in: ["$$s.status", ["Printed", "Label Printed", "label Printed"]] }, then: 1 },
                                                                 { case: { $in: ["$$s.status", ["DTF Load", "Embroidery Load"]] }, then: 2 },
                                                                 { case: { $eq: ["$$s.status", "DTF Find"] }, then: 3 },
                                                                 { case: { $eq: ["$$s.status", "Folded"] }, then: 4 },
@@ -145,7 +145,7 @@ export async function GET(req) {
                     _id: null,
                     dtfFind:      { $sum: { $cond: [{ $eq: ["$latestStatus", "DTF Find"] }, 1, 0] } },
                     dtfLoad:      { $sum: { $cond: [{ $in: ["$latestStatus", ["DTF Load", "Embroidery Load"]] }, 1, 0] } },
-                    labelPrinted: { $sum: { $cond: [{ $in: ["$latestStatus", ["Printed", "Label Printed"]] }, 1, 0] } },
+                    labelPrinted: { $sum: { $cond: [{ $eq: ["$latestStatus", "label Printed"] }, 1, 0] } },
                     folded:       { $sum: { $cond: [{ $eq: ["$latestStatus", "Folded"] }, 1, 0] } },
                     inBin:        { $sum: { $cond: [{ $eq: [{ $indexOfCP: [{ $ifNull: ["$latestStatus", ""] }, "In Bin"] }, 0] }, 1, 0] } },
                     rePulled:     { $sum: { $cond: [{ $eq: ["$latestStatus", "Re-Pulled"] }, 1, 0] } },
@@ -183,7 +183,7 @@ export async function GET(req) {
 
         if (csvMode) {
             const headers = ["Date", "PO Number", "Style", "Color", "Size", "Piece ID", "Wholesale Cost", "Stage"];
-            const PRIO = { "Printed": 1, "Label Printed": 1, "DTF Load": 2, "Embroidery Load": 2, "DTF Find": 3, "Folded": 4, "Shipped": 6, "PreShipped": 6 };
+            const PRIO = { "Printed": 1, "Label Printed": 1, "label Printed": 1, "DTF Load": 2, "Embroidery Load": 2, "DTF Find": 3, "Folded": 4, "Shipped": 6, "PreShipped": 6 };
             const prio = (s) => s?.startsWith("In Bin") ? 5 : (PRIO[s] ?? 0);
             const stageOf = (i) => {
                 if (!i.steps?.length) return "Pending";
