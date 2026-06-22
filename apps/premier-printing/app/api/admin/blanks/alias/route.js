@@ -11,7 +11,9 @@ export async function POST(req=NextApiRequest){
     let images = []
     //console.log(details)
     for(let key of Object.keys(data.selectedBlanks.find(b=> b._id.toString() == data.options.details))){
-        if(key != "_id" && key != "code") details[key] = data.selectedBlanks.find(b=> b._id.toString() == data.options.details)[key]
+        // Alias blanks carry NO inventory/envelopes/fold — incoming items match the underlying ORIGINAL
+        // blank and draw from ITS inventory, so don't copy those off the source blank.
+        if(key != "_id" && key != "code" && key != "envelopes" && key != "fold") details[key] = data.selectedBlanks.find(b=> b._id.toString() == data.options.details)[key]
     }
     let combinedColors = []
     if(data.colorsToUse == "combined"){

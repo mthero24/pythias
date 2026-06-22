@@ -84,7 +84,30 @@ export const recomputeStockStatus = async () => {
         const blanks  = [...new Set(unattached.map(i => i.blank).filter(Boolean))];
         const colors  = [...new Set(unattached.map(i => i.color).filter(Boolean))];
         const sizes   = [...new Set(unattached.map(i => i.size).filter(Boolean))];
-        const invIds  = [...new Set(unattached.map(i => `${i.colorName}-${i.sizeName}-${i.styleCode}`).filter(s => s !== "--"))];
+
+        // Alias blanks carry NO inventory — an item matched to an alias must draw from its underlying
+        // ORIGINAL blank's stock. Inventory is keyed by colorName-sizeName-CODE and the names are shared,
+        // so we swap the alias code for each underlying original blank's code when building lookup keys.
+        const blankDocs = blanks.length ? await Blank.find({ _id: { $in: blanks } }).select("code type blanks").lean() : [];
+        const aliasOriginalCodes = new Map();   // aliasBlankId(str) -> [originalCode,...]
+        const aliasDocs = blankDocs.filter(b => b.type === "alias");
+        if (aliasDocs.length) {
+            const originalIds = [...new Set(aliasDocs.flatMap(b => (b.blanks || []).map(String)))];
+            const originals = originalIds.length ? await Blank.find({ _id: { $in: originalIds } }).select("code").lean() : [];
+            const codeById = new Map(originals.map(o => [String(o._id), o.code]));
+            for (const b of aliasDocs) {
+                aliasOriginalCodes.set(String(b._id), (b.blanks || []).map(id => codeById.get(String(id))).filter(Boolean));
+            }
+        }
+        // Candidate inventory_id keys for an item: the underlying originals' codes if it's an alias, else its own.
+        const invIdKeysFor = (i) => {
+            const codes = aliasOriginalCodes.get(String(i.blank));
+            if (codes && codes.length) return codes.map(c => `${i.colorName}-${i.sizeName}-${c}`);
+            const k = `${i.colorName}-${i.sizeName}-${i.styleCode}`;
+            return k !== "--" ? [k] : [];
+        };
+
+        const invIds = [...new Set(unattached.flatMap(invIdKeysFor))];
 
         const orClauses = [];
         if (blanks.length) orClauses.push({ blank: { $in: blanks }, color: { $in: colors }, sizeId: { $in: sizes } });
@@ -100,8 +123,10 @@ export const recomputeStockStatus = async () => {
         const attachOps = [];
         for (const item of unattached) {
             const bcsKey  = item.blank && item.color && item.size ? `${item.blank}-${item.color}-${item.size}` : null;
-            const invIdKey = `${item.colorName}-${item.sizeName}-${item.styleCode}`;
-            const found = (bcsKey && byBCS.get(bcsKey)) ?? byInvId.get(invIdKey) ?? null;
+            let found = (bcsKey && byBCS.get(bcsKey)) ?? null;
+            if (!found) {
+                for (const key of invIdKeysFor(item)) { found = byInvId.get(key); if (found) break; }
+            }
             if (found) {
                 attachOps.push({ updateOne: {
                     filter: { _id: item._id },

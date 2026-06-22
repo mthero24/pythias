@@ -133,6 +133,7 @@ export async function POST(req = NextApiRequest) {
         Inventory.deleteMany({ blank: blank._id }); // fire-and-forget
       } else {
         updateInventory(blank); // fire-and-forget
+        propagateToAliases(blank); // mirror new colors/sizes onto any alias blanks built on this one
       }
       if (JSON.stringify(beforeBlank?.images) !== JSON.stringify(blank.images)) {
         purgeCloudflareForBlank(blank.images); // fire-and-forget
@@ -191,4 +192,23 @@ async function generateInventory(style) {
     }
   }
   if (docs.length > 0) await Inventory.insertMany(docs, { ordered: false });
+}
+
+// When an original blank gains colors/sizes, mirror them onto any alias blanks built on it
+// (aliases combine their underlying blanks' colors/sizes). Never touches alias inventory/envelopes.
+async function propagateToAliases(blank) {
+  try {
+    const aliases = await Blanks.find({ type: "alias", blanks: blank._id });
+    if (!aliases.length) return;
+    const srcColorIds = (blank.colors || []).map(c => String(c?._id || c));
+    for (const alias of aliases) {
+      const haveColors = new Set((alias.colors || []).map(c => String(c?._id || c)));
+      for (const cid of srcColorIds) if (cid && !haveColors.has(cid)) alias.colors.push(cid);
+      const haveSizes = new Set((alias.sizes || []).map(s => s.name));
+      for (const s of (blank.sizes || [])) {
+        if (s?.name && !haveSizes.has(s.name)) { const { _id, ...rest } = s; alias.sizes.push(rest); }
+      }
+      await alias.save();
+    }
+  } catch (e) { console.error("[blanks] propagateToAliases failed:", e.message); }
 }
