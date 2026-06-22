@@ -46,3 +46,13 @@ export async function sendEmail({ to, subject, html, from }) {
         return { ok: false, error: e.message };
     }
 }
+
+// Build a from-address that keeps the VERIFIED sending email but swaps in a store's brand name,
+// so each store's emails come from its own name (e.g. "Print Threads <stores@pythiastechnologies.com>").
+export function brandedFrom(brandName) {
+    if (!brandName) return DEFAULT_FROM;
+    const m = DEFAULT_FROM.match(/<([^>]+)>/);
+    const email = m ? m[1] : DEFAULT_FROM;
+    const safe = String(brandName).replace(/[<>"\r\n]/g, "").trim().slice(0, 60);
+    return safe ? `${safe} <${email}>` : DEFAULT_FROM;
+}

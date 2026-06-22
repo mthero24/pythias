@@ -1,8 +1,8 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { StorefrontMessage } from "@pythias/mongo";
+import { StorefrontMessage, StorefrontSite } from "@pythias/mongo";
 import { assertInternal } from "@/lib/internal";
-import { sendEmail } from "@/lib/email";
+import { sendEmail, brandedFrom } from "@/lib/email";
 import { sendSMS } from "@/lib/sms";
 import { isNetworkSuppressed } from "@pythias/mongo";
 import { isSuppressed, recordBlockUsage } from "@/lib/marketing";
@@ -20,6 +20,22 @@ export async function POST(req) {
 
     const now = new Date();
     let sent = 0, skipped = 0, failed = 0, processed = 0;
+
+    // Per-store sender name: emails go out as the store's own brand (on the verified domain),
+    // resolved from the org's storefront name and cached for this drain pass.
+    const fromCache = new Map();
+    const fromForOrg = async (orgId) => {
+        const k = String(orgId);
+        if (fromCache.has(k)) return fromCache.get(k);
+        let from;
+        try {
+            const site = (await StorefrontSite.findOne({ orgId, plan: { $ne: "none" } }).select("name").lean())
+                || (await StorefrontSite.findOne({ orgId }).select("name").lean());
+            from = brandedFrom(site?.name);
+        } catch { from = undefined; }
+        fromCache.set(k, from);
+        return from;
+    };
 
     for (let i = 0; i < BATCH; i++) {
         // Atomically claim the next due message so concurrent drains never double-send.
@@ -42,7 +58,7 @@ export async function POST(req) {
 
         const res = msg.channel === "sms"
             ? await sendSMS({ to: msg.to, body: msg.body })
-            : await sendEmail({ to: msg.to, subject: msg.subject, html: msg.html });
+            : await sendEmail({ to: msg.to, subject: msg.subject, html: msg.html, from: await fromForOrg(msg.orgId) });
 
         if (res.ok) {
             msg.status = "sent"; msg.sentAt = new Date(); msg.providerId = res.id || null; msg.error = undefined;
