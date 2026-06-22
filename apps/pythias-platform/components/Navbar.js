@@ -59,6 +59,7 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrackChangesIcon from "@mui/icons-material/TrackChanges";
 import TimelineIcon from "@mui/icons-material/Timeline";
 import HistoryIcon from "@mui/icons-material/History";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import GavelIcon from "@mui/icons-material/Gavel";
 import TuneIcon from "@mui/icons-material/Tune";
 import OndemandVideoIcon from "@mui/icons-material/OndemandVideo";
@@ -218,6 +219,7 @@ function buildFulfillmentSections(base) {
                 { label: "Error Logs",          path: "errors",              icon: <BugReportIcon fontSize="small" /> },
                 { label: "Licenses",            path: "admin/license",       icon: <GavelIcon fontSize="small" /> },
                 { label: "Users",               path: "users",               icon: <PeopleIcon fontSize="small" /> },
+                { label: "My Account",          path: "account",             icon: <AccountCircleIcon fontSize="small" /> },
                 { label: "Settings",            path: "settings",            icon: <SettingsIcon fontSize="small" /> },
                 { label: "Shipping & Hardware", path: "settings/shipping",   icon: <LocalShippingIcon fontSize="small" /> },
                 { label: "Label Creator",       path: "settings/labels",     icon: <LabelIcon fontSize="small" /> },
@@ -289,6 +291,7 @@ function buildCommerceSections(base) {
                 { label: "Integrations", path: "integrations",     icon: <IntegrationInstructionsIcon fontSize="small" /> },
                 { label: "Licenses",     path: "admin/license",    icon: <GavelIcon fontSize="small" /> },
                 { label: "Users",        path: "users",            icon: <PeopleIcon fontSize="small" /> },
+                { label: "My Account",   path: "account",          icon: <AccountCircleIcon fontSize="small" /> },
                 { label: "Settings",     path: "settings",         icon: <SettingsIcon fontSize="small" /> },
                 { label: "Billing",      path: "billing",          icon: <PaymentIcon fontSize="small" /> },
                 { label: "Support",      path: "support",          icon: <SupportAgentIcon fontSize="small" /> },

@@ -51,3 +51,21 @@ export async function resetMonthlyUsage(orgId) {
         'usage.periodStart': new Date(),
     });
 }
+
+// Recompute the usage counters from the live collections. The $inc counters drift if ANY
+// create/delete/import path misses incrementUsage, so this is the source of truth for the
+// dashboard (and corrects the stored counters that billing/overage read).
+export async function recountUsage(orgId) {
+    const { PlatformProduct, PlatformDesign, PlatformOrder } = await import("@pythias/mongo");
+    const org = await Organization.findById(orgId).select("usage.periodStart").lean();
+    const periodStart = org?.usage?.periodStart || new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    const [productsTotal, designsTotal, ordersThisMonth] = await Promise.all([
+        PlatformProduct.countDocuments({ orgId }),
+        PlatformDesign.countDocuments({ orgId }),
+        PlatformOrder.countDocuments({ orgId, date: { $gte: periodStart } }),
+    ]);
+    await Organization.findByIdAndUpdate(orgId, { $set: {
+        "usage.productsTotal": productsTotal, "usage.designsTotal": designsTotal, "usage.ordersThisMonth": ordersThisMonth,
+    } });
+    return { productsTotal, designsTotal, ordersThisMonth };
+}

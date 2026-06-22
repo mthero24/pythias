@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { redirect } from "next/navigation";
 import { Organization, UsageLedger } from "@pythias/mongo";
+import { recountUsage } from "@/lib/usageEnforce";
 import { Box, Container, Grid2, Typography, Card, CardContent, Stack, Chip, Divider } from "@mui/material";
 import UsageGauge from "@/components/UsageGauge";
 import TierBadge from "@/components/TierBadge";
@@ -24,7 +25,10 @@ export default async function DashboardPage({ params }) {
 
     if (!org) redirect("/login");
 
-    const { limits, usage } = org;
+    // Recompute counts from the live collections (stored $inc counters can drift) so the gauges are accurate.
+    const fresh = await recountUsage(session.user.orgId).catch(() => null);
+    const { limits } = org;
+    const usage = { ...org.usage, ...(fresh || {}) };
     const firstName = session.user.firstName;
 
     return (
