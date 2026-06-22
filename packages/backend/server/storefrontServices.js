@@ -44,6 +44,23 @@ export async function refundStorefrontOrder(orgId, { orderId, amountCents, reaso
     return data;
 }
 
+// Send a single preview email/SMS to the seller's own address so they can test a campaign or
+// automation step before it goes to customers. Routed through the storefront (which holds the
+// Resend/Twilio creds + per-store from-name).
+export async function sendMarketingPreview(orgId, { channel, subject, html, body, to } = {}) {
+    if (!to) throw httpError(400, "A recipient is required");
+    const key = INTERNAL_KEY();
+    if (!key) throw httpError(503, "Messaging is not configured");
+    const res = await fetch(`${STOREFRONT_BASE()}/api/internal/marketing/preview`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-pythias-internal-key": key },
+        body: JSON.stringify({ orgId: String(orgId), channel, subject, html, body, to }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw httpError(res.status, data.error || "Preview failed");
+    return data;
+}
+
 // Fields the editor's draft → publish flow manages. NOTE: `redirects` and `termContent` are intentionally
 // excluded — they're written straight to the live site by their services (migrator / term generator) and
 // must not be round-tripped through the draft (a stale autosave would clobber them).

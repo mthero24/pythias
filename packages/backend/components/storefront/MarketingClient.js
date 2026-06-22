@@ -103,6 +103,19 @@ function Composer({ onDone, onCancel }) {
         finally { setBusy(false); }
     };
 
+    const [previewBusy, setPreviewBusy] = useState(false);
+    const sendPreview = async () => {
+        const to = window.prompt(f.channel === "sms" ? "Send a preview text to which number? (+1…)" : "Send a preview email to which address?");
+        if (!to) return;
+        setPreviewBusy(true); setError(null);
+        try {
+            const d = await (await fetch("/api/marketing/preview", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ channel: f.channel, subject: f.subject, html: f.html, body: f.body, to }) })).json();
+            if (d.error) throw new Error(d.error);
+            alert("Preview sent ✓");
+        } catch (e) { setError(`Preview failed: ${e.message}`); }
+        finally { setPreviewBusy(false); }
+    };
+
     return (
         <div style={{ ...card, display: "grid", gap: 12 }}>
             <h3 style={{ margin: 0 }}>New campaign</h3>
@@ -145,6 +158,7 @@ function Composer({ onDone, onCancel }) {
             {error && <div style={{ color: "#dc2626", fontSize: "0.88rem" }}>{error}</div>}
             <div style={{ display: "flex", gap: 8 }}>
                 <button onClick={save} disabled={busy} style={btn}>{busy ? "Saving…" : "Save draft"}</button>
+                <button onClick={sendPreview} disabled={previewBusy} style={ghost}>{previewBusy ? "Sending…" : "Send preview"}</button>
                 <button onClick={onCancel} style={ghost}>Cancel</button>
             </div>
         </div>

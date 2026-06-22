@@ -68,6 +68,14 @@ function FlowEditor({ initial, segments, onClose, onSaved }) {
     const setStep = (i, k, v) => setF((s) => ({ ...s, steps: s.steps.map((x, j) => j === i ? { ...x, [k]: v } : x) }));
     const addStep = () => setF((s) => ({ ...s, steps: [...s.steps, { delayHours: 24, channel: "email", subject: "", html: "" }] }));
     const rmStep = (i) => setF((s) => ({ ...s, steps: s.steps.filter((_, j) => j !== i) }));
+    const previewStep = async (st) => {
+        const to = window.prompt(st.channel === "sms" ? "Send a preview text to which number? (+1…)" : "Send a preview email to which address?");
+        if (!to) return;
+        try {
+            const d = await (await fetch("/api/marketing/preview", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ channel: st.channel, subject: st.subject, html: st.html, body: st.body, to }) })).json();
+            alert(d.error ? `Preview failed: ${d.error}` : "Preview sent ✓");
+        } catch { alert("Preview failed"); }
+    };
 
     const aiBuild = async () => {
         if (!prompt.trim()) return; setAiBusy(true); setError(null);
@@ -105,7 +113,8 @@ function FlowEditor({ initial, segments, onClose, onSaved }) {
                             <span style={{ fontSize: "0.82rem", color: "#64748b" }}>Wait</span>
                             <input type="number" style={{ ...input, width: 90 }} value={st.delayHours} onChange={(e) => setStep(i, "delayHours", Number(e.target.value))} /><span style={{ fontSize: "0.82rem", color: "#64748b" }}>hours, then</span>
                             <select style={{ ...input, width: 110 }} value={st.channel} onChange={(e) => setStep(i, "channel", e.target.value)}><option value="email">Email</option><option value="sms">SMS</option></select>
-                            <button onClick={() => rmStep(i)} style={{ ...ghost, marginLeft: "auto", color: "#dc2626" }}>×</button>
+                            <button onClick={() => previewStep(st)} style={{ ...ghost, marginLeft: "auto" }}>Preview</button>
+                            <button onClick={() => rmStep(i)} style={{ ...ghost, color: "#dc2626" }}>×</button>
                         </div>
                         {st.channel === "email" ? <>
                             <input style={input} placeholder="Subject" value={st.subject || ""} onChange={(e) => setStep(i, "subject", e.target.value)} />
