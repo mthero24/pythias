@@ -68,6 +68,7 @@ import ShieldIcon from "@mui/icons-material/Shield";
 import GavelIcon from "@mui/icons-material/Gavel";
 import HandshakeIcon from "@mui/icons-material/Handshake";
 import PodcastsIcon from "@mui/icons-material/Podcasts";
+import SupportAgentIcon from "@mui/icons-material/SupportAgent";
 
 const DRAWER_WIDTH = 268;
 
@@ -102,6 +103,7 @@ const NAV_SECTIONS = [
       { label: "Activity",         href: "/admin/activity",       icon: <BarChartIcon fontSize="small" />,               showCSV: false, charts: true },
       { label: "Analytics",        href: "/admin/analytics",      icon: <TrendingUpIcon fontSize="small" />,             showCSV: false, charts: true },
       { label: "Downloads",        href: "/admin/downloads",      icon: <SystemUpdateAltIcon fontSize="small" />,        showCSV: false },
+      { label: "Support",          href: "/admin/support",        icon: <SupportAgentIcon fontSize="small" />,           showCSV: false },
       { label: "Shipping & Hardware", href: "/admin/settings/shipping", icon: <IntegrationInstructionsIcon fontSize="small" />, showCSV: false },
       { label: "Label Creator",       href: "/admin/settings/labels",   icon: <LabelIcon fontSize="small" />,                  showCSV: false },
     ],
