@@ -30,6 +30,7 @@ const TABS = [
     { href: "/account/designs", label: "My Designs" },
     { href: "/account/images", label: "My Images" },
     { href: "/account/messages", label: "Messages" },
+    { href: "/account/password", label: "Password" },
 ];
 
 // Auth-gating wrapper for every account page. Redirects to login when signed out, renders
@@ -55,7 +56,10 @@ export function AccountShell({ active, children }) {
                     <h1 style={{ margin: 0, fontSize: "1.6rem" }}>My Account</h1>
                     <div style={{ color: "#64748b", fontSize: "0.9rem" }}>{customer.email}</div>
                 </div>
-                <button onClick={logout} style={ghostBtn}>Sign out</button>
+                <div style={{ display: "flex", gap: 8 }}>
+                    <a href="/" style={ghostBtn}>← Back to shopping</a>
+                    <button onClick={logout} style={ghostBtn}>Sign out</button>
+                </div>
             </div>
 
             <AccountNav active={active} />
