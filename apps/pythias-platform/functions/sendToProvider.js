@@ -20,16 +20,24 @@ export async function cancelOrderAtProvider(providerSlug, { poNumber, reason } =
     const cfg = PROVIDER_INGEST[providerSlug];
     if (!cfg?.url || !cfg?.secret) return { skipped: true, reason: "no_ingest_config" };
     if (!poNumber) return { skipped: true, reason: "no_poNumber" };
-    try {
-        const res = await fetch(cfg.url, {
-            method: "DELETE",
-            headers: { "Content-Type": "application/json", "x-pythias-secret": cfg.secret },
-            body: JSON.stringify({ poNumber, reason: reason || "cancelled" }),
-            signal: AbortSignal.timeout(15000),
-        });
-        if (!res.ok) { const body = await res.text().catch(() => ""); return { ok: false, status: res.status, error: body || `HTTP ${res.status}` }; }
-        return { ok: true, ...(await res.json().catch(() => ({}))) };
-    } catch (e) { return { ok: false, error: e.message }; }
+    // Retry transient network errors / 5xx. The provider cancel is idempotent (already-cancelled
+    // returns success), so retrying is safe — and prevents a momentary fetch blip from missing the cancel.
+    let lastErr;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+            const res = await fetch(cfg.url, {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json", "x-pythias-secret": cfg.secret },
+                body: JSON.stringify({ poNumber, reason: reason || "cancelled" }),
+                signal: AbortSignal.timeout(15000),
+            });
+            if (!res.ok && res.status >= 500) { lastErr = `HTTP ${res.status}`; }
+            else if (!res.ok) { const body = await res.text().catch(() => ""); return { ok: false, status: res.status, error: body || `HTTP ${res.status}` }; }
+            else return { ok: true, ...(await res.json().catch(() => ({}))) };
+        } catch (e) { lastErr = e.message; }
+        if (attempt < 3) await new Promise((r) => setTimeout(r, 400 * attempt));
+    }
+    return { ok: false, error: lastErr || "failed after retries" };
 }
 
 // Resolve which provider an order was routed to (RoutingLog) and cancel it there. Safe no-op if the
