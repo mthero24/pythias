@@ -248,10 +248,14 @@ function buildCommerceSections(base) {
             ],
         },
         {
+            // Storefront is its own area — not mixed into the product catalog.
+            label: "Storefront",
+            items: [...STOREFRONT_ITEMS],
+        },
+        {
             label: "Catalog",
             items: [
                 { label: "Garment Catalog",  path: "catalog",                icon: <CheckroomIcon fontSize="small" /> },
-                ...STOREFRONT_ITEMS,
                 { label: "Designs",          path: "admin/designs",          icon: <BrushIcon fontSize="small" /> },
                 { label: "Design Templates", path: "admin/design-templates", icon: <DesignServicesIcon fontSize="small" /> },
                 { label: "Products",         path: "products",               icon: <InventoryIcon fontSize="small" /> },

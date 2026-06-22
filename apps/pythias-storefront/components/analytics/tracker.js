@@ -1,9 +1,9 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 
 const ENDPOINT = "/api/analytics/collect";
-const VID = "sf_vid", SID = "sf_sid", SID_TS = "sf_sid_ts";
+const VID = "sf_vid", SID = "sf_sid", SID_TS = "sf_sid_ts", CONSENT = "sf_consent";
 const SESSION_GAP = 30 * 60 * 1000;   // 30 min idle = new session
 
 function uid() {
@@ -22,6 +22,10 @@ function getSessionId() {
     localStorage.setItem(SID_TS, String(now));
     return s;
 }
+// Visitor must opt in before we send ANY analytics — incl. the server-side GA4 mirror.
+function hasConsent() {
+    try { return localStorage.getItem(CONSENT) === "yes"; } catch { return false; }
+}
 
 // Only count REAL buyer visits — exclude localhost/dev, the editor's draft-preview (?preview/?pv),
 // and any iframe-embedded render (the builder's live preview). Otherwise dev + editor sessions skew
@@ -39,7 +43,7 @@ function isRealVisit() {
 
 // Reliable fire-and-forget send (survives page unload).
 function beacon(payload) {
-    if (!isRealVisit()) return;
+    if (!isRealVisit() || !hasConsent()) return;
     try {
         const body = JSON.stringify(payload);
         if (navigator.sendBeacon) navigator.sendBeacon(ENDPOINT, new Blob([body], { type: "application/json" }));
@@ -59,8 +63,12 @@ export function track(event, data = {}) {
 export default function AnalyticsTracker() {
     const pathname = usePathname();
     const startRef = useRef(Date.now());
+    const [consent, setConsent] = useState(undefined);   // undefined = unread, null = undecided, "yes"/"no" = chosen
+
+    useEffect(() => { try { setConsent(localStorage.getItem(CONSENT) || null); } catch { setConsent(null); } }, []);
 
     // Page view on every route change (carry UTM params for acquisition attribution).
+    // `consent` is a dep so the landing pageview re-fires the moment the visitor opts in.
     useEffect(() => {
         startRef.current = Date.now();
         const sp = new URLSearchParams(window.location.search);
@@ -69,7 +77,7 @@ export default function AnalyticsTracker() {
             path: pathname, referrer: document.referrer || "",
             utm: { source: sp.get("utm_source") || "", medium: sp.get("utm_medium") || "", campaign: sp.get("utm_campaign") || "" },
         });
-    }, [pathname]);
+    }, [pathname, consent]);
 
     // Core Web Vitals — observe, then flush once when the page is hidden/unloaded.
     useEffect(() => {
@@ -116,5 +124,28 @@ export default function AnalyticsTracker() {
         return () => { document.removeEventListener("visibilitychange", onHide); window.removeEventListener("pagehide", flush); flush(); };
     }, [pathname]);
 
+    const choose = (v) => { try { localStorage.setItem(CONSENT, v); } catch { /* ignore */ } setConsent(v); };
+    if (consent === null) return <ConsentBanner onAccept={() => choose("yes")} onDecline={() => choose("no")} />;
     return null;
+}
+
+// Cookie/tracking consent. Until the visitor accepts, beacon() sends nothing (incl. the server-side
+// GA4 mirror). Shown once per device; choice persisted in localStorage.
+function ConsentBanner({ onAccept, onDecline }) {
+    const btn = { padding: "9px 16px", borderRadius: 8, border: "none", cursor: "pointer", fontWeight: 700, fontSize: "0.9rem" };
+    return (
+        <div role="dialog" aria-label="Cookie consent" style={{
+            position: "fixed", left: 12, right: 12, bottom: 12, zIndex: 9999,
+            background: "#111827", color: "#fff", borderRadius: 12, padding: "14px 16px",
+            display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap",
+            boxShadow: "0 12px 34px rgba(0,0,0,0.35)", fontSize: "0.9rem",
+        }}>
+            <span style={{ flex: "1 1 280px" }}>
+                We use cookies to analyze traffic and improve your experience.{" "}
+                <a href="/policies/privacy" style={{ color: "#93c5fd" }}>Privacy policy</a>
+            </span>
+            <button onClick={onDecline} style={{ ...btn, border: "1px solid rgba(255,255,255,0.3)", background: "transparent", color: "#fff" }}>Decline</button>
+            <button onClick={onAccept} style={{ ...btn, background: "var(--sf-accent, #f59e0b)", color: "#fff" }}>Accept</button>
+        </div>
+    );
 }
