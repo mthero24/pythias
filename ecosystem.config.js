@@ -329,6 +329,21 @@ module.exports = {
       log_date_format: "YYYY-MM-DD HH:mm Z",
     },
     {
+      name: "storefront-marketing-billing",
+      cwd: "apps/pythias-platform",
+      script: "scripts/runMarketingBilling.js",
+      exec_mode: "fork",
+      instances: 1,
+      autorestart: false,
+      cron_restart: "0 6 1 * *", // 06:00 UTC on the 1st — bills last month's email/SMS overage as invoice items
+      watch: false,
+      env: { NODE_ENV: "production", PORT: 3010 },
+      out_file: "logs/storefront-marketing-billing-out.log",
+      error_file: "logs/storefront-marketing-billing-error.log",
+      merge_logs: false,
+      log_date_format: "YYYY-MM-DD HH:mm Z",
+    },
+    {
       name: "storefront-weekly-report",
       cwd: "apps/pythias-platform",
       script: "scripts/runWeeklyReport.js",

@@ -23,6 +23,8 @@ const schema = new mongoose.Schema({
     totalOverageCharge: { type: Number, default: 0 },
     invoiced: { type: Boolean, default: false },
     stripeInvoiceId: { type: String },
+    marketingBilled: { type: Boolean, default: false },   // email/SMS overage invoice-item created for this period
+    marketingInvoiceItemId: { type: String },
     alerts: [{
         type: { type: String, enum: ['75pct', '90pct', '100pct'] },
         resource: { type: String },
