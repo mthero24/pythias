@@ -22,9 +22,9 @@ function getSessionId() {
     localStorage.setItem(SID_TS, String(now));
     return s;
 }
-// Visitor must opt in before we send ANY analytics — incl. the server-side GA4 mirror.
+// Opt-out: track by default (incl. the server-side GA4 mirror); stop only if the visitor declined.
 function hasConsent() {
-    try { return localStorage.getItem(CONSENT) === "yes"; } catch { return false; }
+    try { return localStorage.getItem(CONSENT) !== "no"; } catch { return true; }
 }
 
 // Only count REAL buyer visits — exclude localhost/dev, the editor's draft-preview (?preview/?pv),

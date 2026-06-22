@@ -69,7 +69,9 @@ export default function CartView({ addOns = [] }) {
             <div className="sf-cart-grid" style={{ display: "flex", flexWrap: "wrap", gap: 32, alignItems: "flex-start" }}>
                 {/* Left — items + add-ons */}
                 <div style={{ flex: "1 1 460px", minWidth: 0 }}>
-                    <FreeShipBar subtotalCents={subtotalCents} />
+                    {/* Free-ship threshold is on the POST-discount total (matches the server) — a discount
+                        can drop the order below the threshold, so the bar must use the discounted amount. */}
+                    <FreeShipBar subtotalCents={totalCents} />
 
                     <div style={{ ...card, padding: "4px 20px" }}>
                         {items.map((i) => {
