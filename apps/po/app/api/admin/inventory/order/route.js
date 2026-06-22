@@ -132,6 +132,8 @@ export async function POST(req = NextApiRequest) {
     let order = new InventoryOrders({
         vendor: data.order.company,
         poNumber: data.order.poNumber,
+        // Tag by which button placed it: "outOfStock" vs regular "inventory" restock (default inventory).
+        orderType: data.orderType === "outOfStock" ? "outOfStock" : "inventory",
         dateOrdered: new Date(data.order.dateOrdered + "T12:00:00"),
         dateExpected: data.order.dateExpected ? new Date(data.order.dateExpected + "T12:00:00") : null,
         locations: [],
