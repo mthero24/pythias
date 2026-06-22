@@ -19,6 +19,8 @@ const schema = new mongoose.Schema({
     referrerDomain: { type: String },   // "" = direct
     device:         { type: String, enum: ["mobile", "tablet", "desktop"], default: "desktop" },
     country:        { type: String },
+    region:         { type: String },   // state/province (from CF-Region — needs CF "visitor location headers")
+    city:           { type: String },   // city (from CF-IPCity — needs CF "visitor location headers")
 
     // Acquisition attribution (captured on the landing pageview).
     utmSource:   { type: String },

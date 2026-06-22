@@ -736,6 +736,9 @@ export async function analyticsSummary(orgIdStr, range = "7d") {
             exit: [{ $match: { exitPath: { $ne: null } } }, { $group: { _id: "$exitPath", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 8 }],
             returning: [{ $group: { _id: { $cond: ["$returning", "returning", "new"] }, count: { $sum: 1 } } }],
             countries: [{ $match: { country: { $nin: [null, ""] } } }, { $group: { _id: "$country", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 10 }],
+            cities: [{ $match: { city: { $nin: [null, ""] } } }, { $group: { _id: { city: "$city", region: "$region" }, count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 10 }],
+            buyerCountries: [{ $match: { converted: true, country: { $nin: [null, ""] } } }, { $group: { _id: "$country", count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 10 }],
+            buyerCities: [{ $match: { converted: true, city: { $nin: [null, ""] } } }, { $group: { _id: { city: "$city", region: "$region" }, count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 10 }],
             // Acquisition with revenue attribution (UTM source; "" = direct/referral).
             sources: [{ $group: { _id: { $ifNull: ["$utmSource", ""] }, sessions: { $sum: 1 }, conversions: { $sum: { $cond: ["$converted", 1, 0] } }, revenueCents: { $sum: "$revenueCents" } } }, { $sort: { sessions: -1 } }, { $limit: 8 }],
             campaigns: [{ $match: { utmCampaign: { $nin: [null, ""] } } }, { $group: { _id: "$utmCampaign", sessions: { $sum: 1 }, conversions: { $sum: { $cond: ["$converted", 1, 0] } }, revenueCents: { $sum: "$revenueCents" } } }, { $sort: { revenueCents: -1 } }, { $limit: 8 }],
@@ -769,6 +772,7 @@ export async function analyticsSummary(orgIdStr, range = "7d") {
     const vitals = { lcp: avg(v.lcpSum, v.lcpCount), cls: v.clsCount ? Math.round((v.clsSum / v.clsCount) * 1000) / 1000 : null, fcp: avg(v.fcpSum, v.fcpCount), ttfb: avg(v.ttfbSum, v.ttfbCount), inp: avg(v.inpSum, v.inpCount) };
     const slowestPages = pathAgg.filter((p) => p.lcpCount >= 3).map((p) => ({ path: p._id, lcp: Math.round(p.lcpSum / p.lcpCount), samples: p.lcpCount })).sort((a, b) => b.lcp - a.lcp).slice(0, 8);
     const fmt = (arr) => arr.map((x) => ({ label: x._id === "" ? "Direct" : x._id, count: x.count }));
+    const fmtCity = (arr) => arr.map((x) => ({ label: [x._id.city, x._id.region].filter(Boolean).join(", ") || "—", count: x.count }));
 
     return {
         range,
@@ -778,6 +782,9 @@ export async function analyticsSummary(orgIdStr, range = "7d") {
         funnel: { sessions: fn.sessions || 0, addedToCart: fn.addedToCart || 0, startedCheckout: fn.startedCheckout || 0, converted: fn.converted || 0 },
         devices: fmt(sess.devices), referrers: fmt(sess.referrers), landingPages: fmt(sess.landing), exitPages: fmt(sess.exit),
         countries: fmt(sess.countries),
+        cities: fmtCity(sess.cities),
+        buyerCountries: fmt(sess.buyerCountries),
+        buyerCities: fmtCity(sess.buyerCities),
         newVsReturning: { new: sess.returning.find((x) => x._id === "new")?.count || 0, returning: sess.returning.find((x) => x._id === "returning")?.count || 0 },
         sources: (sess.sources || []).map((s) => ({ label: s._id === "" ? "Direct / referral" : s._id, sessions: s.sessions, conversions: s.conversions, revenueCents: s.revenueCents })),
         campaigns: (sess.campaigns || []).map((c) => ({ label: c._id, sessions: c.sessions, conversions: c.conversions, revenueCents: c.revenueCents })),

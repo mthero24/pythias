@@ -12,6 +12,9 @@ import { dayKey, deviceFromUA, domainOf, cleanPath } from "@/lib/analytics";
 import { sendGa4 } from "@/lib/ga4";
 
 const countryOf = (req) => (req.headers.get("cf-ipcountry") || req.headers.get("x-vercel-ip-country") || req.headers.get("x-country") || "").toUpperCase() || undefined;
+// City/region come from Cloudflare's "Add visitor location headers" managed transform (off by default).
+const regionOf = (req) => (req.headers.get("cf-region") || req.headers.get("x-vercel-ip-country-region") || "").trim() || undefined;
+const cityOf   = (req) => (req.headers.get("cf-ipcity") || req.headers.get("x-vercel-ip-city") || "").trim() || undefined;
 const bumpProduct = (orgId, date, productId, inc) => {
     if (!productId || !mongoose.Types.ObjectId.isValid(productId)) return null;
     return StorefrontProductStat.updateOne({ orgId, date, productId: new mongoose.Types.ObjectId(productId) }, { $inc: inc }, { upsert: true });
@@ -45,7 +48,7 @@ export async function POST(req) {
                     $setOnInsert: {
                         startedAt: now, landingPath: path, visitorId: b.visitorId,
                         referrer: b.referrer || "", referrerDomain: domainOf(b.referrer), device,
-                        country: countryOf(req),
+                        country: countryOf(req), region: regionOf(req), city: cityOf(req),
                         utmSource: b.utm?.source || undefined, utmMedium: b.utm?.medium || undefined, utmCampaign: b.utm?.campaign || undefined,
                     },
                 },

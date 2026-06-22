@@ -127,7 +127,10 @@ export default function AnalyticsClient() {
                         <RevCard title="Traffic sources (revenue)" rows={data.sources} />
                         <RevCard title="Campaigns (UTM)" rows={data.campaigns} emptyText="Tag links with ?utm_campaign=… to attribute revenue." />
                         <ListCard title="New vs returning" rows={[{ label: "New", count: data.newVsReturning?.new || 0 }, { label: "Returning", count: data.newVsReturning?.returning || 0 }]} />
-                        <ListCard title="Top countries" rows={data.countries} hint="Needs Cloudflare/edge geo headers." />
+                        <ListCard title="Top countries" rows={data.countries} />
+                        <ListCard title="Top cities" rows={data.cities} hint="Enable Cloudflare “Add visitor location headers” for city/region." />
+                        <ListCard title="Buyers by country" rows={data.buyerCountries} hint="Where your paying customers are." />
+                        <ListCard title="Buyers by city" rows={data.buyerCities} hint="Paying customers by city." />
                     </div>
 
                     {/* Product funnel */}
