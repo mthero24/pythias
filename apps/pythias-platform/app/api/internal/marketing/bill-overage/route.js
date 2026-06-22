@@ -29,6 +29,12 @@ export async function POST(req) {
     let billed = 0, charged = 0, skipped = 0;
 
     for (const l of ledgers) {
+        // Comped/free accounts are never charged marketing overage.
+        const org = await Organization.findById(l.orgId).select("stripeCustomerId comp").lean();
+        if (org?.comp) {
+            await UsageLedger.updateOne({ _id: l._id }, { $set: { overageEmailsCharge: 0, overageSmsCharge: 0, marketingBilled: true } });
+            skipped++; continue;
+        }
         // The org's storefront plan sets the allowance + overage rates.
         const site = await StorefrontSite.findOne({ orgId: l.orgId, plan: { $ne: "none" } }).select("plan").lean();
         const m = site?.plan ? STOREFRONT_PLAN_LIMITS[site.plan]?.marketing : null;
@@ -42,7 +48,6 @@ export async function POST(req) {
 
         const set = { overageEmailsCharge: emailCharge, overageSmsCharge: smsCharge, marketingBilled: true };
         if (totalCents > 0) {
-            const org = await Organization.findById(l.orgId).select("stripeCustomerId").lean();
             if (org?.stripeCustomerId) {
                 try {
                     const item = await stripe.invoiceItems.create({

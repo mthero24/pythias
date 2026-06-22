@@ -15,9 +15,10 @@ export async function syncUsageLedger(orgId) {
         ? 0
         : Math.max(0, org.usage.ordersThisMonth - org.limits.ordersPerMonth);
 
-    const overageOrdersCharge = calcOverage(org.usage.ordersThisMonth, org.limits.ordersPerMonth, tier.overage.order);
+    const comp = org.comp === true;   // comped/free account → never charge overage
+    const overageOrdersCharge = comp ? 0 : calcOverage(org.usage.ordersThisMonth, org.limits.ordersPerMonth, tier.overage.order);
     const extraUsers = Math.max(0, org.usage.usersTotal - org.limits.users);
-    const extraUsersCharge = extraUsers * (tier.overage.user ?? 0);
+    const extraUsersCharge = comp ? 0 : extraUsers * (tier.overage.user ?? 0);
     const totalOverageCharge = overageOrdersCharge + extraUsersCharge;
 
     await UsageLedger.findOneAndUpdate(
