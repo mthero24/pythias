@@ -1631,30 +1631,32 @@ export async function profitAnalytics(orgIdStr, range = "30d") {
     const start = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
     const [agg] = await PlatformOrder.aggregate([
-        { $match: { orgId, source: "storefront", date: { $gte: start } } },
+        // Cancelled and fully-refunded orders are NOT sales — exclude them. Partial refunds on
+        // surviving orders are netted out below (order.refundedCents, set by every refund path).
+        { $match: { orgId, source: "storefront", date: { $gte: start }, cancelled: { $ne: true }, refunded: { $ne: true } } },
         { $project: {
             day: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
             subtotal:  { $ifNull: ["$storefrontPayout.subtotalCents", 0] },
             wholesale: { $ifNull: ["$storefrontPayout.wholesaleCents", 0] },
             stripeFee: { $ifNull: ["$storefrontPayout.stripeFeeCents", 0] },
             discount:  { $add: [{ $multiply: [{ $ifNull: ["$discountAmount", 0] }, 100] }, { $ifNull: ["$rewardsRedeemedCents", 0] }, { $ifNull: ["$giftCardRedeemedCents", 0] }] },
+            refundCents: { $ifNull: ["$refundedCents", 0] },
         } },
         { $project: {
-            day: 1, subtotal: 1, wholesale: 1, discount: 1,
+            day: 1, subtotal: 1, wholesale: 1, discount: 1, refundCents: 1,
             netSales: { $subtract: ["$subtotal", "$discount"] },
             fees: { $add: ["$stripeFee", { $round: [{ $multiply: ["$subtotal", 0.01] }, 0] }] },
         } },
-        { $project: { day: 1, netSales: 1, wholesale: 1, fees: 1, discount: 1, profit: { $subtract: ["$netSales", { $add: ["$wholesale", "$fees"] }] } } },
+        { $project: { day: 1, netSales: 1, wholesale: 1, fees: 1, discount: 1, refundCents: 1, profit: { $subtract: ["$netSales", { $add: ["$wholesale", "$fees", "$refundCents"] }] } } },
         { $facet: {
-            totals: [{ $group: { _id: null, orders: { $sum: 1 }, revenue: { $sum: "$netSales" }, cogs: { $sum: "$wholesale" }, fees: { $sum: "$fees" }, discounts: { $sum: "$discount" }, profit: { $sum: "$profit" } } }],
+            totals: [{ $group: { _id: null, orders: { $sum: 1 }, revenue: { $sum: "$netSales" }, cogs: { $sum: "$wholesale" }, fees: { $sum: "$fees" }, discounts: { $sum: "$discount" }, refunds: { $sum: "$refundCents" }, profit: { $sum: "$profit" } } }],
             trend:  [{ $group: { _id: "$day", profit: { $sum: "$profit" }, revenue: { $sum: "$netSales" } } }, { $sort: { _id: 1 } }],
         } },
     ]);
     const t = agg.totals[0] || {};
-    const refundAgg = await StorefrontReturn.aggregate([{ $match: { orgId, status: "refunded", updatedAt: { $gte: start } } }, { $group: { _id: null, refunds: { $sum: "$refundCents" } } }]);
-    const refunds = refundAgg[0]?.refunds || 0;
+    const refunds = t.refunds || 0;
     const revenue = t.revenue || 0, orders = t.orders || 0;
-    const profit = (t.profit || 0) - refunds;
+    const profit = t.profit || 0;   // already net of partial refunds (cancelled/fully-refunded excluded)
     return {
         range,
         totals: {
