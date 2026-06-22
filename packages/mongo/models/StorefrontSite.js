@@ -213,6 +213,7 @@ const schema = new mongoose.Schema({
     // ── Analytics / tracking (IDs only; scripts injected by the storefront) ──
     analytics: {
         ga4Id:         { type: String },   // Google tag / GA4  "G-XXXXXXX"
+        ga4ApiSecret:  { type: String },   // GA4 Measurement Protocol secret (server-side, blocker-proof tracking)
         gtmId:         { type: String },   // Google Tag Manager "GTM-XXXXXXX"
         metaPixelId:   { type: String },   // Meta / Facebook pixel
         tiktokPixelId: { type: String },
