@@ -17,6 +17,8 @@ const schema = new mongoose.Schema({
     stripeSessionId: { type: String },
     description:     { type: String },
     paidAt:          { type: Date, required: true },
+    manual:          { type: Boolean, default: false },  // recorded by hand (outside Stripe — invoice/ACH/check)
+    recordedBy:      { type: String },                   // admin email who recorded a manual payment
 }, { timestamps: true });
 
 schema.index({ orgId: 1, paidAt: -1 });

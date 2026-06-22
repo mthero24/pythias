@@ -1,6 +1,7 @@
 import { Organization, UsageLedger, PaymentReceived } from "@pythias/mongo";
 import { Box, Container, Typography, Card, Table, TableBody, TableCell, TableHead, TableRow, Chip, Stack, Button } from "@mui/material";
 import { TIERS } from "@/lib/tiers";
+import RecordPaymentButton from "./RecordPaymentButton";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +38,7 @@ export default async function AdminPage() {
                     <Stack direction="row" spacing={1.5} alignItems="center">
                         <Typography variant="h6" fontWeight={700}>Platform Admin</Typography>
                         <Button size="small" variant="outlined" href="/admin/analytics">Company Analytics</Button>
+                        <RecordPaymentButton orgs={orgs.map(o => ({ id: String(o._id), name: o.name || o.slug }))} />
                     </Stack>
                     <Stack direction="row" spacing={3}>
                         <Box sx={{ textAlign: "right" }}>
