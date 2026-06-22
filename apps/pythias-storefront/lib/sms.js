@@ -2,13 +2,17 @@
 // (returns { ok:false }) instead of breaking the build or the outbox drain.
 let _client = null;
 async function client() {
-    const sid = process.env.TWILIO_ACCOUNT_SID;
-    const token = process.env.TWILIO_AUTH_TOKEN;
-    if (!sid || !token) return null;
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;            // AC… (always required)
+    const apiKeySid = process.env.TWILIO_API_KEY_SID;             // SK… + secret — preferred (revocable, scoped)
+    const apiKeySecret = process.env.TWILIO_API_KEY_SECRET;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;              // fallback: the account Auth Token
+    if (!accountSid) return null;
     if (_client) return _client;
     try {
         const twilio = (await import("twilio")).default;
-        _client = twilio(sid, token);
+        if (apiKeySid && apiKeySecret) _client = twilio(apiKeySid, apiKeySecret, { accountSid });
+        else if (authToken) _client = twilio(accountSid, authToken);
+        else return null;
         return _client;
     } catch {
         return null;   // package not installed
