@@ -111,6 +111,7 @@ export function OrderModal({ open, setOpen, type, items, setBlanks, setItems, de
         const res = await axios.post("/api/admin/inventory/order", {
             order,
             needsOrdered,
+            orderType: type === "Out Of Stock" ? "outOfStock" : "inventory",
             items: type === "Inventory Order" ? [] : items,
         });
         if (res?.data) {
