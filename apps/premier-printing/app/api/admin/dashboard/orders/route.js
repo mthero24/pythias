@@ -48,12 +48,18 @@ export async function GET(req) {
             licenceFeeByOrder[key] = (licenceFeeByOrder[key] || 0) + (i.licenceFee || 0);
         }
 
-        const enriched = orders.map(o => ({
-            ...o,
-            blanksCogs: cogsByOrder[String(o._id)] || 0,
-            licenceFee: licenceFeeByOrder[String(o._id)] || 0,
-            shippingCost: shipCostExpr(o),
-        }));
+        const enriched = orders.map(o => {
+            // Cancelled/refunded orders contribute $0 revenue and $0 net (matches the summary's activeExpr).
+            // Their items are already excluded from the COGS/licence queries above, so those are 0 too.
+            const dead = o.canceled || o.refunded;
+            return {
+                ...o,
+                total: dead ? 0 : (o.total ?? 0),
+                blanksCogs: cogsByOrder[String(o._id)] || 0,
+                licenceFee: licenceFeeByOrder[String(o._id)] || 0,
+                shippingCost: dead ? 0 : shipCostExpr(o),
+            };
+        });
 
         if (csvMode) {
             const headers = ["Date", "PO Number", "Order ID", "Marketplace", "Status", "Revenue", "Shipping Cost", "Blank COGS", "Licence Fee"];
