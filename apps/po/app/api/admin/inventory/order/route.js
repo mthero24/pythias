@@ -98,13 +98,16 @@ export async function PUT(req = NextApiRequest) {
                 await inv.save();
             }
             location.received = true;
-            printItems = Sort(printItems, "PO");
-            let printLabels = await axios.post("https://production.printoracle.com/api/production/print-labels", { items: Sort(printItems, "PO"), poNumber: order.poNumber });
-            console.log(printLabels?.data);
             if (order.locations.filter(l => l.received == false).length == 0) order.received = true;
             order.markModified("locations");
             order.markModified("received");
-            await order.save();
+            await order.save();   // persist the receive BEFORE printing — a label-print failure must not lose it
+            // Labels are best-effort (reprintable) — never abort the receive if the print service errors.
+            try {
+                printItems = Sort(printItems, "PO");
+                const printLabels = await axios.post("https://production.printoracle.com/api/production/print-labels", { items: Sort(printItems, "PO"), poNumber: order.poNumber });
+                console.log(printLabels?.data);
+            } catch (e) { console.error("[inventory/order receive] label print failed (receive saved):", e.message); }
             // Receiving removes this PO's capacity — reconcile the per-item "ordered" flags
             // so nothing stays marked "ordered" beyond the remaining active-PO truth.
             reconcileOrderedStatus().catch(e => console.error("[inventory/order receive] reconcile failed:", e.message));
