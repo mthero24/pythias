@@ -44,7 +44,10 @@ export default async function DashboardLayout({ children, params }) {
             <CSVProvider>
                 <Navbar />
                 <UsageAlertBanner org={orgData} />
-                <SetupGuideBanner slug={slug} />
+                {/* The 13-step Setup Guide banner is Fulfillment/Commerce-Cloud onboarding (integrations,
+                    blanks, production). Storefront sellers get their own "Get your store ready" checklist
+                    on the dashboard instead, so hide this banner for them. */}
+                {orgData.orgType !== "storefront" && <SetupGuideBanner slug={slug} />}
                 <main style={{ minHeight: "calc(100vh - 64px)" }}>
                     {children}
                 </main>
