@@ -1,4 +1,4 @@
-import { PlatformProduct, PlatformBlank as Blanks, PlatformColor as Color, Brands, PlatformMarketPlace as MarketPlaces, PlatformEditData, PlatformLicenseHolder as LicenseHolders } from "@pythias/mongo";
+import { PlatformProduct, PlatformBlank as Blanks, PlatformColor as Color, Brands, PlatformMarketPlace as MarketPlaces, PlatformEditData, PlatformLicenseHolder as LicenseHolders, Organization } from "@pythias/mongo";
 import { ProductsMain as Main, serialize } from "@pythias/backend";
 import { CreateSku } from "@/functions/CreateSku";
 import { getServerSession } from "next-auth";
@@ -28,6 +28,8 @@ export default async function ProductsPage(req) {
         LicenseHolders.find(orgId ? { orgId } : {}).lean(),
         orgId ? PlatformProduct.countDocuments({ orgId }) : Promise.resolve(0),
     ]);
+    const org = orgId ? await Organization.findById(orgId).select("orgType").lean() : null;
+    const orgType = org?.orgType || "fulfillment";
     const byType = (t) => editData.filter((d) => d.type === t);
     const seasons = byType("seasons");
     const genders = byType("genders");
@@ -60,6 +62,7 @@ export default async function ProductsPage(req) {
             canManageMarketplaces={canManageMarketplaces}
             searchUrl="/api/admin/products"
             orgId={orgId}
+            orgType={orgType}
         />
     );
 }

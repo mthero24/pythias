@@ -75,7 +75,11 @@ const schema = new mongoose.Schema({
         price: Number,
         compareAtPrice: { default: 0, type: Number },   // "was" price → shows a strikethrough + savings when > price
         wholesalePrice: { default: 0, type: Number },
-        previousSkus: [String]
+        costPerItem: { default: 0, type: Number },
+        weight: { default: 0, type: Number },
+        previousSkus: [String],
+        name: String,                        // free-form variant label for catalog (buy-not-build) products
+        stock: { type: Number, default: 0 }, // on-hand qty for self-fulfilled catalog products
     }],
     variantImages: Object,
     variantSecondaryImages: Object,
@@ -117,6 +121,10 @@ const schema = new mongoose.Schema({
     category: [String],
     ids: Object,
     isNFProduct: { type: Boolean, default: false },
+    // Buy-not-build catalog products (reseller / commerce-cloud stocked goods that the seller ships themselves).
+    isCatalogProduct: { type: Boolean, default: false },
+    trackInventory: { type: Boolean, default: false },       // enforce variant.stock at checkout
+    continueSellingOOS: { type: Boolean, default: false },   // allow ordering when a variant's stock is 0
     createdAt: { type: Date, default: Date.now },
     lastUpdated: { type: Date, default: Date.now },
     tempImages: [Object],

@@ -10,6 +10,7 @@ import ZoomInIcon from '@mui/icons-material/ZoomIn';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import axios from 'axios';
 import { ProductImageCarosel, VariantDisplay } from '../design/stages/previewStage';
+import { CatalogProductCreate } from './CatalogProductCreate';
 
 const STAGES = [
     { key: "Select Blank", label: "Blank" },
@@ -82,7 +83,8 @@ const catalogEntriesToBlanks = (catalog) => {
 };
 
 export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, setStage, brands: brandsProp, setBrands, seasons, setSeasons, genders, setGenders, CreateSku, themes, setThemes, sportUsedFor, setSportUsedFor, orgType }) => {
-    const [type, setType] = useState("From Blank");
+    // Storefront resellers don't have blanks — default them straight to the buy-not-build ("Other") creator.
+    const [type, setType] = useState(orgType === "storefront" ? "Other" : "From Blank");
     const [blanks, setBlanks] = useState([]);
     const [localBrands, setLocalBrands] = useState(brandsProp || []);
     const [loading, setLoading] = useState(false);
@@ -207,10 +209,13 @@ export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, set
                     <CloseIcon onClick={() => { setProduct({blanks: [], colors: [], productImages: [], variantsArray: []}); releaseHold(); setStage("Select Blank"); setLoading(false); setOpen(false) }} sx={{ cursor: "pointer", color: "#780606"}} />
                 </Box>
                 <Typography variant="h5" textAlign="center">Create New Product</Typography>
-                <Box sx={{padding: "2%", marginBottom: "2%", display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center"}}>
-                    <Button fullWidth variant="outlined" sx={{background: type== "From Blank" ? "#e2e2e2" : "transparent"}} onClick={() => setType("From Blank")}>From Blank</Button>
-                    <Button fullWidth variant="outlined" sx={{background: type== "Other" ? "#e2e2e2" : "transparent"}} onClick={() => setType("Other")}>Other</Button>
-                </Box>
+                {/* Resellers (storefront) have no blanks — show only the buy-not-build creator. */}
+                {orgType !== "storefront" && (
+                    <Box sx={{padding: "2%", marginBottom: "2%", display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center"}}>
+                        <Button fullWidth variant="outlined" sx={{background: type== "From Blank" ? "#e2e2e2" : "transparent"}} onClick={() => setType("From Blank")}>From Blank</Button>
+                        <Button fullWidth variant="outlined" sx={{background: type== "Other" ? "#e2e2e2" : "transparent"}} onClick={() => setType("Other")}>Buy / Resell (UPC)</Button>
+                    </Box>
+                )}
                 {type === "From Blank" && (
                     <Stepper activeStep={currentStepIndex < 0 ? 0 : currentStepIndex} alternativeLabel sx={{ marginBottom: 3 }} nonLinear>
                         {STAGES.map((s, idx) => (
@@ -1047,11 +1052,10 @@ export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, set
                     </Box>
                 )}
                 {type === "Other" && (
-                    <Box>
-                        <Box sx={{ display: "flex", flexDirection: "row", justifyContent: "center", alignItems: "center", height: "300px" }}>
-                            <Typography variant="h6">Other product creation methods coming soon!</Typography>
-                        </Box>
-                    </Box>
+                    <CatalogProductCreate
+                        onSaved={() => { setProduct({ blanks: [], colors: [], productImages: [], variantsArray: [] }); setStage("Select Blank"); setOpen(false); }}
+                        onCancel={() => { setProduct({ blanks: [], colors: [], productImages: [], variantsArray: [] }); setStage("Select Blank"); setOpen(false); }}
+                    />
                 )}
             </Box>
         </Modal>
