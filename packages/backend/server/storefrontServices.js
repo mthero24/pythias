@@ -375,15 +375,28 @@ export async function aiDraft({ channel = "email", prompt, brand = "our store", 
     const draft = parseJson(textOf(msg));
     if (draft && Array.isArray(draft.blocks)) {
         for (const b of draft.blocks) {
-            // Generate real photos for IMG[...] placeholders (website-builder pipeline).
-            if (b?.type === "image" && typeof b.src === "string" && /IMG\[/i.test(b.src) && orgId) {
-                try { b.src = await substituteAiImages(b.src, String(orgId), 1); } catch { /* leave placeholder */ }
+            // Generate a real photo for an IMG[...] image block (bare src, not an <img> tag).
+            if (b?.type === "image" && typeof b.src === "string" && /IMG\[/i.test(b.src)) {
+                const desc = (b.src.match(/IMG\[([^\]]+)\]/) || [])[1] || "";
+                let url = "";
+                if (orgId && desc && sceneGenAvailable()) {
+                    try { url = await generateImage({ prompt: `${desc}. Photorealistic product/lifestyle photography, on-brand, natural lighting, no text, no watermark.`, aspect: 1.5, orgId: String(orgId) }); } catch { url = ""; }
+                }
+                b.src = url; // real URL, or "" so the block renders nothing instead of a broken placeholder
             }
             // Safety: make any relative button href absolute (relative URLs break in email).
             if (b?.type === "button" && typeof b.href === "string" && b.href.startsWith("/") && baseUrl) b.href = `${baseUrl}${b.href}`;
         }
     }
     return draft;
+}
+
+// Generate a single AI image for the email builder's image block (manual "Generate" button).
+export async function generateEmailImage(orgId, prompt) {
+    if (!prompt || !String(prompt).trim()) throw httpError(400, "Describe the image first");
+    if (!sceneGenAvailable()) throw httpError(503, "AI image generation isn't configured yet (missing GEMINI_API_KEY).");
+    const url = await generateImage({ prompt: `${String(prompt).trim()}. Photorealistic product/lifestyle photography, on-brand, natural lighting, no text, no watermark.`, aspect: 1.5, orgId: String(orgId) });
+    return { url };
 }
 
 // AI header-menu designer: builds a header menu (sections + links + emoji icons) from the store's

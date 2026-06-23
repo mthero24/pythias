@@ -87,6 +87,16 @@ function BlockEditor({ blocks = [], setBlocks }) {
     const remove = (i) => setBlocks(blocks.filter((_, j) => j !== i));
     const move = (i, d) => { const j = i + d; if (j < 0 || j >= blocks.length) return; const c = [...blocks]; [c[i], c[j]] = [c[j], c[i]]; setBlocks(c); };
     const add = (t) => setBlocks([...blocks, { ...NEW_BLOCK[t] }]);
+    const [genIdx, setGenIdx] = useState(-1);
+    const genImage = async (i) => {
+        const prompt = blocks[i]?.src || "";
+        if (!prompt.trim()) { alert("Type a description of the image first, then Generate."); return; }
+        setGenIdx(i);
+        try {
+            const d = await (await fetch("/api/marketing/generate-image", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt }) })).json();
+            if (d.url) update(i, { src: d.url }); else alert(d.error || "Generation failed");
+        } catch { alert("Generation failed"); } finally { setGenIdx(-1); }
+    };
     return (
         <div style={{ display: "grid", gap: 8 }}>
             {blocks.map((b, i) => (
@@ -105,7 +115,11 @@ function BlockEditor({ blocks = [], setBlocks }) {
                         <input style={input} value={b.label || ""} placeholder="Button label" onChange={(e) => update(i, { label: e.target.value })} />
                         <input style={input} value={b.href || ""} placeholder="Link URL (https://…)" onChange={(e) => update(i, { href: e.target.value })} />
                     </div>}
-                    {b.type === "image" && <input style={input} value={b.src || ""} placeholder="Image URL — or IMG[describe a scene] for an AI image" onChange={(e) => update(i, { src: e.target.value })} />}
+                    {b.type === "image" && <div style={{ display: "grid", gap: 6 }}>
+                        <input style={input} value={b.src || ""} placeholder="Image URL — or describe a scene and Generate" onChange={(e) => update(i, { src: e.target.value })} />
+                        <button type="button" onClick={() => genImage(i)} disabled={genIdx === i} style={ghost}>{genIdx === i ? "Generating…" : "✨ Generate AI image"}</button>
+                        {b.src && /^https?:/i.test(b.src) && <img src={b.src} alt="" style={{ maxWidth: "100%", borderRadius: 6, border: "1px solid #e2e8f0" }} />}
+                    </div>}
                     {b.type === "products" && <div style={{ display: "grid", gap: 6 }}>
                         <input style={input} value={b.heading || ""} placeholder="Section heading (e.g. Featured)" onChange={(e) => update(i, { heading: e.target.value })} />
                         <input style={input} value={b.query || ""} placeholder="Product search (e.g. hoodies) — auto-pulls matching products" onChange={(e) => update(i, { query: e.target.value })} />
