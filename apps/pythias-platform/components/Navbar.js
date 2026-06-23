@@ -320,11 +320,11 @@ function buildStorefrontSections(base) {
         { label: "Storefront", items: [...STOREFRONT_ITEMS] },
         {
             label: "Catalog",
+            // Standalone storefront sellers don't use Pythias designs/design-templates (those are for
+            // POD production); they bring their own products. Hide them for storefront accounts.
             items: [
-                { label: "Products",         path: "products",               icon: <InventoryIcon fontSize="small" /> },
-                { label: "Designs",          path: "admin/designs",          icon: <BrushIcon fontSize="small" /> },
-                { label: "Design Templates", path: "admin/design-templates", icon: <DesignServicesIcon fontSize="small" /> },
-                { label: "Brands",           path: "admin/brands",           icon: <SellIcon fontSize="small" /> },
+                { label: "Products", path: "products",     icon: <InventoryIcon fontSize="small" /> },
+                { label: "Brands",   path: "admin/brands", icon: <SellIcon fontSize="small" /> },
             ],
         },
         {
@@ -396,14 +396,25 @@ export default function Navbar() {
                     </Tooltip>
 
                     <Link href={`${base}/dashboard`} style={{ textDecoration: "none", display: "inline-flex", alignItems: "center" }}>
-                        <Image
-                            src={logo}
-                            alt="Pythias Technologies"
-                            width={160}
-                            height={74}
-                            priority
-                            style={{ height: "auto" }}
-                        />
+                        {isStorefront ? (
+                            // String path (not a static import) → render as a plain <img> like the drawer,
+                            // height-constrained to the 56px toolbar so it doesn't overflow or fail optimization.
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                                src="/storefront-logo.png"
+                                alt="Pythias Technologies"
+                                style={{ height: 38, width: "auto", display: "block" }}
+                            />
+                        ) : (
+                            <Image
+                                src={logo}
+                                alt="Pythias Technologies"
+                                width={160}
+                                height={74}
+                                priority
+                                style={{ height: "auto" }}
+                            />
+                        )}
                     </Link>
 
                     <Box sx={{ flex: 1 }} />

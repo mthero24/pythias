@@ -5,6 +5,8 @@ import { routeOrder } from "@/functions/routeOrder";
 import { routeDropship, routeWarehouse } from "@/functions/routeAltVerticals";
 import { assertInternal } from "@/lib/internal";
 import { logError } from "@pythias/backend/server";
+import { notifyPartner } from "@/lib/notifyPartner";
+import { shapeOrder } from "@/lib/partnerShape";
 
 // POST /api/internal/route-order  (server-to-server, from the storefront webhook)
 // Body: { orderId }  →  { routed, groups: [...] }
@@ -25,7 +27,18 @@ export async function POST(req) {
     const org = await Organization.findById(order.orgId, "orgType wallet _id").lean();
     if (!org) return NextResponse.json({ error: "Org not found" }, { status: 404 });
     if (org.orgType !== "commerce") {
-        // Non-commerce orgs fulfill their own orders — nothing to route.
+        // Non-commerce orgs fulfill their own orders — we never route to our fulfillers.
+        // A standalone storefront seller self-fulfills; if they've set up their own order webhook,
+        // push the new order there (notifyPartner no-ops unless their webhook is active). We do NOT
+        // touch Commerce/Fulfillment Cloud routing for them.
+        if (org.orgType === "storefront") {
+            try {
+                const items = await PlatformItem.find({ order: order._id }).lean();
+                await notifyPartner(order.orgId, "order.received", shapeOrder({ ...order.toObject(), items }));
+            } catch (e) {
+                console.error(`[route-order] storefront order.received webhook failed for ${orderId}:`, e.message);
+            }
+        }
         return NextResponse.json({ routed: false, reason: "not_commerce" });
     }
 
