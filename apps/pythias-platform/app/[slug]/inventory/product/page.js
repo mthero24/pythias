@@ -1,6 +1,6 @@
-import { PlatformProductInventory as ProductInventory, PlatformDesign as Design, PlatformBlank as Blank, OrgIntegrations } from "@pythias/mongo";
+import { PlatformProductInventory as ProductInventory, PlatformDesign as Design, PlatformBlank as Blank, OrgIntegrations, PlatformProduct } from "@pythias/mongo";
 import { ProductMain } from "@pythias/inventory";
-import { serialize } from "@pythias/backend";
+import { serialize, CatalogInventory } from "@pythias/backend";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 
@@ -34,6 +34,11 @@ export default async function ProductInventoryPage({ searchParams }) {
 
     const blanks = serialize(blanksRaw);
 
+    // Catalog (buy-not-build / imported) products track stock on the variant, not PlatformInventory —
+    // surface them here too so "added products" show up on the inventory page.
+    const catalogProducts = await PlatformProduct.find({ orgId, isCatalogProduct: true })
+        .select("title variantsArray source").sort({ _id: -1 }).lean();
+
     const parsed = filter ? JSON.parse(filter) : {};
     const find = { orgId };
     if (parsed.blank) find.blankCode = parsed.blank;
@@ -57,15 +62,22 @@ export default async function ProductInventoryPage({ searchParams }) {
     }));
 
     return (
-        <ProductMain
-            inventory={serialize(inventory)}
-            q={q}
-            totalCount={totalCount}
-            totalValue={totalValue}
-            p={page}
-            blanks={blanks}
-            fils={filter}
-            hasEbay={ebayConnCount > 0}
-        />
+        <>
+            {catalogProducts.length > 0 && (
+                <div style={{ maxWidth: 1200, margin: "0 auto", padding: "16px" }}>
+                    <CatalogInventory products={serialize(catalogProducts)} />
+                </div>
+            )}
+            <ProductMain
+                inventory={serialize(inventory)}
+                q={q}
+                totalCount={totalCount}
+                totalValue={totalValue}
+                p={page}
+                blanks={blanks}
+                fils={filter}
+                hasEbay={ebayConnCount > 0}
+            />
+        </>
     );
 }
