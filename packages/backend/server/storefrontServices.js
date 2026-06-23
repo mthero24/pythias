@@ -47,14 +47,14 @@ export async function refundStorefrontOrder(orgId, { orderId, amountCents, reaso
 // Send a single preview email/SMS to the seller's own address so they can test a campaign or
 // automation step before it goes to customers. Routed through the storefront (which holds the
 // Resend/Twilio creds + per-store from-name).
-export async function sendMarketingPreview(orgId, { channel, subject, html, body, to } = {}) {
+export async function sendMarketingPreview(orgId, { channel, subject, html, body, blocks, to } = {}) {
     if (!to) throw httpError(400, "A recipient is required");
     const key = INTERNAL_KEY();
     if (!key) throw httpError(503, "Messaging is not configured");
     const res = await fetch(`${STOREFRONT_BASE()}/api/internal/marketing/preview`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-pythias-internal-key": key },
-        body: JSON.stringify({ orgId: String(orgId), channel, subject, html, body, to }),
+        body: JSON.stringify({ orgId: String(orgId), channel, subject, html, body, blocks, to }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw httpError(res.status, data.error || "Preview failed");
@@ -269,12 +269,12 @@ export async function createCampaign(orgId, b, createdBy) {
     if (!b?.name || !b?.channel) throw httpError(400, "name and channel are required");
     return StorefrontCampaign.create({
         orgId, channel: b.channel, name: b.name, audience: b.audience || "all", segmentId: b.segmentId || undefined,
-        subject: b.subject, html: b.html, body: b.body, status: "draft", createdBy,
+        subject: b.subject, html: b.html, blocks: b.blocks, body: b.body, status: "draft", createdBy,
     });
 }
 export async function updateCampaign(orgId, id, b) {
     const set = {};
-    for (const k of ["name", "channel", "audience", "subject", "html", "body"]) if (k in b) set[k] = b[k];
+    for (const k of ["name", "channel", "audience", "subject", "html", "blocks", "body"]) if (k in b) set[k] = b[k];
     const camp = await StorefrontCampaign.findOneAndUpdate({ _id: id, orgId, status: "draft" }, { $set: set }, { new: true });
     if (!camp) throw httpError(404, "Not found or already sent");
     return camp;

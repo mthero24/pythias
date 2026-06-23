@@ -13,7 +13,8 @@ const schema = new mongoose.Schema({
     segmentId: { type: mongoose.Schema.Types.ObjectId, ref: "StorefrontSegment" },   // when audience = "segment"
 
     subject: { type: String },   // email
-    html:    { type: String },   // email body (AI-assisted)
+    html:    { type: String },   // email body (AI-assisted or rendered from blocks)
+    blocks:  { type: Array },    // email builder blocks ([{ type, ...props }]) — rendered to html via React Email
     body:    { type: String },   // sms body
 
     status:      { type: String, enum: ["draft", "scheduled", "sending", "sent", "canceled"], default: "draft", index: true },

@@ -49,6 +49,23 @@ export async function baseTemplate(props = {}) {
     }
 }
 
+// Render the seller email-builder's block array to inner-content HTML via React Email.
+// Returned HTML is passed as `contentHtml` to baseTemplate (so it sits inside the branded shell).
+export async function renderBlocks(blocks = []) {
+    if (!Array.isArray(blocks) || !blocks.length) return "";
+    try {
+        const [{ render }, { BlockContent }, { createElement }] = await Promise.all([
+            import("@react-email/render"),
+            import("@/emails/blocks"),
+            import("react"),
+        ]);
+        return await render(createElement(BlockContent, { blocks }), { plainText: false });
+    } catch (e) {
+        console.error("[email] renderBlocks failed:", e?.message);
+        return "";
+    }
+}
+
 export function btn(href, label) {
     return `<a href="${href}" style="display:inline-block;background:#111;color:#fff;text-decoration:none;font-weight:700;padding:12px 22px;border-radius:8px">${label}</a>`;
 }

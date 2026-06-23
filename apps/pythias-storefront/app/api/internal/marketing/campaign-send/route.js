@@ -2,8 +2,9 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { StorefrontCampaign, StorefrontCustomer, StorefrontSite, StorefrontSegment } from "@pythias/mongo";
 import { assertInternal } from "@/lib/internal";
-import { baseTemplate } from "@/lib/email";
-import { enqueueMessage, unsubscribeUrl } from "@/lib/marketing";
+import { baseTemplate, renderBlocks } from "@/lib/email";
+import { enqueueMessage, unsubscribeUrl, storeBaseUrl } from "@/lib/marketing";
+import { resolveCampaignBlocks } from "@/lib/emailProducts";
 import { buildSegmentFilter } from "@/lib/segments";
 
 // POST /api/internal/marketing/campaign-send  (triggered by the platform "Send" action)
@@ -41,6 +42,21 @@ export async function POST(req) {
     camp.status = "sending"; camp.sentAt = new Date(); camp.stats.recipients = recipients.length;
     await camp.save();
 
+    // Render the email body ONCE (identical for every recipient); only the unsubscribe link varies,
+    // injected per-recipient via placeholder. Blocks (the React Email builder) take priority over raw html.
+    let htmlTemplate = null;
+    if (camp.channel !== "sms") {
+        const baseUrl = storeBaseUrl(site);
+        const blocks = (Array.isArray(camp.blocks) && camp.blocks.length)
+            ? await resolveCampaignBlocks(camp.orgId, camp.blocks, baseUrl)
+            : null;
+        const contentHtml = blocks ? await renderBlocks(blocks) : (camp.html || "");
+        htmlTemplate = await baseTemplate({
+            brand, contentHtml,
+            footerHtml: `You're receiving this because you subscribed at ${brand}.<br><a href="__UNSUB_URL__" style="color:#94a3b8">Unsubscribe</a>`,
+        });
+    }
+
     const now = Date.now();
     let queued = 0;
     for (let i = 0; i < recipients.length; i++) {
@@ -58,10 +74,8 @@ export async function POST(req) {
         if (camp.channel === "sms") {
             msg = await enqueueMessage({ ...common, body: `${camp.body}\nReply STOP to opt out.` }).catch(() => null);
         } else {
-            const html = await baseTemplate({
-                brand, contentHtml: camp.html || "",
-                footerHtml: `You're receiving this because you subscribed at ${brand}.<br><a href="${unsubscribeUrl({ ...site, orgId: camp.orgId }, "email", to)}" style="color:#94a3b8">Unsubscribe</a>`,
-            });
+            const unsub = unsubscribeUrl({ ...site, orgId: camp.orgId }, "email", to);
+            const html = (htmlTemplate || "").split("__UNSUB_URL__").join(unsub);
             msg = await enqueueMessage({ ...common, subject: camp.subject, html }).catch(() => null);
         }
         if (msg) queued++;
