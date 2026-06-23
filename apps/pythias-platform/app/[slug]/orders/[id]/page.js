@@ -1,8 +1,8 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { redirect, notFound } from "next/navigation";
-import { PlatformOrder, PlatformBlank } from "@pythias/mongo";
-import { OrderMain } from "@pythias/backend";
+import { PlatformOrder, PlatformBlank, Organization } from "@pythias/mongo";
+import { OrderMain, ShipLabelButton } from "@pythias/backend";
 import mongoose from "mongoose";
 export const dynamic = "force-dynamic";
 
@@ -28,11 +28,19 @@ export default async function OrderPage(req) {
         orgId: session.user.orgId,
     }).lean();
 
+    // Self-ship sellers (shipping-labels upgrade on) can buy a discounted label for an order that
+    // hasn't been labeled yet — buying it marks the order shipped + emails the buyer.
+    const org = await Organization.findById(session.user.orgId).select("shippingLabels").lean();
+    const showShipLabel = !!org?.shippingLabels?.enabled && !(order.shippingInfo?.labels?.length);
+
     return (
-        <OrderMain
-            ord={JSON.parse(JSON.stringify(order))}
-            blanks={JSON.parse(JSON.stringify(blanks))}
-            base={`/${params.slug}`}
-        />
+        <>
+            {showShipLabel && <ShipLabelButton orderId={String(order._id)} />}
+            <OrderMain
+                ord={JSON.parse(JSON.stringify(order))}
+                blanks={JSON.parse(JSON.stringify(blanks))}
+                base={`/${params.slug}`}
+            />
+        </>
     );
 }

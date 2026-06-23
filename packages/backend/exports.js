@@ -37,6 +37,7 @@ export { BlanksComponent } from "./components/blanks/Blanks";
 export { Main as OrdersMain } from "./components/orders/Main";
 export { AiBlacklistMain } from "./components/design/AiBlacklist";
 export {Main as OrderMain} from "./components/orders/id/Main";
+export { default as ShipLabelButton } from "./components/orders/ShipLabelButton";
 export { NoteSnackBar } from "./components/orders/id/NoteSnackBar"
 export { Converters } from "./components/converter/Main";
 export {FromSanmarBlank} from "./components/blanks/fromSanmar";
