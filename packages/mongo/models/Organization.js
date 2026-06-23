@@ -86,6 +86,19 @@ const schema = new mongoose.Schema({
         stripePaymentMethodId: { type: String },
         lastRechargedAt:      { type: Date },
     },
+    // ── Self-ship shipping labels (Phase 2 upgrade) ───────────────────
+    // Sellers who stock + ship their own catalog products can buy discounted carrier labels in-app
+    // (usage-based: carrier cost + a small per-label spread, charged to the wallet). Ship-from uses
+    // returnAddress. defaultParcel seeds the parcel when an order's item weights are unknown.
+    shippingLabels: {
+        enabled: { type: Boolean, default: false },
+        defaultParcel: {
+            length: { type: Number, default: 6 },   // inches
+            width:  { type: Number, default: 4 },
+            height: { type: Number, default: 4 },
+            weight: { type: Number, default: 8 },    // ounces (fallback when items have no weight)
+        },
+    },
     // ── Partner API / webhook settings ───────────────────────────────
     partnerWebhook: {
         url:       { type: String },           // partner's endpoint Pythias POSTs to

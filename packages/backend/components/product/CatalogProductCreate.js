@@ -208,6 +208,7 @@ export function CatalogProductCreate({ onSaved, onCancel }) {
                             <Grid2 size={{ xs: 6, sm: 4 }}><TextField fullWidth size="small" type="number" label="Your cost" value={v.costPerItem} onChange={(e) => setVar(i, { costPerItem: e.target.value })} helperText="For profit reports" InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }} {...num} /></Grid2>
                             <Grid2 size={{ xs: 6, sm: 4 }}><TextField fullWidth size="small" label="SKU" value={v.sku} onChange={(e) => setVar(i, { sku: e.target.value })} /></Grid2>
                             <Grid2 size={{ xs: 6, sm: 4 }}><TextField fullWidth size="small" label="UPC" value={v.upc} onChange={(e) => setVar(i, { upc: e.target.value })} /></Grid2>
+                            <Grid2 size={{ xs: 6, sm: 4 }}><TextField fullWidth size="small" type="number" label="Weight (oz)" value={v.weight} onChange={(e) => setVar(i, { weight: e.target.value })} helperText="For shipping rates" inputProps={{ min: 0, step: "0.1" }} /></Grid2>
                             <Grid2 size={{ xs: 6, sm: 4 }}><TextField fullWidth size="small" type="number" label="In stock" value={v.stock} onChange={(e) => setVar(i, { stock: e.target.value })} disabled={!p.trackInventory} inputProps={{ min: 0, step: 1 }} /></Grid2>
                         </Grid2>
                     </Box>
