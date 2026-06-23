@@ -14,7 +14,7 @@ const SEG_OPS = ["is", "gte", "lte", "eq"];
 export default function AutomationsClient() {
     const [tab, setTab] = useState("flows");
     return (
-        <div style={{ maxWidth: 820, margin: "0 auto", padding: "28px 20px" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "28px 20px" }}>
             <h1 style={{ margin: 0 }}>Automations</h1>
             <p style={{ color: "#64748b", margin: "2px 0 18px" }}>Triggered email/SMS flows + reusable audience segments. Describe one and AI builds it.</p>
             <div style={{ display: "flex", gap: 6, marginBottom: 18 }}>

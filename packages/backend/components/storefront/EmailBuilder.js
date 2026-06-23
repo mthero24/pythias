@@ -94,7 +94,7 @@ export function EmailBuilder({ value = {}, onChange, showSubject = true }) {
 
     return (
         <div style={{ display: "flex", gap: 16, alignItems: "flex-start", flexWrap: "wrap" }}>
-            <div style={{ flex: "1 1 300px", minWidth: 280, maxWidth: 400, display: "grid", gap: 8 }}>
+            <div style={{ flex: "1 1 260px", minWidth: 260, maxWidth: 380, display: "grid", gap: 8 }}>
                 {showSubject && <input style={input} placeholder="Subject line" value={subject} onChange={(e) => set({ subject: e.target.value })} />}
                 <div style={{ fontSize: "0.82rem", color: "#475569", fontWeight: 600 }}>Blocks</div>
                 <BlockEditor blocks={blocks} setBlocks={(b) => set({ blocks: b })} />
@@ -103,7 +103,7 @@ export function EmailBuilder({ value = {}, onChange, showSubject = true }) {
                     <textarea style={{ ...input, minHeight: 120, fontFamily: "monospace", marginTop: 6 }} placeholder="Email HTML body" value={html} onChange={(e) => set({ html: e.target.value })} />
                 </details>
             </div>
-            <div style={{ flex: "2 1 460px", minWidth: 300, display: "grid", gap: 8 }}>
+            <div style={{ flex: "2 1 360px", minWidth: 300, display: "grid", gap: 8 }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <div style={{ fontSize: "0.82rem", color: "#475569", fontWeight: 600 }}>Preview {rendering && <span style={{ color: "#94a3b8", fontWeight: 400 }}>· updating…</span>}</div>
                     <button type="button" onClick={() => refreshPreview()} disabled={rendering} style={ghost}>Refresh</button>
