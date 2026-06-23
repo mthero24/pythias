@@ -65,6 +65,16 @@ export async function placeReorder(orgId, productId, sku, qty) {
     catch (e) { return { ok: false, error: e.message }; }
 }
 
+// Set a variant's reorder thresholds (reorder point + restock-to) from the inventory page.
+export async function setReorderLevels(orgId, productId, sku, reorderPoint, reorderTo) {
+    const rp = Math.max(0, Number(reorderPoint) || 0);
+    const rt = Math.max(0, Number(reorderTo) || 0);
+    const r = await PlatformProduct.updateOne({ _id: productId, orgId, "variantsArray.sku": sku }, {
+        $set: { "variantsArray.$.reorderPoint": rp, "variantsArray.$.reorderTo": rt },
+    });
+    return { ok: r.matchedCount > 0, reorderPoint: rp, reorderTo: rt };
+}
+
 // Mark a pending reorder received: add the pending qty to on-hand stock and clear the pending flag.
 export async function receiveReorder(orgId, productId, sku) {
     const p = await PlatformProduct.findOne({ _id: productId, orgId }).select("variantsArray").lean();

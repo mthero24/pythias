@@ -23,6 +23,14 @@ export function CatalogInventory({ products = [] }) {
     const setVar = (productId, sku, patch) => setRows((rs) => rs.map((p) => p._id === productId
         ? { ...p, variantsArray: p.variantsArray.map((v) => v.sku === sku ? { ...v, ...patch } : v) } : p));
 
+    // Save a variant's reorder thresholds (on blur of the inline fields).
+    const saveLevels = async (productId, sku) => {
+        const v = rows.find((x) => x._id === productId)?.variantsArray.find((x) => x.sku === sku);
+        if (!v) return;
+        try { await axios.post("/api/admin/sourcing/reorder", { levels: { productId, sku, reorderPoint: Number(v.reorderPoint) || 0, reorderTo: Number(v.reorderTo) || 0 } }); }
+        catch { /* ignore */ }
+    };
+
     const runSweep = async () => {
         setRunning(true); setMsg(null);
         try {
@@ -91,8 +99,12 @@ export function CatalogInventory({ products = [] }) {
                                     <TableCell>{v.name || "—"}</TableCell>
                                     <TableCell sx={{ fontFamily: "monospace", fontSize: ".8rem" }}>{v.sku || "—"}</TableCell>
                                     <TableCell align="right" sx={{ fontWeight: 600, color: low ? "error.main" : "inherit" }}>{v.stock ?? 0}</TableCell>
-                                    <TableCell align="right">{v.reorderPoint || "—"}</TableCell>
-                                    <TableCell align="right">{v.reorderTo || "—"}</TableCell>
+                                    <TableCell align="right">{v.supplierVid
+                                        ? <TextField variant="standard" type="number" value={v.reorderPoint ?? ""} onChange={(e) => setVar(p._id, v.sku, { reorderPoint: e.target.value })} onBlur={() => saveLevels(p._id, v.sku)} inputProps={{ min: 0, style: { textAlign: "right", width: 46 } }} />
+                                        : "—"}</TableCell>
+                                    <TableCell align="right">{v.supplierVid
+                                        ? <TextField variant="standard" type="number" value={v.reorderTo ?? ""} onChange={(e) => setVar(p._id, v.sku, { reorderTo: e.target.value })} onBlur={() => saveLevels(p._id, v.sku)} inputProps={{ min: 0, style: { textAlign: "right", width: 46 } }} />
+                                        : "—"}</TableCell>
                                     <TableCell align="right">{pending > 0 ? <Chip size="small" color="warning" label={pending} /> : "—"}</TableCell>
                                     <TableCell>{p.source?.supplier ? String(p.source.supplier).toUpperCase() : "—"}</TableCell>
                                     <TableCell align="right">
