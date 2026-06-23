@@ -29,16 +29,36 @@ const CC_TIERS = [
     { key: "enterprise", label: "Enterprise", price: "Custom",  marginFee: "Negotiated",         desc: "Unlimited everything · dedicated support" },
 ];
 
+// ── Storefront Cloud tiers (standalone, self-fulfill — mirror lib/storefrontPlans.js) ─────────
+const SF_TIERS = [
+    { key: "starter",    label: "Starter",    price: "$49/mo",  desc: "1 storefront · unlimited products · email & SMS marketing" },
+    { key: "pro",        label: "Pro",        price: "$149/mo", desc: "3 storefronts · AI autopilot · automations & A/B testing" },
+    { key: "enterprise", label: "Enterprise", price: "$399/mo", desc: "5 storefronts · merchant of record · priority support" },
+];
+const VALID_SF_TIERS = new Set(SF_TIERS.map(t => t.key));
+
 function RegisterForm() {
     const router       = useRouter();
     const searchParams = useSearchParams();
     const planParam    = searchParams.get("plan");
     const typeParam    = searchParams.get("type");
     const isCommerce   = typeParam === "commerce";
+    const isStorefront = typeParam === "storefront";
 
-    const initialTier = isCommerce
-        ? (CC_TIERS.some(t => t.key === planParam) ? planParam : "free")
-        : (VALID_FC_TIERS.has(planParam) ? planParam : "starter");
+    // Per-product branding: accent color, cloud label, and the simple tier list (commerce + storefront
+    // share the same card shape; fulfillment pulls from lib/tiers).
+    const accent      = isStorefront ? "#0e9f6e" : isCommerce ? "#6366f1" : "#b8860b";
+    const accentHover = isStorefront ? "#0b8a5f" : isCommerce ? "#4f46e5" : "#9a7209";
+    const cloudLabel  = isStorefront ? "Storefront Cloud" : isCommerce ? "Commerce Cloud" : "Fulfillment Cloud";
+    const accentBtnSx = (isCommerce || isStorefront) ? { bgcolor: accent, "&:hover": { bgcolor: accentHover } } : {};
+    const simpleTiers = isStorefront ? SF_TIERS : isCommerce ? CC_TIERS : null;
+    const orgTypeValue = isStorefront ? "storefront" : isCommerce ? "commerce" : "fulfillment";
+
+    const initialTier = isStorefront
+        ? (VALID_SF_TIERS.has(planParam) ? planParam : "starter")
+        : isCommerce
+            ? (CC_TIERS.some(t => t.key === planParam) ? planParam : "free")
+            : (VALID_FC_TIERS.has(planParam) ? planParam : "starter");
 
     const [step, setStep]     = useState(1);
     const [form, setForm]     = useState({
@@ -60,7 +80,7 @@ function RegisterForm() {
             const res = await fetch("/api/orgs", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...form, orgType: isCommerce ? "commerce" : "fulfillment" }),
+                body: JSON.stringify({ ...form, orgType: orgTypeValue }),
             });
             const data = await res.json().catch(() => ({}));
             if (!res.ok) { setError(data.error || "Registration failed"); setLoading(false); return; }
@@ -71,7 +91,7 @@ function RegisterForm() {
         }
     }
 
-    const selectedCCTier = CC_TIERS.find(t => t.key === form.tier);
+    const selectedSimpleTier = simpleTiers?.find(t => t.key === form.tier);
     const selectedFCTier = TIERS[form.tier];
 
     return (
@@ -82,22 +102,24 @@ function RegisterForm() {
                         <Box>
                             <Chip
                                 size="small"
-                                label={isCommerce ? "Commerce Cloud" : "Fulfillment Cloud"}
+                                label={cloudLabel}
                                 sx={{
                                     mb: 1,
-                                    bgcolor: isCommerce ? "rgba(99,102,241,0.12)" : "rgba(211,167,61,0.12)",
-                                    color: isCommerce ? "#6366f1" : "#b8860b",
+                                    bgcolor: isStorefront ? "rgba(14,159,110,0.12)" : isCommerce ? "rgba(99,102,241,0.12)" : "rgba(211,167,61,0.12)",
+                                    color: accent,
                                     fontWeight: 700,
                                     fontSize: "0.7rem",
                                 }}
                             />
                             <Typography variant="h5" fontWeight={700}>
-                                {isCommerce ? "Start selling" : "Start your free trial"}
+                                {isStorefront ? "Launch your store" : isCommerce ? "Start selling" : "Start your free trial"}
                             </Typography>
                             <Typography variant="body2" color="text.secondary">
-                                {isCommerce
-                                    ? "No monthly cost on the free plan — pay only when you make a sale."
-                                    : "14 days free, no credit card required"}
+                                {isStorefront
+                                    ? "Build your own branded online store — you sell, you fulfill. 14 days free."
+                                    : isCommerce
+                                        ? "No monthly cost on the free plan — pay only when you make a sale."
+                                        : "14 days free, no credit card required"}
                             </Typography>
                         </Box>
 
@@ -110,15 +132,15 @@ function RegisterForm() {
                                     <>
                                         <Typography variant="subtitle2" color="text.secondary">Choose your plan</Typography>
 
-                                        {isCommerce ? (
-                                            CC_TIERS.map(t => (
+                                        {simpleTiers ? (
+                                            simpleTiers.map(t => (
                                                 <Card
                                                     key={t.key}
                                                     variant="outlined"
                                                     onClick={() => setForm(f => ({ ...f, tier: t.key }))}
                                                     sx={{
                                                         cursor: "pointer",
-                                                        borderColor: form.tier === t.key ? "#6366f1" : "divider",
+                                                        borderColor: form.tier === t.key ? accent : "divider",
                                                         borderWidth: form.tier === t.key ? 2 : 1,
                                                         p: 1.5,
                                                     }}
@@ -130,7 +152,7 @@ function RegisterForm() {
                                                         </Box>
                                                         <Box sx={{ textAlign: "right", flexShrink: 0, ml: 1 }}>
                                                             <Chip label={t.price} color={form.tier === t.key ? "primary" : "default"} size="small" sx={{ display: "block", mb: 0.5 }} />
-                                                            <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.65rem" }}>{t.marginFee}</Typography>
+                                                            {t.marginFee && <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.65rem" }}>{t.marginFee}</Typography>}
                                                         </Box>
                                                     </Stack>
                                                 </Card>
@@ -169,9 +191,9 @@ function RegisterForm() {
                                             variant="contained"
                                             onClick={() => setStep(2)}
                                             fullWidth
-                                            sx={isCommerce ? { bgcolor: "#6366f1", "&:hover": { bgcolor: "#4f46e5" } } : {}}
+                                            sx={accentBtnSx}
                                         >
-                                            Continue with {isCommerce ? selectedCCTier?.label : selectedFCTier?.label}
+                                            Continue with {simpleTiers ? selectedSimpleTier?.label : selectedFCTier?.label}
                                         </Button>
                                     </>
                                 )}
@@ -193,7 +215,7 @@ function RegisterForm() {
                                         <Stack direction="row" spacing={1}>
                                             <Button variant="outlined" onClick={() => setStep(1)} fullWidth>Back</Button>
                                             <Button variant="contained" onClick={() => setStep(3)} fullWidth
-                                                sx={isCommerce ? { bgcolor: "#6366f1", "&:hover": { bgcolor: "#4f46e5" } } : {}}>
+                                                sx={accentBtnSx}>
                                                 Continue
                                             </Button>
                                         </Stack>
@@ -216,8 +238,8 @@ function RegisterForm() {
                                         <Stack direction="row" spacing={1}>
                                             <Button variant="outlined" onClick={() => setStep(2)} fullWidth>Back</Button>
                                             <Button type="submit" variant="contained" fullWidth disabled={loading}
-                                                sx={isCommerce ? { bgcolor: "#6366f1", "&:hover": { bgcolor: "#4f46e5" } } : {}}>
-                                                {loading ? "Creating account..." : isCommerce ? "Start selling" : "Start free trial"}
+                                                sx={accentBtnSx}>
+                                                {loading ? "Creating account..." : isStorefront ? "Launch my store" : isCommerce ? "Start selling" : "Start free trial"}
                                             </Button>
                                         </Stack>
                                     </>

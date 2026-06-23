@@ -31,7 +31,8 @@ export default async function HomePage({ searchParams }) {
     if (!live) {
         if (isApexHost(h.get("host"))) {
             const platform = process.env.PLATFORM_PUBLIC_BASE || "https://platform.pythiastechnologies.com";
-            redirect(`${platform}/register?type=commerce`);
+            // Standalone storefront sellers (self-fulfill) — send them to the storefront signup flow.
+            redirect(`${platform}/register?type=storefront`);
         }
         return <NoSite />;
     }
