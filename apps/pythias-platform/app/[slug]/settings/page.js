@@ -83,6 +83,10 @@ export default function SettingsPage() {
     if (!org) return null;
 
     const isOwnerOrAdmin = session?.user?.role === "owner" || session?.user?.role === "admin";
+    // Commerce Cloud / Storefront sellers self-ship and have no production floor — hide the
+    // fulfillment-only settings (production, label creator, picklist, shipping & hardware) and
+    // instead surface the self-ship Shipping Labels settings.
+    const isReseller = org.orgType === "commerce" || org.orgType === "storefront";
 
     return (
         <Box sx={{ bgcolor: "background.default", minHeight: "100vh" }}>
@@ -90,20 +94,29 @@ export default function SettingsPage() {
                 <Typography variant="h6" fontWeight={700} sx={{ mb: 3 }}>Settings</Typography>
 
                 <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mb: 3 }}>
-                    {[["org","Organization"],["returnAddress","Return Address"],["production","Production"],["sku","SKU Format"]].map(([t, label]) => (
+                    {[["org","Organization"],["returnAddress","Return Address"],...(!isReseller ? [["production","Production"]] : []),["sku","SKU Format"]].map(([t, label]) => (
                         <Button key={t} variant={tab === t ? "contained" : "outlined"} size="small" onClick={() => setTab(t)}>
                             {label}
                         </Button>
                     ))}
-                    <Button variant="outlined" size="small" href="settings/labels">
-                        Label Creator
-                    </Button>
-                    <Button variant="outlined" size="small" href="settings/picklist">
-                        Picklist Settings
-                    </Button>
-                    <Button variant="outlined" size="small" href="settings/shipping">
-                        Shipping &amp; Hardware
-                    </Button>
+                    {!isReseller && (
+                        <>
+                            <Button variant="outlined" size="small" href="settings/labels">
+                                Label Creator
+                            </Button>
+                            <Button variant="outlined" size="small" href="settings/picklist">
+                                Picklist Settings
+                            </Button>
+                            <Button variant="outlined" size="small" href="settings/shipping">
+                                Shipping &amp; Hardware
+                            </Button>
+                        </>
+                    )}
+                    {isReseller && (
+                        <Button variant="outlined" size="small" href="settings/shipping-labels">
+                            Shipping Labels
+                        </Button>
+                    )}
                 </Stack>
 
                 {msg && <Alert severity={msg.type} sx={{ mb: 2 }} onClose={() => setMsg(null)}>{msg.text}</Alert>}
