@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { StorefrontCampaign, StorefrontCustomer, StorefrontSite, StorefrontSegment } from "@pythias/mongo";
 import { assertInternal } from "@/lib/internal";
 import { baseTemplate, renderBlocks } from "@/lib/email";
-import { enqueueMessage, unsubscribeUrl, storeBaseUrl } from "@/lib/marketing";
+import { enqueueMessage, unsubscribeUrl, storeBaseUrl, logoOf, logoHeightOf } from "@/lib/marketing";
 import { resolveCampaignBlocks } from "@/lib/emailProducts";
 import { buildSegmentFilter } from "@/lib/segments";
 
@@ -47,13 +47,14 @@ export async function POST(req) {
     let htmlTemplate = null;
     if (camp.channel !== "sms") {
         const baseUrl = storeBaseUrl(site);
-        const logo = site?.logoUrl && site?.logoStyle !== "name" ? (site.logoUrl.startsWith("http") ? site.logoUrl : `${baseUrl}${site.logoUrl}`) : "";
+        const logo = logoOf(site, baseUrl);
+        const logoHeight = logoHeightOf(site);
         const blocks = (Array.isArray(camp.blocks) && camp.blocks.length)
             ? await resolveCampaignBlocks(camp.orgId, camp.blocks, baseUrl)
             : null;
         const contentHtml = blocks ? await renderBlocks(blocks) : (camp.html || "");
         htmlTemplate = await baseTemplate({
-            brand, logo, contentHtml,
+            brand, logo, logoHeight, contentHtml,
             footerHtml: `You're receiving this because you subscribed at ${brand}.<br><a href="__UNSUB_URL__" style="color:#94a3b8">Unsubscribe</a>`,
         });
     }

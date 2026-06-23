@@ -1,5 +1,5 @@
 import { StorefrontFlow, StorefrontSegment, StorefrontCustomer } from "@pythias/mongo";
-import { enqueueMessage, storeBaseUrl } from "@/lib/marketing";
+import { enqueueMessage, storeBaseUrl, logoOf, logoHeightOf } from "@/lib/marketing";
 import { baseTemplate, renderBlocks } from "@/lib/email";
 import { resolveCampaignBlocks } from "@/lib/emailProducts";
 import { buildSegmentFilter } from "@/lib/segments";
@@ -14,7 +14,8 @@ export async function enrollFlows({ orgId, site, customer, trigger, token = "x" 
 
     const brand = site?.businessInfo?.legalName || site?.name || "Our Store";
     const baseUrl = storeBaseUrl(site);
-    const logo = site?.logoUrl && site?.logoStyle !== "name" ? (site.logoUrl.startsWith("http") ? site.logoUrl : `${baseUrl}${site.logoUrl}`) : "";
+    const logo = logoOf(site, baseUrl);
+    const logoHeight = logoHeightOf(site);
     let enrolled = 0;
 
     for (const flow of flows) {
@@ -48,7 +49,7 @@ export async function enrollFlows({ orgId, site, customer, trigger, token = "x" 
                 const contentHtml = (Array.isArray(step.blocks) && step.blocks.length)
                     ? await renderBlocks(await resolveCampaignBlocks(orgId, step.blocks, baseUrl))
                     : (step.html || "");
-                const html = await baseTemplate({ brand, logo, contentHtml });
+                const html = await baseTemplate({ brand, logo, logoHeight, contentHtml });
                 msg = await enqueueMessage({ ...common, subject: step.subject, html }).catch(() => null);
             }
             if (msg) any = true;

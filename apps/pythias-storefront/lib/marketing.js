@@ -11,6 +11,24 @@ export function storeBaseUrl(site) {
     return `https://${site?.subdomain || "store"}.${base}`;
 }
 
+// ── Store logo (for email headers) ───────────────────────────────────────────
+// The live logo lives in site.theme (logoUrl/logoStyle/logoHeight); the top-level
+// logoUrl is legacy and usually empty. Returns an absolute URL, or "" when the
+// store is name-only / has no logo (header then falls back to the brand name).
+export function logoOf(site, baseUrl = "") {
+    const t = site?.theme || {};
+    const url = t.logoUrl || site?.logoUrl || "";
+    const style = t.logoStyle || site?.logoStyle || "logo";
+    if (!url || style === "name") return "";
+    if (/^https?:/i.test(url)) return url;
+    const b = baseUrl || storeBaseUrl(site);
+    return b ? `${b}${url}` : url;
+}
+export function logoHeightOf(site) {
+    const h = Number(site?.theme?.logoHeight || site?.logoHeight) || 40;
+    return Math.min(Math.max(20, h), 64); // clamp so email headers stay sane
+}
+
 // ── Suppression (live opt-out gate) ──────────────────────────────────────────
 export async function isSuppressed(orgId, channel, value) {
     if (!value) return true;

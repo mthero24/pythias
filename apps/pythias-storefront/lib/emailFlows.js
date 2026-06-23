@@ -1,13 +1,7 @@
 import { baseTemplate, btn, renderBlocks } from "@/lib/email";
-import { enqueueMessage, storeBaseUrl, unsubscribeUrl } from "@/lib/marketing";
+import { enqueueMessage, storeBaseUrl, unsubscribeUrl, logoOf } from "@/lib/marketing";
 
 const brandOf = (site) => site?.businessInfo?.legalName || site?.name || "Our Store";
-// Absolute logo URL for the email header (empty when the brand uses name-only style or has no logo).
-const logoOf = (site) => {
-    const u = site?.logoUrl;
-    if (!u || site?.logoStyle === "name") return "";
-    return u.startsWith("http") ? u : `${storeBaseUrl(site)}${u}`;
-};
 const money = (c) => `$${((c || 0) / 100).toFixed(2)}`;
 const transactionalFooter = (brand) => `${brand} · This is a transactional message about your account or order.`;
 const marketingFooter = (site, channel, value) =>
