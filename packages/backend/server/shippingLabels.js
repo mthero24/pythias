@@ -53,5 +53,14 @@ export async function buyShippingLabel({ shipmentId, rateId }) {
     };
 }
 
+// Look up one rate's cost on an existing shipment (for a wallet balance pre-check before buying).
+export async function getShipmentRate(shipmentId, rateId) {
+    const s = await ep(`/shipments/${shipmentId}`);
+    const r = (s.rates || []).find((x) => x.id === rateId);
+    if (!r) throw new Error("That rate is no longer available — refresh rates and try again.");
+    const costCents = Math.round(parseFloat(r.rate) * 100);
+    return { costCents, carrier: r.carrier, service: r.service, billedCents: costCents + MARKUP_CENTS };
+}
+
 export const labelMarkupCents = () => MARKUP_CENTS;
 export const shippingLabelsConfigured = () => !!process.env.EASYPOST_API_KEY;
