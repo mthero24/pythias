@@ -27,6 +27,7 @@ export default function ProductEditPage() {
     const { org } = useOrg() ?? {};
     const base = org?.slug ? `/${org.slug}` : "";
     const isNew = params.id === "create";
+    const isStorefront = org?.orgType === "storefront"; // storefront sellers have no blanks/designs
 
     const [product, setProduct] = useState(EMPTY_PRODUCT);
     const [blanks, setBlanks] = useState([]);
@@ -189,7 +190,8 @@ export default function ProductEditPage() {
                         </CardContent>
                     </Card>
 
-                    {/* Design + Blank */}
+                    {/* Design + Blank — hidden for storefront sellers (they have no blanks/designs) */}
+                    {!isStorefront && (
                     <Card variant="outlined">
                         <CardContent>
                             <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 2 }}>Design &amp; Blank</Typography>
@@ -213,6 +215,7 @@ export default function ProductEditPage() {
                             </Stack>
                         </CardContent>
                     </Card>
+                    )}
 
                     {/* Variants */}
                     <Card variant="outlined">
