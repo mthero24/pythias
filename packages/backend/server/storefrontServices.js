@@ -61,6 +61,20 @@ export async function sendMarketingPreview(orgId, { channel, subject, html, body
     return data;
 }
 
+// Render a marketing email to HTML for an on-page preview (no send). Returns { html }.
+export async function renderMarketingEmail(orgId, { subject, html, blocks } = {}) {
+    const key = INTERNAL_KEY();
+    if (!key) throw httpError(503, "Messaging is not configured");
+    const res = await fetch(`${STOREFRONT_BASE()}/api/internal/marketing/render`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-pythias-internal-key": key },
+        body: JSON.stringify({ orgId: String(orgId), subject, html, blocks }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw httpError(res.status, data.error || "Render failed");
+    return data;
+}
+
 // Fields the editor's draft → publish flow manages. NOTE: `redirects` and `termContent` are intentionally
 // excluded — they're written straight to the live site by their services (migrator / term generator) and
 // must not be round-tripped through the draft (a stale autosave would clobber them).
@@ -342,15 +356,33 @@ export async function aiDraft({ channel = "email", prompt, brand = "our store", 
         const site = await StorefrontSite.findOne({ orgId }).select("name customDomain subdomain").lean().catch(() => null);
         if (site) { baseUrl = _storeBaseUrl(site); if (!brand || brand === "our store") brand = site.name || brand; }
     }
-    const instruction = channel === "sms"
-        ? `Write a single marketing SMS for "${brand}" in a ${tone} tone, under 320 chars. Goal: ${prompt}. STRICT JSON: {"body":"..."} only.`
-        : `Write a marketing email for "${brand}" in a ${tone} tone. Goal: ${prompt}. Return a short subject and an HTML body (inline-styled inner content, no <html>/<body>). `
-          + `Every call-to-action MUST be a real, clickable <a href="..."> button with an ABSOLUTE https:// URL — relative URLs like "/products" do NOT work in email. `
-          + (baseUrl ? `Link CTAs to the store at ${baseUrl} (e.g. ${baseUrl}/products). ` : `Link CTAs to the store's homepage. `)
-          + `STRICT JSON: {"subject":"...","html":"..."} only.`;
-    const msg = await client.messages.create({ model: "claude-opus-4-8", max_tokens: 2000, thinking: { type: "adaptive" }, messages: [{ role: "user", content: instruction }] });
+    if (channel === "sms") {
+        const msg = await client.messages.create({ model: "claude-opus-4-8", max_tokens: 2000, thinking: { type: "adaptive" }, messages: [{ role: "user", content: `Write a single marketing SMS for "${brand}" in a ${tone} tone, under 320 chars. Goal: ${prompt}. STRICT JSON: {"body":"..."} only.` }] });
+        return parseJson(textOf(msg));
+    }
+    // Email: return a structured array of BUILDER BLOCKS (so the visual builder populates + previews),
+    // not raw HTML. Image blocks use IMG[...] placeholders → real AI photos; products block auto-pulls catalog.
+    const instruction = `Design a marketing email for "${brand}" in a ${tone} tone. Goal: ${prompt}. `
+        + `Return a subject and an array of content BLOCKS. Allowed block types:\n`
+        + `{"type":"heading","text":"..."}\n`
+        + `{"type":"text","text":"..."}\n`
+        + `{"type":"image","src":"IMG[<vivid photorealistic scene to generate — product/people/setting/mood>]"}\n`
+        + `{"type":"products","heading":"<short heading>","query":"<1-3 word catalog search relevant to this email>"}\n`
+        + `{"type":"button","label":"<CTA text>","href":"${baseUrl ? `${baseUrl}/products` : "https://your-store/products"}"}\n`
+        + `{"type":"divider"}\n`
+        + `Use 5-7 blocks: open with a heading, supporting text, AT LEAST ONE image (IMG[...]), a products block with a relevant query, and a clear button CTA with an ABSOLUTE https URL${baseUrl ? ` linking to ${baseUrl}` : ""}. Never invent product names or prices — the products block pulls real catalog items. STRICT JSON: {"subject":"...","blocks":[...]} only.`;
+    const msg = await client.messages.create({ model: "claude-opus-4-8", max_tokens: 2500, thinking: { type: "adaptive" }, messages: [{ role: "user", content: instruction }] });
     const draft = parseJson(textOf(msg));
-    if (draft && draft.html) draft.html = absolutizeEmailLinks(draft.html, baseUrl);
+    if (draft && Array.isArray(draft.blocks)) {
+        for (const b of draft.blocks) {
+            // Generate real photos for IMG[...] placeholders (website-builder pipeline).
+            if (b?.type === "image" && typeof b.src === "string" && /IMG\[/i.test(b.src) && orgId) {
+                try { b.src = await substituteAiImages(b.src, String(orgId), 1); } catch { /* leave placeholder */ }
+            }
+            // Safety: make any relative button href absolute (relative URLs break in email).
+            if (b?.type === "button" && typeof b.href === "string" && b.href.startsWith("/") && baseUrl) b.href = `${baseUrl}${b.href}`;
+        }
+    }
     return draft;
 }
 

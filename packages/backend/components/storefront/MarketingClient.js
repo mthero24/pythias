@@ -130,6 +130,19 @@ function Composer({ onDone, onCancel }) {
     const set = (k) => (e) => setF((s) => ({ ...s, [k]: e.target.value }));
     useEffect(() => { fetch("/api/storefront/segments").then((r) => r.json()).then((d) => !d.error && setSegments(d.segments)).catch(() => {}); }, []);
 
+    // On-page email preview: render the current blocks/html to the real email HTML (server-side).
+    const [previewHtml, setPreviewHtml] = useState("");
+    const [rendering, setRendering] = useState(false);
+    const refreshPreview = async (override) => {
+        const src = override || f;
+        if (src.channel && src.channel !== "email") return;
+        setRendering(true);
+        try {
+            const d = await (await fetch("/api/marketing/render-preview", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ subject: src.subject, html: src.html, blocks: src.blocks }) })).json();
+            if (!d.error) setPreviewHtml(d.html || "");
+        } catch { /* ignore */ } finally { setRendering(false); }
+    };
+
     const aiDraft = async () => {
         if (!aiPrompt.trim()) return;
         setAiBusy(true); setError(null);
@@ -139,7 +152,8 @@ function Composer({ onDone, onCancel }) {
                 body: JSON.stringify({ channel: f.channel, prompt: aiPrompt }),
             })).json();
             if (d.error) throw new Error(d.error);
-            setF((s) => ({ ...s, subject: d.subject ?? s.subject, html: d.html ?? s.html, body: d.body ?? s.body }));
+            setF((s) => ({ ...s, subject: d.subject ?? s.subject, blocks: Array.isArray(d.blocks) ? d.blocks : s.blocks, html: d.html ?? s.html, body: d.body ?? s.body }));
+            if (f.channel === "email") refreshPreview({ channel: "email", subject: d.subject, html: d.html, blocks: d.blocks });
         } catch (e) { setError(e.message); }
         finally { setAiBusy(false); }
     };
@@ -207,6 +221,13 @@ function Composer({ onDone, onCancel }) {
                         <summary style={{ fontSize: "0.8rem", color: "#94a3b8", cursor: "pointer" }}>Advanced: raw HTML (used only if no blocks above)</summary>
                         <textarea style={{ ...input, minHeight: 120, fontFamily: "monospace", marginTop: 6 }} placeholder="Email HTML body" value={f.html} onChange={set("html")} />
                     </details>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 4 }}>
+                        <div style={{ fontSize: "0.82rem", color: "#475569", fontWeight: 600 }}>Preview</div>
+                        <button type="button" onClick={() => refreshPreview()} disabled={rendering} style={ghost}>{rendering ? "Rendering…" : "Refresh preview"}</button>
+                    </div>
+                    {previewHtml
+                        ? <iframe title="Email preview" srcDoc={previewHtml} style={{ width: "100%", height: 460, border: "1px solid #e2e8f0", borderRadius: 8, background: "#fff" }} />
+                        : <div style={{ fontSize: "0.82rem", color: "#94a3b8", padding: 12, border: "1px dashed #e2e8f0", borderRadius: 8 }}>Add blocks (or click Draft), then Refresh preview to see your email.</div>}
                 </>
             ) : (
                 <textarea style={{ ...input, minHeight: 100 }} placeholder="SMS message" value={f.body} onChange={set("body")} />
