@@ -345,13 +345,9 @@ function buildStorefrontSections(base) {
                 { label: "Support",       path: "support",       icon: <SupportAgentIcon fontSize="small" /> },
             ],
         },
-        {
-            label: "Help",
-            items: [
-                { label: "Guides", path: "guides", icon: <MenuBookIcon fontSize="small" /> },
-                { label: "Setup Guides", href: "https://pythiastechnologies.com/setup-guides/integrations", icon: <IntegrationInstructionsIcon fontSize="small" />, target: "_blank" },
-            ],
-        },
+        // No "Help" section for storefront: the /guides page + Setup Guides are Fulfillment-Cloud/POD
+        // content (production, receiving inventory orders, returns) — irrelevant to standalone sellers,
+        // who get the onboarding checklist on their dashboard. Support stays under Account.
     ];
 }
 
