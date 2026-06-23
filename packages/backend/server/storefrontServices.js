@@ -320,14 +320,38 @@ async function anthropic() {
 function parseJson(text) { return JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)); }
 const textOf = (msg) => (msg.content || []).filter((b) => b.type === "text").map((b) => b.text).join("").trim();
 
-export async function aiDraft({ channel = "email", prompt, brand = "our store", tone = "friendly" }) {
+// Make email links actually work: rewrite relative ("/path") and empty/"#" hrefs to absolute store
+// URLs. Relative URLs are dead in email clients — this is why AI-drafted CTA buttons had no link.
+export function absolutizeEmailLinks(html, baseUrl) {
+    if (!html) return html;
+    const root = String(baseUrl || process.env.STOREFRONT_PUBLIC_BASE || "").replace(/\/+$/, "");
+    if (!root) return html;
+    return String(html)
+        .replace(/href\s*=\s*"(\/[^"]*)"/gi, `href="${root}$1"`)
+        .replace(/href\s*=\s*'(\/[^']*)'/gi, `href='${root}$1'`)
+        .replace(/href\s*=\s*"(?:#|)"/gi, `href="${root}/products"`)
+        .replace(/href\s*=\s*'(?:#|)'/gi, `href='${root}/products'`);
+}
+
+export async function aiDraft({ channel = "email", prompt, brand = "our store", tone = "friendly", orgId }) {
     if (!prompt) throw httpError(400, "prompt is required");
     const client = await anthropic();
+    // Resolve the store's absolute base URL so CTA buttons link somewhere real (relative URLs break in email).
+    let baseUrl = "";
+    if (orgId) {
+        const site = await StorefrontSite.findOne({ orgId }).select("name customDomain subdomain").lean().catch(() => null);
+        if (site) { baseUrl = _storeBaseUrl(site); if (!brand || brand === "our store") brand = site.name || brand; }
+    }
     const instruction = channel === "sms"
         ? `Write a single marketing SMS for "${brand}" in a ${tone} tone, under 320 chars. Goal: ${prompt}. STRICT JSON: {"body":"..."} only.`
-        : `Write a marketing email for "${brand}" in a ${tone} tone. Goal: ${prompt}. Return a short subject and an HTML body (inline-styled inner content, no <html>/<body>). STRICT JSON: {"subject":"...","html":"..."} only.`;
+        : `Write a marketing email for "${brand}" in a ${tone} tone. Goal: ${prompt}. Return a short subject and an HTML body (inline-styled inner content, no <html>/<body>). `
+          + `Every call-to-action MUST be a real, clickable <a href="..."> button with an ABSOLUTE https:// URL — relative URLs like "/products" do NOT work in email. `
+          + (baseUrl ? `Link CTAs to the store at ${baseUrl} (e.g. ${baseUrl}/products). ` : `Link CTAs to the store's homepage. `)
+          + `STRICT JSON: {"subject":"...","html":"..."} only.`;
     const msg = await client.messages.create({ model: "claude-opus-4-8", max_tokens: 2000, thinking: { type: "adaptive" }, messages: [{ role: "user", content: instruction }] });
-    return parseJson(textOf(msg));
+    const draft = parseJson(textOf(msg));
+    if (draft && draft.html) draft.html = absolutizeEmailLinks(draft.html, baseUrl);
+    return draft;
 }
 
 // AI header-menu designer: builds a header menu (sections + links + emoji icons) from the store's
@@ -1554,12 +1578,19 @@ export async function updateFlow(orgId, id, b) {
     return f;
 }
 export async function deleteFlow(orgId, id) { await StorefrontFlow.deleteOne({ _id: id, orgId }); }
-export async function aiFlow({ prompt, brand = "our store" }) {
+export async function aiFlow({ prompt, brand = "our store", orgId }) {
     if (!prompt) throw httpError(400, "prompt is required");
     const client = await anthropic();
-    const instruction = `Design a marketing automation for "${brand}": "${prompt}". Triggers: signup,first_purchase,any_purchase,abandoned_cart,win_back. Each step has delayHours (from enrollment), channel "email", subject, and html (inline-styled inner content). STRICT JSON only: {"name":"...","trigger":"signup","steps":[{"delayHours":0,"channel":"email","subject":"...","html":"..."}]}`;
+    let baseUrl = "";
+    if (orgId) {
+        const site = await StorefrontSite.findOne({ orgId }).select("name customDomain subdomain").lean().catch(() => null);
+        if (site) { baseUrl = _storeBaseUrl(site); if (!brand || brand === "our store") brand = site.name || brand; }
+    }
+    const instruction = `Design a marketing automation for "${brand}": "${prompt}". Triggers: signup,first_purchase,any_purchase,abandoned_cart,win_back. Each step has delayHours (from enrollment), channel "email", subject, and html (inline-styled inner content). Every CTA in html MUST be a real <a href> button with an ABSOLUTE https:// URL${baseUrl ? ` linking to ${baseUrl} (e.g. ${baseUrl}/products)` : ""} — relative URLs do not work in email. STRICT JSON only: {"name":"...","trigger":"signup","steps":[{"delayHours":0,"channel":"email","subject":"...","html":"..."}]}`;
     const msg = await client.messages.create({ model: "claude-opus-4-8", max_tokens: 2500, thinking: { type: "adaptive" }, messages: [{ role: "user", content: instruction }] });
-    return parseJson(textOf(msg));
+    const flow = parseJson(textOf(msg));
+    if (flow && Array.isArray(flow.steps)) flow.steps = flow.steps.map((s) => (s && s.html ? { ...s, html: absolutizeEmailLinks(s.html, baseUrl) } : s));
+    return flow;
 }
 
 // ── Payouts (Stripe Connect via storefront internal endpoints) ───────────────
@@ -3068,12 +3099,12 @@ export async function applyAutopilotAction(orgId, action, createdBy) {
         return { ok: true, message: `Automatic discount "${d.title}" is live.` };
     }
     if (t === "create_flow") {
-        const flow = await aiFlow({ prompt: params.prompt || "engagement series" });
+        const flow = await aiFlow({ prompt: params.prompt || "engagement series", orgId });
         const created = await createFlow(orgId, { name: flow.name || "Automation", trigger: params.trigger || flow.trigger || "signup", active: true, steps: flow.steps || [] });
         return { ok: true, message: `Automation "${created.name}" created and activated.` };
     }
     if (t === "create_campaign") {
-        const draft = await aiDraft({ channel: params.channel || "email", prompt: params.prompt || "news" });
+        const draft = await aiDraft({ channel: params.channel || "email", prompt: params.prompt || "news", orgId });
         const camp = await createCampaign(orgId, { name: (params.prompt || "Campaign").slice(0, 60), channel: params.channel || "email", audience: params.audience || "all", subject: draft.subject, html: draft.html, body: draft.body }, createdBy);
         return { ok: true, message: `Draft campaign "${camp.name}" created — review & send in Marketing.` };
     }
