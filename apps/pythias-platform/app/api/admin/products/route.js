@@ -128,6 +128,8 @@ async function buildPlatformDoc(raw, orgId) {
             name: v.name ?? "",                              // catalog (buy-not-build) variant label
             stock: typeof v.stock === "number" ? v.stock : (Number(v.stock) || 0),  // self-ship on-hand qty
             supplierVid: v.supplierVid ?? "",                // wholesale supplier variant id (auto-reorder)
+            reorderPoint: Number(v.reorderPoint) || 0,
+            reorderTo: Number(v.reorderTo) || 0,
             active: true,
             ...(v.ids ? { ids: v.ids } : {}),
         };

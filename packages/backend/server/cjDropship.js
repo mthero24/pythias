@@ -77,9 +77,30 @@ export async function cjGetProduct(pid) {
 
 export async function cjInventoryBySku(sku) { return cj("/product/stock/queryBySku", { query: { sku } }); }
 
-// Place a CJ order (reorder / dropship). products: [{ vid, quantity }].
-export async function cjCreateOrder({ orderNumber, shippingCountryCode, shippingAddress, products, logisticName }) {
-    return cj("/shopping/order/createOrderV2", { method: "POST", body: { orderNumber, shippingCountryCode, shippingAddress, products, logisticName } });
+// Freight options for a shipment → [{ logisticName, priceCents, days }], cheapest first.
+export async function cjFreight({ endCountryCode = "US", zip, products, startCountryCode = "CN" }) {
+    const d = await cj("/logistic/freightCalculate", { method: "POST", body: { startCountryCode, endCountryCode, zip, products } });
+    return (Array.isArray(d) ? d : [])
+        .map((o) => ({ logisticName: o.logisticName, priceCents: cents(o.logisticPrice), days: o.logisticAging || "" }))
+        .filter((o) => o.logisticName)
+        .sort((a, b) => a.priceCents - b.priceCents);
+}
+
+// Place a CJ order (reorder / dropship). createOrderV2 wants TOP-LEVEL shipping fields + a logisticName
+// (verified live). shipTo: { name, country, countryCode, province, city, address, zip, phone }.
+export async function cjCreateOrder({ orderNumber, shipTo = {}, products, logisticName, fromCountryCode = "CN" }) {
+    return cj("/shopping/order/createOrderV2", { method: "POST", body: {
+        orderNumber, fromCountryCode, logisticName,
+        shippingCountryCode: shipTo.countryCode || "US",
+        shippingCountry: shipTo.country || "United States",
+        shippingProvince: shipTo.province || "",
+        shippingCity: shipTo.city || "",
+        shippingAddress: shipTo.address || "",
+        shippingCustomerName: shipTo.name || "",
+        shippingPhone: shipTo.phone || "",
+        shippingZip: shipTo.zip || "",
+        products,
+    } });
 }
 export async function cjOrderDetail({ orderId, orderNumber }) {
     const d = await cj("/shopping/order/getOrderDetail", { query: { orderId, orderNumber } });

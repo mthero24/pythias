@@ -13,7 +13,7 @@ import axios from 'axios';
 // them themselves. Enter a UPC → we look it up (UPCitemdb → Claude web_search) and prefill; or fill
 // it all in manually. Single-variant by default; expand to variations on demand. Saves via /api/admin/products.
 
-const emptyVariant = (upc = "") => ({ name: "", sku: "", price: "", compareAtPrice: "", costPerItem: "", upc, stock: "", weight: "", supplierVid: "" });
+const emptyVariant = (upc = "") => ({ name: "", sku: "", price: "", compareAtPrice: "", costPerItem: "", upc, stock: "", weight: "", supplierVid: "", reorderPoint: "", reorderTo: "" });
 
 // Seed state from a wholesale import (CJ product): cost prefilled from wholesale, price from the
 // supplier's suggested retail (editable), UPC/weight/images carried, supplierVid kept for reorder.
@@ -26,7 +26,7 @@ function fromImport(cj) {
         variantsArray: (cj.variants?.length ? cj.variants : [{}]).map((v) => ({
             name: v.name || "", sku: v.sku || "", upc: v.upc || "",
             price: c(v.suggestedRetailCents), compareAtPrice: "", costPerItem: c(v.costCents),
-            stock: "", weight: v.weightOz || "", supplierVid: v.cjVid || "",
+            stock: "", weight: v.weightOz || "", supplierVid: v.cjVid || "", reorderPoint: "", reorderTo: "",
         })),
         trackInventory: true, continueSellingOOS: false,
         source: cj.pid ? { supplier: "cj", pid: cj.pid } : null,
@@ -136,6 +136,7 @@ export function CatalogProductCreate({ onSaved, onCancel, initial = null }) {
                     price: Number(v.price) || 0, compareAtPrice: Number(v.compareAtPrice) || 0,
                     costPerItem: Number(v.costPerItem) || 0, weight: Number(v.weight) || 0,
                     stock: Number(v.stock) || 0, supplierVid: v.supplierVid || "",
+                    reorderPoint: Number(v.reorderPoint) || 0, reorderTo: Number(v.reorderTo) || 0,
                     color: null, size: null, blank: null,
                 })),
                 isNFProduct: true, isCatalogProduct: true,
@@ -229,6 +230,12 @@ export function CatalogProductCreate({ onSaved, onCancel, initial = null }) {
                             <Grid2 size={{ xs: 6, sm: 4 }}><TextField fullWidth size="small" label="UPC" value={v.upc} onChange={(e) => setVar(i, { upc: e.target.value })} /></Grid2>
                             <Grid2 size={{ xs: 6, sm: 4 }}><TextField fullWidth size="small" type="number" label="Weight (oz)" value={v.weight} onChange={(e) => setVar(i, { weight: e.target.value })} helperText="For shipping rates" inputProps={{ min: 0, step: "0.1" }} /></Grid2>
                             <Grid2 size={{ xs: 6, sm: 4 }}><TextField fullWidth size="small" type="number" label="In stock" value={v.stock} onChange={(e) => setVar(i, { stock: e.target.value })} disabled={!p.trackInventory} inputProps={{ min: 0, step: 1 }} /></Grid2>
+                            {p.source && p.trackInventory && (
+                                <>
+                                    <Grid2 size={{ xs: 6, sm: 4 }}><TextField fullWidth size="small" type="number" label="Reorder at" value={v.reorderPoint} onChange={(e) => setVar(i, { reorderPoint: e.target.value })} helperText="Auto-reorder when stock hits this" inputProps={{ min: 0, step: 1 }} /></Grid2>
+                                    <Grid2 size={{ xs: 6, sm: 4 }}><TextField fullWidth size="small" type="number" label="Restock to" value={v.reorderTo} onChange={(e) => setVar(i, { reorderTo: e.target.value })} helperText="Refill on-hand up to this" inputProps={{ min: 0, step: 1 }} /></Grid2>
+                                </>
+                            )}
                         </Grid2>
                     </Box>
                 ))}

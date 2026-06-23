@@ -81,6 +81,11 @@ const schema = new mongoose.Schema({
         name: String,                        // free-form variant label for catalog (buy-not-build) products
         stock: { type: Number, default: 0 }, // on-hand qty for self-fulfilled catalog products
         supplierVid: String,                 // wholesale supplier variant id (e.g. CJ vid) → auto-reorder
+        reorderPoint: { type: Number, default: 0 },       // auto-reorder when stock <= this (0 = off)
+        reorderTo:    { type: Number, default: 0 },        // refill up to this on-hand level
+        pendingReorderQty: { type: Number, default: 0 },   // qty on an open reorder PO (blocks duplicate orders)
+        lastReorderAt: { type: Date },
+        lastReorderId: String,                             // supplier order id of the last reorder
     }],
     variantImages: Object,
     variantSecondaryImages: Object,
