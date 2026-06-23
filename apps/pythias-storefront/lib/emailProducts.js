@@ -1,38 +1,31 @@
 import { PlatformProduct } from "@pythias/mongo";
+import { searchProducts } from "@/lib/catalog";
 
 // Resolve a generic card-item shape { title, image, price, url } for email product blocks.
-const money = (n) => (typeof n === "number" && n > 0 ? `$${n.toFixed(2)}` : "");
+const money = (cents) => (typeof cents === "number" && cents > 0 ? `$${(cents / 100).toFixed(2)}` : "");
+const abs = (img, baseUrl) => (img && !/^https?:/i.test(img) && baseUrl ? `${baseUrl}${img}` : (img || ""));
 
-function toItem(p, baseUrl) {
-    const image = (p.productImages || []).map((pi) => pi?.image).find(Boolean) || "";
-    const prices = (p.variantsArray || []).map((v) => v?.price).filter((n) => typeof n === "number" && n > 0);
-    const min = prices.length ? Math.min(...prices) : 0;
-    const slug = p.slug || p._id?.toString();
-    return {
-        title: p.title || "",
-        image: image && !image.startsWith("http") && baseUrl ? `${baseUrl}${image}` : image,
-        price: money(min),
-        url: baseUrl && slug ? `${baseUrl}/products/${slug}` : "",
-    };
-}
-
-// Context product search: pick catalog products RELEVANT to a query (title/tags/category), org-scoped.
-// Falls back to newest products when no query. Used by the email builder's "products" block.
+// Pick catalog products for an email block. With a query, use the SAME Atlas-powered catalog search the
+// storefront uses (typo-tolerant, relevance-ranked, deduped by design) → much better than a plain regex.
+// With explicit ids, fetch those directly. Empty query → newest products (searchProducts fallback).
 export async function resolveProducts(orgId, { query = "", ids = [], limit = 3, baseUrl = "" } = {}) {
-    const sel = "title slug productImages variantsArray";
-    let docs = [];
     if (Array.isArray(ids) && ids.length) {
-        docs = await PlatformProduct.find({ orgId, _id: { $in: ids } }).select(sel).limit(limit).lean().catch(() => []);
-    } else if (query && query.trim()) {
-        const rx = new RegExp(query.trim().split(/\s+/).map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|"), "i");
-        docs = await PlatformProduct.find({ orgId, active: { $ne: false }, "productImages.0": { $exists: true }, $or: [{ title: rx }, { tags: rx }, { category: rx }] })
-            .select(sel).limit(limit).lean().catch(() => []);
+        const docs = await PlatformProduct.find({ orgId, _id: { $in: ids } })
+            .select("title slug productImages variantsArray").limit(limit).lean().catch(() => []);
+        return docs.map((p) => {
+            const image = (p.productImages || []).map((pi) => pi?.image).find(Boolean) || "";
+            const prices = (p.variantsArray || []).map((v) => v?.price).filter((n) => typeof n === "number" && n > 0);
+            const minCents = prices.length ? Math.round(Math.min(...prices) * 100) : 0;
+            return { title: p.title || "", image: abs(image, baseUrl), price: money(minCents), url: baseUrl ? `${baseUrl}/products/${p.slug || p._id}` : "" };
+        });
     }
-    if (!docs.length) {
-        docs = await PlatformProduct.find({ orgId, active: { $ne: false }, "productImages.0": { $exists: true } })
-            .select(sel).sort({ _id: -1 }).limit(limit).lean().catch(() => []);
-    }
-    return docs.map((p) => toItem(p, baseUrl));
+    const cards = await searchProducts(orgId, query, limit).catch(() => []);
+    return cards.map((c) => ({
+        title: c.title || "",
+        image: abs(c.image, baseUrl),
+        price: money(c.priceCents || 0) + (c.priceVaries ? "+" : ""),
+        url: baseUrl ? `${baseUrl}/products/${c.slug || c.id}` : "",
+    }));
 }
 
 // Resolve every "products" block in a campaign's block array (attach .items) before rendering.
