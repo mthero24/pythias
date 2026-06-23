@@ -5,7 +5,8 @@ const SECRET = process.env.STOREFRONT_JWT_SECRET || "dev-insecure-secret-change-
 
 // ── Store URL (for links in emails) ──────────────────────────────────────────
 export function storeBaseUrl(site) {
-    if (site?.customDomain) return `https://${site.customDomain}`;
+    // customDomain is an OBJECT { hostname, status, ... } — use .hostname (only when live), not the object.
+    if (site?.customDomain?.hostname && site.customDomain.status === "active") return `https://${site.customDomain.hostname}`;
     const base = process.env.STOREFRONT_BASE_DOMAIN || "pythias.store";
     return `https://${site?.subdomain || "store"}.${base}`;
 }
