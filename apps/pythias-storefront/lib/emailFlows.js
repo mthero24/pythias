@@ -12,7 +12,7 @@ const marketingFooter = (site, channel, value) =>
 // Thank-you / welcome on account creation.
 export async function enqueueWelcome(site, customer) {
     const brand = brandOf(site);
-    const html = baseTemplate({
+    const html = await baseTemplate({
         brand, title: `Welcome${customer.name ? `, ${customer.name.split(" ")[0]}` : ""}! 🎉`,
         contentHtml: `<p>Thanks for creating an account with ${brand}. We're glad you're here.</p>
             <p style="margin:20px 0">${btn(`${storeBaseUrl(site)}/products`, "Start shopping")}</p>`,
@@ -30,7 +30,7 @@ export async function enqueueVerification(site, customer) {
     if (!customer.emailVerifyToken) return null;
     const brand = brandOf(site);
     const link = `${storeBaseUrl(site)}/api/account/verify?id=${customer._id}&token=${customer.emailVerifyToken}`;
-    const html = baseTemplate({
+    const html = await baseTemplate({
         brand, title: "Confirm your email",
         contentHtml: `<p>Please confirm your email address to finish setting up your account.</p>
             <p style="margin:20px 0">${btn(link, "Verify email")}</p>
@@ -49,7 +49,7 @@ export async function enqueueOrderConfirmation(site, { orgId, orderId, poNumber,
     if (!email) return null;
     const brand = brandOf(site);
     const rows = lines.map((l) => `<tr><td style="padding:6px 0">${l.label} × ${l.qty}</td><td style="padding:6px 0;text-align:right">${money(l.amountCents)}</td></tr>`).join("");
-    const html = baseTemplate({
+    const html = await baseTemplate({
         brand, title: `Order confirmed — #${poNumber}`,
         contentHtml: `<p>Thanks for your order! We've received it and will email you when it ships.</p>
             <table style="width:100%;border-collapse:collapse;margin:16px 0">${rows}
@@ -76,7 +76,7 @@ export async function enqueueOrderStatus(site, { orgId, orderId, poNumber, email
     const copy = STATUS_COPY[status];
     if (!email || !copy) return null;
     const brand = brandOf(site);
-    const html = baseTemplate({
+    const html = await baseTemplate({
         brand, title: copy.title,
         contentHtml: `<p>${copy.body}</p>
             ${trackingUrl ? `<p style="margin:18px 0">${btn(trackingUrl, "Track your package")}</p>` : ""}
@@ -97,7 +97,7 @@ export async function enqueueReviewRequest(site, { orgId, orderId, email, custom
     const links = products.slice(0, 6).map((p) =>
         `<li style="margin:6px 0">${esc(p.title)} — ${btn(`${storeBaseUrl(site)}/products/${p.id}#review`, "Leave a review")}</li>`
     ).join("");
-    const html = baseTemplate({
+    const html = await baseTemplate({
         brand, title: "How did we do? ⭐",
         contentHtml: `<p>Thanks for your order from ${brand}! Your feedback helps other shoppers and helps us improve.</p>
             <ul style="list-style:none;padding:0;margin:14px 0">${links}</ul>`,
@@ -126,7 +126,7 @@ export async function enqueueReturnStatus(site, { orgId, rmaNumber, email, custo
     const copy = RETURN_COPY[status];
     if (!email || !copy) return null;
     const brand = brandOf(site);
-    const html = baseTemplate({ brand, title: copy.title, contentHtml: `<p>${copy.body}</p><p style="font-size:13px;color:#94a3b8">Return ${esc(rmaNumber)}</p>`, footerHtml: transactionalFooter(brand) });
+    const html = await baseTemplate({ brand, title: copy.title, contentHtml: `<p>${copy.body}</p><p style="font-size:13px;color:#94a3b8">Return ${esc(rmaNumber)}</p>`, footerHtml: transactionalFooter(brand) });
     return enqueueMessage({ orgId, channel: "email", to: email, customerId, type: "order_status", category: "transactional", subject: `${brand}: ${copy.title}`, html, dedupeKey: `return_status:${rmaNumber}:${status}` });
 }
 
@@ -134,7 +134,7 @@ export async function enqueueReturnStatus(site, { orgId, rmaNumber, email, custo
 export async function enqueueSubscriptionStarted(site, { orgId, email, customerId, intervalLabel, nextBillingAt }) {
     if (!email) return null;
     const brand = brandOf(site);
-    const html = baseTemplate({ brand, title: "Your subscription is active 🔁", contentHtml: `<p>Thanks for subscribing! You'll get a new order <b>${esc(intervalLabel || "regularly")}</b>${nextBillingAt ? ` — next on ${new Date(nextBillingAt).toLocaleDateString()}` : ""}.</p><p>Manage, pause, or cancel anytime in <a href="${storeBaseUrl(site)}/account/subscriptions">your account</a>.</p>`, footerHtml: transactionalFooter(brand) });
+    const html = await baseTemplate({ brand, title: "Your subscription is active 🔁", contentHtml: `<p>Thanks for subscribing! You'll get a new order <b>${esc(intervalLabel || "regularly")}</b>${nextBillingAt ? ` — next on ${new Date(nextBillingAt).toLocaleDateString()}` : ""}.</p><p>Manage, pause, or cancel anytime in <a href="${storeBaseUrl(site)}/account/subscriptions">your account</a>.</p>`, footerHtml: transactionalFooter(brand) });
     return enqueueMessage({ orgId, channel: "email", to: email, customerId, type: "welcome", category: "transactional", subject: `Your ${brand} subscription is active`, html, dedupeKey: `sub_started:${customerId}:${nextBillingAt ? new Date(nextBillingAt).getTime() : Date.now()}` });
 }
 
@@ -142,7 +142,7 @@ export async function enqueueSubscriptionStarted(site, { orgId, email, customerI
 export async function enqueueSubscriptionFailed(site, { orgId, email, customerId, attempt }) {
     if (!email) return null;
     const brand = brandOf(site);
-    const html = baseTemplate({ brand, title: "We couldn't process your subscription payment", contentHtml: `<p>Your card was declined for your latest ${brand} subscription order. Please update your payment method to avoid interruption.</p><p style="margin:16px 0">${btn(`${storeBaseUrl(site)}/account/subscriptions`, "Update payment")}</p>`, footerHtml: transactionalFooter(brand) });
+    const html = await baseTemplate({ brand, title: "We couldn't process your subscription payment", contentHtml: `<p>Your card was declined for your latest ${brand} subscription order. Please update your payment method to avoid interruption.</p><p style="margin:16px 0">${btn(`${storeBaseUrl(site)}/account/subscriptions`, "Update payment")}</p>`, footerHtml: transactionalFooter(brand) });
     return enqueueMessage({ orgId, channel: "email", to: email, customerId, type: "order_status", category: "transactional", subject: `Action needed: ${brand} subscription payment failed`, html, dedupeKey: `sub_failed:${customerId}:${attempt}` });
 }
 
@@ -150,7 +150,7 @@ export async function enqueueSubscriptionFailed(site, { orgId, email, customerId
 
 export async function enqueueAbandonedCart(site, customer, { discountCode } = {}) {
     const brand = brandOf(site);
-    const html = baseTemplate({
+    const html = await baseTemplate({
         brand, title: "You left something behind 🛒",
         contentHtml: `<p>Your cart is still waiting at ${brand}.</p>
             ${discountCode ? `<p>Here's <b>${discountCode}</b> for a little something off if you finish now.</p>` : ""}
@@ -168,7 +168,7 @@ export async function enqueueAbandonedCart(site, customer, { discountCode } = {}
 export async function enqueuePopupDiscount(site, { email, code, customerId }) {
     if (!email || !code) return null;
     const brand = brandOf(site);
-    const html = baseTemplate({
+    const html = await baseTemplate({
         brand, title: "Here's your discount 🎁",
         contentHtml: `<p>Thanks for joining ${brand}! Use this code at checkout:</p>
             <p style="font-size:22px;font-weight:800;letter-spacing:1px;margin:16px 0">${code}</p>
@@ -184,7 +184,7 @@ export async function enqueuePopupDiscount(site, { email, code, customerId }) {
 
 export async function enqueueAbandonedSession(site, customer) {
     const brand = brandOf(site);
-    const html = baseTemplate({
+    const html = await baseTemplate({
         brand, title: "Come back and take a look",
         contentHtml: `<p>Thanks for stopping by ${brand}. Here's what's new — come see something you'll love.</p>
             <p style="margin:18px 0">${btn(`${storeBaseUrl(site)}/products`, "Shop now")}</p>`,

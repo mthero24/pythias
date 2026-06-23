@@ -40,7 +40,7 @@ export async function enrollFlows({ orgId, site, customer, trigger, token = "x" 
             };
             const msg = step.channel === "sms"
                 ? await enqueueMessage({ ...common, body: `${step.body}\nReply STOP to opt out.` }).catch(() => null)
-                : await enqueueMessage({ ...common, subject: step.subject, html: baseTemplate({ brand, contentHtml: step.html || "" }) }).catch(() => null);
+                : await enqueueMessage({ ...common, subject: step.subject, html: await baseTemplate({ brand, contentHtml: step.html || "" }) }).catch(() => null);
             if (msg) any = true;
         }
         if (any) { enrolled++; await StorefrontFlow.updateOne({ _id: flow._id }, { $inc: { "stats.enrolled": 1 } }).catch(() => {}); }

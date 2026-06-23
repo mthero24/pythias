@@ -58,7 +58,7 @@ export async function POST(req) {
         if (camp.channel === "sms") {
             msg = await enqueueMessage({ ...common, body: `${camp.body}\nReply STOP to opt out.` }).catch(() => null);
         } else {
-            const html = baseTemplate({
+            const html = await baseTemplate({
                 brand, contentHtml: camp.html || "",
                 footerHtml: `You're receiving this because you subscribed at ${brand}.<br><a href="${unsubscribeUrl({ ...site, orgId: camp.orgId }, "email", to)}" style="color:#94a3b8">Unsubscribe</a>`,
             });

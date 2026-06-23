@@ -1,7 +1,4 @@
 import { Resend } from "resend";
-import { createElement } from "react";
-import { renderToStaticMarkup } from "react-dom/server";
-import { EmailShell } from "@/emails/Layout";
 
 // Lazy Resend client — never construct at module load (so `next build` doesn't fail when the
 // key is missing). Storefront emails are sent from the seller's brand-ish from-address.
@@ -35,13 +32,19 @@ function legacyTemplate({ brand = "Our Store", title = "", contentHtml = "", foo
 }
 
 // Polished email shell rendered from the React Email components (table-based, Outlook-safe).
-// Stays SYNC (renderToStaticMarkup) so all 16 existing callers are unchanged; falls back to the
-// legacy shell if rendering ever fails. `brand` = store name; `footerHtml` carries the unsubscribe link.
-export function baseTemplate(props = {}) {
+// ASYNC: @react-email/render is loaded via DYNAMIC import so react-dom/server never enters the
+// static module graph (Next blocks that). Falls back to the legacy shell if rendering ever fails,
+// so transactional emails can't break. `brand` = store name; `footerHtml` carries the unsubscribe link.
+export async function baseTemplate(props = {}) {
     try {
-        return "<!doctype html>" + renderToStaticMarkup(createElement(EmailShell, props));
+        const [{ render }, { EmailShell }, { createElement }] = await Promise.all([
+            import("@react-email/render"),
+            import("@/emails/Layout"),
+            import("react"),
+        ]);
+        return await render(createElement(EmailShell, props));
     } catch (e) {
-        console.error("[email] React Email shell render failed — using fallback:", e?.message);
+        console.error("[email] React Email render failed — using fallback:", e?.message);
         return legacyTemplate(props);
     }
 }
