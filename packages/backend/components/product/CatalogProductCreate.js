@@ -71,6 +71,18 @@ export function CatalogProductCreate({ onSaved, onCancel, initial = null }) {
     const set = (patch) => setP((s) => ({ ...s, ...patch }));
     const setVar = (i, patch) => setP((s) => ({ ...s, variantsArray: s.variantsArray.map((v, j) => (j === i ? { ...v, ...patch } : v)) }));
 
+    // Generate SKUs for catalog variants (the POD SKU generator needs blank/color/size, which these
+    // don't have). Base from the title + a per-variant suffix (option name or index). Fills blanks only.
+    const genSkus = () => {
+        const base = ((p.sku || p.title || "PROD").replace(/[^a-z0-9]/gi, "").slice(0, 8).toUpperCase()) || "PROD";
+        setP((s) => ({
+            ...s,
+            variantsArray: s.variantsArray.map((v, i) => v.sku ? v : ({
+                ...v, sku: `${base}-${(v.name || "").replace(/[^a-z0-9]/gi, "").slice(0, 6).toUpperCase() || (i + 1)}`,
+            })),
+        }));
+    };
+
     const multi = p.variantsArray.length > 1;
     const hasPrice = p.variantsArray.some((v) => Number(v.price) > 0);
     const canCreate = !!p.title.trim() && hasPrice && !saving && !uploading;
@@ -240,6 +252,7 @@ export function CatalogProductCreate({ onSaved, onCancel, initial = null }) {
                     </Box>
                 ))}
                 <Button size="small" startIcon={<AddIcon />} onClick={() => set({ variantsArray: [...p.variantsArray, emptyVariant()] })}>{multi ? "Add another variation" : "Add a variation (size, color, etc.)"}</Button>
+                <Button size="small" onClick={genSkus} sx={{ ml: 1 }}>Generate SKUs</Button>
 
                 <Box sx={{ marginTop: 2, paddingTop: 1.5, borderTop: "1px dashed", borderColor: "divider" }}>
                     <FormControlLabel control={<Checkbox checked={p.trackInventory} onChange={(e) => set({ trackInventory: e.target.checked })} />} label="Track inventory (count down stock as orders come in)" />
