@@ -1631,11 +1631,15 @@ export async function aiFlow({ prompt, brand = "our store", orgId }) {
         const site = await StorefrontSite.findOne({ orgId }).select("name customDomain subdomain").lean().catch(() => null);
         if (site) { baseUrl = _storeBaseUrl(site); if (!brand || brand === "our store") brand = site.name || brand; }
     }
-    const instruction = `Design a marketing automation for "${brand}": "${prompt}". Triggers: signup,first_purchase,any_purchase,abandoned_cart,win_back. `
-        + `Each step has delayHours (from enrollment), channel "email", subject, and an array of content BLOCKS. Block types: `
+    const instruction = `Design a marketing automation for "${brand}": "${prompt}". `
+        + `Triggers: signup, first_purchase, any_purchase, abandoned_cart, win_back, order_shipped (when an order ships), order_delivered (when an order is delivered). `
+        + `Choose realistic delayHours per step from enrollment — don't bunch everything at 0. Good defaults: a shipped notice at 0h; a review request ~72h after delivery; win-back weeks out. `
+        + `Each step has delayHours, channel "email", subject, and an array of content BLOCKS. Block types: `
         + `{"type":"heading","text":"..."}, {"type":"text","text":"..."}, {"type":"image","src":"IMG[<vivid photorealistic scene>]"}, `
         + `{"type":"products","heading":"...","query":"<1-3 word catalog search>"}, {"type":"button","label":"...","href":"${baseUrl ? `${baseUrl}/products` : "https://your-store/products"}"}, {"type":"divider"}. `
-        + `Each email step: a heading, supporting text, optionally an image (IMG[...]) and/or a products block, and a clear button CTA with an ABSOLUTE https URL. Never invent product names/prices. `
+        + `For order_shipped / order_delivered flows you may also use {"type":"order_summary","heading":"Your order"} (auto-fills the order's items) and {"type":"review_buttons","heading":"How did we do?","label":"Leave a review"} (auto-fills a review button per product), `
+        + `and these tokens in any text/subject/button: {{first_name}}, {{order_number}}, {{order_url}}, {{tracking_url}}, {{brand}} (e.g. a "Track your package" button with href "{{tracking_url}}"). `
+        + `Each email step: a heading, supporting text, optionally an image/products block, and a clear CTA. Never invent product names/prices. `
         + `STRICT JSON only: {"name":"...","trigger":"signup","steps":[{"delayHours":0,"channel":"email","subject":"...","blocks":[...]}]}`;
     const msg = await client.messages.create({ model: "claude-opus-4-8", max_tokens: 3000, thinking: { type: "adaptive" }, messages: [{ role: "user", content: instruction }] });
     const flow = parseJson(textOf(msg));

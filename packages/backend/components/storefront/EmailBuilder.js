@@ -15,10 +15,14 @@ const NEW_BLOCK = {
     products: { type: "products", heading: "Featured", query: "", limit: 3 },
     divider:  { type: "divider" },
     spacer:   { type: "spacer", height: 24 },
+    // Post-purchase (order_shipped / order_delivered flows): auto-filled per order at send time.
+    order_summary:  { type: "order_summary", heading: "Your order" },
+    review_buttons: { type: "review_buttons", heading: "How did we do?", label: "Leave a review" },
 };
 const BLOCK_ORDER = ["heading", "text", "button", "image", "products", "divider", "spacer"];
+const LIFECYCLE_BLOCKS = ["order_summary", "review_buttons"];
 
-function BlockEditor({ blocks = [], setBlocks }) {
+function BlockEditor({ blocks = [], setBlocks, palette = BLOCK_ORDER }) {
     const tiny = { border: "1px solid #e2e8f0", background: "#fff", borderRadius: 6, padding: "2px 7px", marginLeft: 4, cursor: "pointer", fontSize: "0.8rem" };
     const update = (i, patch) => setBlocks(blocks.map((b, j) => (j === i ? { ...b, ...patch } : b)));
     const remove = (i) => setBlocks(blocks.filter((_, j) => j !== i));
@@ -62,17 +66,27 @@ function BlockEditor({ blocks = [], setBlocks }) {
                         <input style={input} value={b.query || ""} placeholder="Product search (e.g. hoodies) — auto-pulls matching products" onChange={(e) => update(i, { query: e.target.value })} />
                     </div>}
                     {b.type === "spacer" && <input style={input} type="number" value={b.height ?? 24} placeholder="Height (px)" onChange={(e) => update(i, { height: parseInt(e.target.value) || 24 })} />}
+                    {b.type === "order_summary" && <div style={{ display: "grid", gap: 6 }}>
+                        <input style={input} value={b.heading || ""} placeholder="Heading (e.g. Your order)" onChange={(e) => update(i, { heading: e.target.value })} />
+                        <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>Auto-fills with the items from each order.</div>
+                    </div>}
+                    {b.type === "review_buttons" && <div style={{ display: "grid", gap: 6 }}>
+                        <input style={input} value={b.heading || ""} placeholder="Heading (e.g. How did we do?)" onChange={(e) => update(i, { heading: e.target.value })} />
+                        <input style={input} value={b.label || ""} placeholder="Button label (e.g. Leave a review)" onChange={(e) => update(i, { label: e.target.value })} />
+                        <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>Auto-fills one review button per product in the order.</div>
+                    </div>}
                 </div>
             ))}
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {BLOCK_ORDER.map((t) => <button type="button" key={t} onClick={() => add(t)} style={ghost}>+ {t}</button>)}
+                {palette.map((t) => <button type="button" key={t} onClick={() => add(t)} style={ghost}>+ {t.replace("_", " ")}</button>)}
             </div>
         </div>
     );
 }
 
-export function EmailBuilder({ value = {}, onChange, showSubject = true }) {
+export function EmailBuilder({ value = {}, onChange, showSubject = true, showLifecycleBlocks = false }) {
     const subject = value.subject || "", html = value.html || "", blocks = value.blocks || [];
+    const palette = showLifecycleBlocks ? [...BLOCK_ORDER, ...LIFECYCLE_BLOCKS] : BLOCK_ORDER;
     const set = (patch) => onChange?.({ ...value, ...patch });
     const [previewHtml, setPreviewHtml] = useState("");
     const [rendering, setRendering] = useState(false);
@@ -97,7 +111,8 @@ export function EmailBuilder({ value = {}, onChange, showSubject = true }) {
             <div style={{ flex: "1 1 260px", minWidth: 260, maxWidth: 380, display: "grid", gap: 8 }}>
                 {showSubject && <input style={input} placeholder="Subject line" value={subject} onChange={(e) => set({ subject: e.target.value })} />}
                 <div style={{ fontSize: "0.82rem", color: "#475569", fontWeight: 600 }}>Blocks</div>
-                <BlockEditor blocks={blocks} setBlocks={(b) => set({ blocks: b })} />
+                {showLifecycleBlocks && <div style={{ fontSize: "0.72rem", color: "#94a3b8", lineHeight: 1.5 }}>Personalize with tokens: {"{{first_name}}"}, {"{{order_number}}"}, {"{{order_url}}"}, {"{{tracking_url}}"}, {"{{brand}}"}</div>}
+                <BlockEditor blocks={blocks} setBlocks={(b) => set({ blocks: b })} palette={palette} />
                 <details>
                     <summary style={{ fontSize: "0.8rem", color: "#94a3b8", cursor: "pointer" }}>Advanced: raw HTML (used only if no blocks above)</summary>
                     <textarea style={{ ...input, minHeight: 120, fontFamily: "monospace", marginTop: 6 }} placeholder="Email HTML body" value={html} onChange={(e) => set({ html: e.target.value })} />

@@ -9,6 +9,8 @@ export const EMAIL_BLOCK_TYPES = [
     { type: "button",   label: "Button" },
     { type: "image",    label: "Image" },
     { type: "products", label: "Products" },
+    { type: "order_summary",  label: "Order summary" },
+    { type: "review_buttons", label: "Review buttons" },
     { type: "divider",  label: "Divider" },
     { type: "spacer",   label: "Spacer" },
 ];
@@ -58,6 +60,33 @@ function Block({ b }) {
                 <Section style={{ margin: "8px 0 14px" }}>
                     {b.heading ? <Heading as="h3" style={{ fontSize: "18px", fontWeight: 700, margin: "0 0 12px" }}>{b.heading}</Heading> : null}
                     {(b.items || []).map((it, j) => <ProductCard key={j} item={it} />)}
+                </Section>
+            );
+        case "order_summary":
+            // Post-purchase: this order's line items (filled at send time). Empty → preview placeholder.
+            return (
+                <Section style={{ margin: "8px 0 14px" }}>
+                    {b.heading ? <Heading as="h3" style={{ fontSize: "18px", fontWeight: 700, margin: "0 0 10px" }}>{b.heading}</Heading> : null}
+                    {(b.items && b.items.length) ? (
+                        <Section style={{ border: "1px solid #eeeeee", borderRadius: "10px", padding: "10px 14px" }}>
+                            {b.items.map((it, j) => (
+                                <Text key={j} style={{ fontSize: "14px", margin: "4px 0", color: "#333333" }}>{it.title}{it.qty > 1 ? ` × ${it.qty}` : ""}</Text>
+                            ))}
+                        </Section>
+                    ) : <Text style={{ fontSize: "13px", color: "#94a3b8", margin: "4px 0" }}>Your order items will appear here.</Text>}
+                </Section>
+            );
+        case "review_buttons":
+            // Post-purchase: a "Leave a review" button per product (filled at send time).
+            return (
+                <Section style={{ margin: "8px 0 14px" }}>
+                    {b.heading ? <Heading as="h3" style={{ fontSize: "18px", fontWeight: 700, margin: "0 0 12px" }}>{b.heading}</Heading> : null}
+                    {(b.products && b.products.length) ? b.products.map((p, j) => (
+                        <Section key={j} style={{ margin: "0 0 10px" }}>
+                            <Text style={{ fontSize: "14px", margin: "0 0 6px", color: "#333333" }}>{p.title}</Text>
+                            <Button href={p.url || "#"} style={{ backgroundColor: b.color || "#111111", color: "#ffffff", padding: "9px 18px", borderRadius: "6px", fontWeight: 700, fontSize: "14px", textDecoration: "none", display: "inline-block" }}>{b.label || "Leave a review"}</Button>
+                        </Section>
+                    )) : <Text style={{ fontSize: "13px", color: "#94a3b8", margin: "4px 0" }}>A review button for each item will appear here.</Text>}
                 </Section>
             );
         case "divider":

@@ -17,7 +17,7 @@ const schema = new mongoose.Schema({
     orgId:   { type: mongoose.Schema.Types.ObjectId, ref: "Organization", required: true, index: true },
     name:    { type: String, required: true },
     // What enrolls a customer.
-    trigger: { type: String, enum: ["signup", "first_purchase", "any_purchase", "abandoned_cart", "win_back"], required: true },
+    trigger: { type: String, enum: ["signup", "first_purchase", "any_purchase", "abandoned_cart", "win_back", "order_shipped", "order_delivered"], required: true },
     active:  { type: Boolean, default: false },
     segmentId: { type: mongoose.Schema.Types.ObjectId, ref: "StorefrontSegment" },   // optional audience filter
 

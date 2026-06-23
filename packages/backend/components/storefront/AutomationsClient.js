@@ -7,7 +7,8 @@ const card = { background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12
 const btn = { padding: "10px 16px", borderRadius: 9, border: "none", background: "#635bff", color: "#fff", fontWeight: 700, cursor: "pointer" };
 const ghost = { padding: "8px 14px", borderRadius: 9, border: "1px solid #cbd5e1", background: "#fff", color: "#334155", fontWeight: 600, cursor: "pointer" };
 
-const TRIGGERS = [["signup", "On signup"], ["first_purchase", "First purchase"], ["any_purchase", "Any purchase"], ["abandoned_cart", "Abandoned cart"], ["win_back", "Win-back (lapsed)"]];
+const TRIGGERS = [["signup", "On signup"], ["first_purchase", "First purchase"], ["any_purchase", "Any purchase"], ["abandoned_cart", "Abandoned cart"], ["win_back", "Win-back (lapsed)"], ["order_shipped", "Order shipped"], ["order_delivered", "Order delivered"]];
+const LIFECYCLE_TRIGGERS = ["order_shipped", "order_delivered"];
 const SEG_FIELDS = ["emailConsent", "smsConsent", "isLead", "emailVerified", "ordersCount", "totalSpentCents", "lastOrderDaysAgo", "signupDaysAgo", "rewardsBalance"];
 const SEG_OPS = ["is", "gte", "lte", "eq"];
 
@@ -119,7 +120,7 @@ function FlowEditor({ initial, segments, onClose, onSaved }) {
                             <button onClick={() => rmStep(i)} style={{ ...ghost, color: "#dc2626" }}>×</button>
                         </div>
                         {st.channel === "email"
-                            ? <EmailBuilder value={{ subject: st.subject, html: st.html, blocks: st.blocks }} onChange={(v) => setStepMerge(i, v)} />
+                            ? <EmailBuilder value={{ subject: st.subject, html: st.html, blocks: st.blocks }} onChange={(v) => setStepMerge(i, v)} showLifecycleBlocks={LIFECYCLE_TRIGGERS.includes(f.trigger)} />
                             : <textarea style={{ ...input, minHeight: 60 }} placeholder="SMS message" value={st.body || ""} onChange={(e) => setStep(i, "body", e.target.value)} />}
                     </div>
                 ))}

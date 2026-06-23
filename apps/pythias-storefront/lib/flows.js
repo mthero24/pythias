@@ -7,7 +7,10 @@ import { buildSegmentFilter } from "@/lib/segments";
 // Enroll a customer into all active flows for a trigger: enqueue each step into the outbox at a
 // cumulative delay. Idempotent per (flow, customer, token, step) via dedupeKey, so re-triggering
 // the same enrollment never double-sends. `token` makes recurring triggers (any_purchase) unique.
-export async function enrollFlows({ orgId, site, customer, trigger, token = "x" }) {
+// `context` (optional) carries per-order data for post-purchase flows (order_shipped / order_delivered):
+// it fills {{tokens}} (first_name, order_number, order_url, tracking_url, brand) and the
+// order_summary / review_buttons blocks. Rendered at enroll time, so each order gets its own copy.
+export async function enrollFlows({ orgId, site, customer, trigger, token = "x", context = null }) {
     if (!customer?._id) return 0;
     const flows = await StorefrontFlow.find({ orgId, trigger, active: true }).lean();
     if (!flows.length) return 0;
@@ -16,6 +19,9 @@ export async function enrollFlows({ orgId, site, customer, trigger, token = "x" 
     const baseUrl = storeBaseUrl(site);
     const logo = logoOf(site, baseUrl);
     const logoHeight = logoHeightOf(site);
+    // Merge tokens available to lifecycle steps.
+    const tokens = { brand, ...(context || {}) };
+    const applyTokens = (s) => (typeof s === "string" ? s.replace(/\{\{(\w+)\}\}/g, (_, k) => (tokens[k] != null ? String(tokens[k]) : "")) : s);
     let enrolled = 0;
 
     for (const flow of flows) {
@@ -44,13 +50,18 @@ export async function enrollFlows({ orgId, site, customer, trigger, token = "x" 
             };
             let msg;
             if (step.channel === "sms") {
-                msg = await enqueueMessage({ ...common, body: `${step.body}\nReply STOP to opt out.` }).catch(() => null);
+                msg = await enqueueMessage({ ...common, body: `${applyTokens(step.body)}\nReply STOP to opt out.` }).catch(() => null);
             } else {
-                const contentHtml = (Array.isArray(step.blocks) && step.blocks.length)
-                    ? await renderBlocks(await resolveCampaignBlocks(orgId, step.blocks, baseUrl))
-                    : (step.html || "");
+                let contentHtml;
+                if (Array.isArray(step.blocks) && step.blocks.length) {
+                    // Fill {{tokens}} in block strings, then resolve dynamic blocks with the order context.
+                    const tokenized = context ? JSON.parse(applyTokens(JSON.stringify(step.blocks))) : step.blocks;
+                    contentHtml = await renderBlocks(await resolveCampaignBlocks(orgId, tokenized, baseUrl, context));
+                } else {
+                    contentHtml = applyTokens(step.html || "");
+                }
                 const html = await baseTemplate({ brand, logo, logoHeight, contentHtml });
-                msg = await enqueueMessage({ ...common, subject: step.subject, html }).catch(() => null);
+                msg = await enqueueMessage({ ...common, subject: applyTokens(step.subject), html }).catch(() => null);
             }
             if (msg) any = true;
         }

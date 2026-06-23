@@ -28,12 +28,22 @@ export async function resolveProducts(orgId, { query = "", ids = [], limit = 3, 
     }));
 }
 
-// Resolve every "products" block in a campaign's block array (attach .items) before rendering.
-export async function resolveCampaignBlocks(orgId, blocks = [], baseUrl = "") {
+// Resolve every dynamic block in a campaign/flow block array (attach .items) before rendering.
+// `ctx` carries per-order data for post-purchase flow blocks (order_summary / review_buttons).
+export async function resolveCampaignBlocks(orgId, blocks = [], baseUrl = "", ctx = null) {
     if (!Array.isArray(blocks)) return [];
     return Promise.all(blocks.map(async (b) => {
-        if (b?.type !== "products") return b;
-        const items = await resolveProducts(orgId, { query: b.query, ids: b.productIds, limit: b.limit || 3, baseUrl });
-        return { ...b, items };
+        if (b?.type === "products") {
+            const items = await resolveProducts(orgId, { query: b.query, ids: b.productIds, limit: b.limit || 3, baseUrl });
+            return { ...b, items };
+        }
+        // Post-purchase: this order's line items as product cards.
+        if (b?.type === "order_summary") return { ...b, items: ctx?.items || [] };
+        // Post-purchase: a "Leave a review" button per product in this order.
+        if (b?.type === "review_buttons") {
+            const products = (ctx?.reviewProducts || []).map((p) => ({ ...p, url: baseUrl ? `${baseUrl}/products/${p.id}#review` : "#" }));
+            return { ...b, products };
+        }
+        return b;
     }));
 }
