@@ -1,5 +1,6 @@
 import { PlatformProductInventory as ProductInventory, PlatformDesign as Design, PlatformBlank as Blank, OrgIntegrations, PlatformProduct } from "@pythias/mongo";
-import { serialize } from "@pythias/backend";
+import { ProductMain } from "@pythias/inventory";
+import { serialize, CatalogInventory } from "@pythias/backend";
 import InventoryTabs from "./InventoryTabs";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
@@ -63,17 +64,24 @@ export default async function ProductInventoryPage({ searchParams }) {
 
     return (
         <InventoryTabs
-            podProps={{
-                inventory: serialize(inventory),
-                q,
-                totalCount,
-                totalValue,
-                p: page,
-                blanks,
-                fils: filter,
-                hasEbay: ebayConnCount > 0,
-            }}
-            catalogProducts={serialize(catalogProducts)}
+            boughtCount={catalogProducts.length}
+            made={
+                <ProductMain
+                    inventory={serialize(inventory)}
+                    q={q}
+                    totalCount={totalCount}
+                    totalValue={totalValue}
+                    p={page}
+                    blanks={blanks}
+                    fils={filter}
+                    hasEbay={ebayConnCount > 0}
+                />
+            }
+            bought={
+                <div style={{ maxWidth: 1200, margin: "0 auto", padding: 16 }}>
+                    <CatalogInventory products={serialize(catalogProducts)} />
+                </div>
+            }
         />
     );
 }

@@ -1,23 +1,22 @@
 "use client";
 import { useState } from "react";
 import { Box, Tabs, Tab } from "@mui/material";
-import { ProductMain } from "@pythias/inventory";
-import { CatalogInventory } from "@pythias/backend";
 
-// Tabbed product inventory: "Made" (POD PlatformInventory) vs "Bought & imported" (catalog products,
-// stock on the variant). ProductMain stays mounted (display toggle) so its filters/paging persist.
-export default function InventoryTabs({ podProps, catalogProducts = [] }) {
+// Pure tab shell. The two panels (POD ProductMain, catalog CatalogInventory) are rendered by the
+// server page and passed in as props — so this client component doesn't pull server-only modules
+// (node:crypto) into the client bundle. Both stay mounted (display toggle) to preserve state.
+export default function InventoryTabs({ made, bought, boughtCount = 0 }) {
     const [tab, setTab] = useState(0);
     return (
         <Box>
             <Box sx={{ borderBottom: 1, borderColor: "divider", px: 2, pt: 1 }}>
                 <Tabs value={tab} onChange={(e, v) => setTab(v)}>
                     <Tab label="Made products" />
-                    <Tab label={`Bought & imported${catalogProducts.length ? ` (${catalogProducts.length})` : ""}`} />
+                    <Tab label={`Bought & imported${boughtCount ? ` (${boughtCount})` : ""}`} />
                 </Tabs>
             </Box>
-            <Box sx={{ display: tab === 0 ? "block" : "none" }}><ProductMain {...podProps} /></Box>
-            {tab === 1 && <Box sx={{ maxWidth: 1200, margin: "0 auto", p: 2 }}><CatalogInventory products={catalogProducts} /></Box>}
+            <Box sx={{ display: tab === 0 ? "block" : "none" }}>{made}</Box>
+            <Box sx={{ display: tab === 1 ? "block" : "none" }}>{bought}</Box>
         </Box>
     );
 }
