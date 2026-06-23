@@ -2,7 +2,7 @@
 // renderToStaticMarkup (sync) — @react-email/components give table-based, email-client-safe
 // markup (Outlook included). Content/footer are passed as pre-built HTML strings (from emailFlows
 // etc.) and injected, so existing email bodies keep working unchanged.
-import { Html, Head, Body, Container, Section, Heading } from "@react-email/components";
+import { Html, Head, Body, Container, Section, Heading, Img } from "@react-email/components";
 
 const s = {
     body: { backgroundColor: "#f5f5f5", fontFamily: "Arial, Helvetica, sans-serif", color: "#111111", margin: 0, padding: 0 },
@@ -14,14 +14,18 @@ const s = {
     footer: { textAlign: "center", color: "#94a3b8", fontSize: "12px", padding: "16px 8px", lineHeight: "1.6" },
 };
 
-export function EmailShell({ brand = "Our Store", title = "", contentHtml = "", footerHtml = "" }) {
+export function EmailShell({ brand = "Our Store", title = "", contentHtml = "", footerHtml = "", logo = "", logoHeight = 40 }) {
     return (
         <Html lang="en">
             <Head />
             <Body style={s.body}>
                 <Container style={s.container}>
                     <Section style={s.card}>
-                        <Section style={s.header}>{brand}</Section>
+                        <Section style={s.header}>
+                            {logo
+                                ? <Img src={logo} alt={brand} height={logoHeight} style={{ maxHeight: `${logoHeight}px`, width: "auto", display: "block" }} />
+                                : brand}
+                        </Section>
                         <Section style={s.content}>
                             {title ? <Heading as="h1" style={s.title}>{title}</Heading> : null}
                             <div dangerouslySetInnerHTML={{ __html: contentHtml }} />

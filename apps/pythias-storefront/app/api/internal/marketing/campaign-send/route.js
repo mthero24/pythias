@@ -47,12 +47,13 @@ export async function POST(req) {
     let htmlTemplate = null;
     if (camp.channel !== "sms") {
         const baseUrl = storeBaseUrl(site);
+        const logo = site?.logoUrl && site?.logoStyle !== "name" ? (site.logoUrl.startsWith("http") ? site.logoUrl : `${baseUrl}${site.logoUrl}`) : "";
         const blocks = (Array.isArray(camp.blocks) && camp.blocks.length)
             ? await resolveCampaignBlocks(camp.orgId, camp.blocks, baseUrl)
             : null;
         const contentHtml = blocks ? await renderBlocks(blocks) : (camp.html || "");
         htmlTemplate = await baseTemplate({
-            brand, contentHtml,
+            brand, logo, contentHtml,
             footerHtml: `You're receiving this because you subscribed at ${brand}.<br><a href="__UNSUB_URL__" style="color:#94a3b8">Unsubscribe</a>`,
         });
     }

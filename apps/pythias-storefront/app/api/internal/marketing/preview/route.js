@@ -26,11 +26,12 @@ export async function POST(req) {
     const hasBlocks = Array.isArray(blocks) && blocks.length;
     if (!subject || (!html && !hasBlocks)) return NextResponse.json({ error: "Email subject and content are required" }, { status: 400 });
 
-    const site = orgId ? await StorefrontSite.findOne({ orgId, plan: { $ne: "none" } }).select("name customDomain subdomain businessInfo").lean() : null;
+    const site = orgId ? await StorefrontSite.findOne({ orgId }).select("name customDomain subdomain businessInfo logoUrl logoStyle").lean() : null;
     const brand = site?.businessInfo?.legalName || site?.name || "Our Store";
     const baseUrl = storeBaseUrl(site);
+    const logo = site?.logoUrl && site?.logoStyle !== "name" ? (site.logoUrl.startsWith("http") ? site.logoUrl : `${baseUrl}${site.logoUrl}`) : "";
     const contentHtml = hasBlocks ? await renderBlocks(await resolveCampaignBlocks(orgId, blocks, baseUrl)) : (html || "");
-    const fullHtml = await baseTemplate({ brand, contentHtml, footerHtml: `${brand} · This is a preview.` });
+    const fullHtml = await baseTemplate({ brand, logo, contentHtml, footerHtml: `${brand} · This is a preview.` });
     const r = await sendEmail({ to, subject: `[Preview] ${subject}`, html: fullHtml, from: brandedFrom(site?.name) });
     return r.ok ? NextResponse.json({ ok: true, id: r.id }) : NextResponse.json({ error: r.error || "Email failed" }, { status: 502 });
 }
