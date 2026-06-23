@@ -80,6 +80,7 @@ const schema = new mongoose.Schema({
         previousSkus: [String],
         name: String,                        // free-form variant label for catalog (buy-not-build) products
         stock: { type: Number, default: 0 }, // on-hand qty for self-fulfilled catalog products
+        supplierVid: String,                 // wholesale supplier variant id (e.g. CJ vid) → auto-reorder
     }],
     variantImages: Object,
     variantSecondaryImages: Object,
@@ -125,6 +126,8 @@ const schema = new mongoose.Schema({
     isCatalogProduct: { type: Boolean, default: false },
     trackInventory: { type: Boolean, default: false },       // enforce variant.stock at checkout
     continueSellingOOS: { type: Boolean, default: false },   // allow ordering when a variant's stock is 0
+    // Wholesale source linkage (Phase 3) — which supplier + product this was imported from, for auto-reorder.
+    source: { supplier: String, pid: String },
     createdAt: { type: Date, default: Date.now },
     lastUpdated: { type: Date, default: Date.now },
     tempImages: [Object],

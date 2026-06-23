@@ -11,6 +11,8 @@ import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import axios from 'axios';
 import { ProductImageCarosel, VariantDisplay } from '../design/stages/previewStage';
 import { CatalogProductCreate } from './CatalogProductCreate';
+import { SourcingBrowser } from './SourcingBrowser';
+import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 
 const STAGES = [
     { key: "Select Blank", label: "Blank" },
@@ -85,6 +87,10 @@ const catalogEntriesToBlanks = (catalog) => {
 export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, setStage, brands: brandsProp, setBrands, seasons, setSeasons, genders, setGenders, CreateSku, themes, setThemes, sportUsedFor, setSportUsedFor, orgType }) => {
     // Storefront resellers don't have blanks — default them straight to the buy-not-build ("Other") creator.
     const [type, setType] = useState(orgType === "storefront" ? "Other" : "From Blank");
+    // Wholesale sourcing browser (CJ) → import prefills the catalog creator.
+    const [sourcingOpen, setSourcingOpen] = useState(false);
+    const [imported, setImported] = useState(null);
+    const [importKey, setImportKey] = useState(0);
     const [blanks, setBlanks] = useState([]);
     const [localBrands, setLocalBrands] = useState(brandsProp || []);
     const [loading, setLoading] = useState(false);
@@ -1052,10 +1058,19 @@ export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, set
                     </Box>
                 )}
                 {type === "Other" && (
-                    <CatalogProductCreate
-                        onSaved={() => { setProduct({ blanks: [], colors: [], productImages: [], variantsArray: [] }); setStage("Select Blank"); setOpen(false); }}
-                        onCancel={() => { setProduct({ blanks: [], colors: [], productImages: [], variantsArray: [] }); setStage("Select Blank"); setOpen(false); }}
-                    />
+                    <Box>
+                        <Box sx={{ textAlign: "center", marginBottom: 1.5 }}>
+                            <Button variant="outlined" startIcon={<TravelExploreIcon />} onClick={() => setSourcingOpen(true)}>Find wholesale products to sell</Button>
+                            {imported && <Typography variant="caption" sx={{ display: "block", marginTop: 0.5, color: "success.main" }}>Imported &ldquo;{imported.title?.slice(0, 50)}&rdquo; — set your price below and create.</Typography>}
+                        </Box>
+                        <CatalogProductCreate
+                            key={importKey}
+                            initial={imported}
+                            onSaved={() => { setProduct({ blanks: [], colors: [], productImages: [], variantsArray: [] }); setStage("Select Blank"); setImported(null); setOpen(false); }}
+                            onCancel={() => { setProduct({ blanks: [], colors: [], productImages: [], variantsArray: [] }); setStage("Select Blank"); setImported(null); setOpen(false); }}
+                        />
+                        <SourcingBrowser open={sourcingOpen} onClose={() => setSourcingOpen(false)} onImport={(prod) => { setImported(prod); setImportKey((k) => k + 1); setSourcingOpen(false); }} />
+                    </Box>
                 )}
             </Box>
         </Modal>

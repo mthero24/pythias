@@ -127,6 +127,7 @@ async function buildPlatformDoc(raw, orgId) {
             weight: v.weight ?? 0,
             name: v.name ?? "",                              // catalog (buy-not-build) variant label
             stock: typeof v.stock === "number" ? v.stock : (Number(v.stock) || 0),  // self-ship on-hand qty
+            supplierVid: v.supplierVid ?? "",                // wholesale supplier variant id (auto-reorder)
             active: true,
             ...(v.ids ? { ids: v.ids } : {}),
         };
@@ -179,6 +180,7 @@ async function buildPlatformDoc(raw, orgId) {
         isCatalogProduct: raw.isCatalogProduct ?? false,
         trackInventory: raw.trackInventory ?? false,
         continueSellingOOS: raw.continueSellingOOS ?? false,
+        ...(raw.source && raw.source.pid ? { source: { supplier: raw.source.supplier || "cj", pid: String(raw.source.pid) } } : {}),
         salePercent: Number(raw.salePercent) || 0,
         lastUpdated: new Date(),
         marketplaceValues: raw.marketplaceValues ?? null,

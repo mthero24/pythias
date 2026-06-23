@@ -13,7 +13,25 @@ import axios from 'axios';
 // them themselves. Enter a UPC → we look it up (UPCitemdb → Claude web_search) and prefill; or fill
 // it all in manually. Single-variant by default; expand to variations on demand. Saves via /api/admin/products.
 
-const emptyVariant = (upc = "") => ({ name: "", sku: "", price: "", compareAtPrice: "", costPerItem: "", upc, stock: "", weight: "" });
+const emptyVariant = (upc = "") => ({ name: "", sku: "", price: "", compareAtPrice: "", costPerItem: "", upc, stock: "", weight: "", supplierVid: "" });
+
+// Seed state from a wholesale import (CJ product): cost prefilled from wholesale, price from the
+// supplier's suggested retail (editable), UPC/weight/images carried, supplierVid kept for reorder.
+function fromImport(cj) {
+    if (!cj) return null;
+    const c = (n) => (n ? (n / 100) : "");
+    return {
+        title: cj.title || "", description: cj.description || "", brand: "", sku: "", tags: [],
+        productImages: (cj.images || []).map((i) => ({ image: i })),
+        variantsArray: (cj.variants?.length ? cj.variants : [{}]).map((v) => ({
+            name: v.name || "", sku: v.sku || "", upc: v.upc || "",
+            price: c(v.suggestedRetailCents), compareAtPrice: "", costPerItem: c(v.costCents),
+            stock: "", weight: v.weightOz || "", supplierVid: v.cjVid || "",
+        })),
+        trackInventory: true, continueSellingOOS: false,
+        source: cj.pid ? { supplier: "cj", pid: cj.pid } : null,
+    };
+}
 
 const selectPortal = {
     menuPortalTarget: typeof document !== "undefined" ? document.body : null,
@@ -40,7 +58,7 @@ const Section = ({ n, title, subtitle, action, children }) => (
     </Card>
 );
 
-export function CatalogProductCreate({ onSaved, onCancel }) {
+export function CatalogProductCreate({ onSaved, onCancel, initial = null }) {
     const [upc, setUpc] = useState("");
     const [looking, setLooking] = useState(false);
     const [lookupMsg, setLookupMsg] = useState(null);   // { severity, text }
@@ -49,7 +67,7 @@ export function CatalogProductCreate({ onSaved, onCancel }) {
     const [uploading, setUploading] = useState(false);
     const [imgUrl, setImgUrl] = useState("");
     const fileRef = useRef(null);
-    const [p, setP] = useState({ title: "", description: "", brand: "", sku: "", tags: [], productImages: [], variantsArray: [emptyVariant()], trackInventory: true, continueSellingOOS: false });
+    const [p, setP] = useState(() => fromImport(initial) || { title: "", description: "", brand: "", sku: "", tags: [], productImages: [], variantsArray: [emptyVariant()], trackInventory: true, continueSellingOOS: false });
     const set = (patch) => setP((s) => ({ ...s, ...patch }));
     const setVar = (i, patch) => setP((s) => ({ ...s, variantsArray: s.variantsArray.map((v, j) => (j === i ? { ...v, ...patch } : v)) }));
 
@@ -117,11 +135,12 @@ export function CatalogProductCreate({ onSaved, onCancel }) {
                     name: v.name, sku: v.sku, upc: v.upc,
                     price: Number(v.price) || 0, compareAtPrice: Number(v.compareAtPrice) || 0,
                     costPerItem: Number(v.costPerItem) || 0, weight: Number(v.weight) || 0,
-                    stock: Number(v.stock) || 0,
+                    stock: Number(v.stock) || 0, supplierVid: v.supplierVid || "",
                     color: null, size: null, blank: null,
                 })),
                 isNFProduct: true, isCatalogProduct: true,
                 trackInventory: p.trackInventory, continueSellingOOS: p.continueSellingOOS,
+                ...(p.source ? { source: p.source } : {}),
             };
             const res = await axios.post("/api/admin/products", { products: [product] });
             if (res.data.error) setSaveErr(res.data.msg || "Save failed.");
