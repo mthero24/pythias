@@ -9,7 +9,7 @@ const ghost = { padding: "8px 14px", borderRadius: 9, border: "1px solid #cbd5e1
 export default function MarketingClient() {
     const [tab, setTab] = useState("campaigns");
     return (
-        <div style={{ maxWidth: 760, margin: "0 auto", padding: "28px 20px" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "28px 20px" }}>
             <h1 style={{ margin: "0 0 4px" }}>Marketing</h1>
             <p style={{ color: "#64748b", margin: "0 0 20px" }}>Email & SMS campaigns and your signup popup. Sends throttle automatically to protect your sender reputation.</p>
             <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
@@ -142,6 +142,13 @@ function Composer({ onDone, onCancel }) {
             if (!d.error) setPreviewHtml(d.html || "");
         } catch { /* ignore */ } finally { setRendering(false); }
     };
+    // Live preview: re-render shortly after the seller edits blocks/subject (debounced).
+    useEffect(() => {
+        if (f.channel !== "email") return;
+        const t = setTimeout(() => refreshPreview(), 700);
+        return () => clearTimeout(t);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [JSON.stringify(f.blocks), f.html, f.subject, f.channel]);
 
     const aiDraft = async () => {
         if (!aiPrompt.trim()) return;
@@ -213,22 +220,29 @@ function Composer({ onDone, onCancel }) {
             </div>
 
             {f.channel === "email" ? (
-                <>
-                    <input style={input} placeholder="Subject line" value={f.subject} onChange={set("subject")} />
-                    <div style={{ fontSize: "0.82rem", color: "#475569", fontWeight: 600 }}>Build your email</div>
-                    <BlockEditor blocks={f.blocks} setBlocks={(b) => setF((s) => ({ ...s, blocks: b }))} />
-                    <details>
-                        <summary style={{ fontSize: "0.8rem", color: "#94a3b8", cursor: "pointer" }}>Advanced: raw HTML (used only if no blocks above)</summary>
-                        <textarea style={{ ...input, minHeight: 120, fontFamily: "monospace", marginTop: 6 }} placeholder="Email HTML body" value={f.html} onChange={set("html")} />
-                    </details>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 4 }}>
-                        <div style={{ fontSize: "0.82rem", color: "#475569", fontWeight: 600 }}>Preview</div>
-                        <button type="button" onClick={() => refreshPreview()} disabled={rendering} style={ghost}>{rendering ? "Rendering…" : "Refresh preview"}</button>
+                // Two-pane builder: the preview is the main view; blocks live in a sidebar next to it.
+                <div style={{ display: "flex", gap: 16, alignItems: "flex-start", flexWrap: "wrap" }}>
+                    {/* Sidebar — editor */}
+                    <div style={{ flex: "1 1 300px", minWidth: 280, maxWidth: 400, display: "grid", gap: 8 }}>
+                        <input style={input} placeholder="Subject line" value={f.subject} onChange={set("subject")} />
+                        <div style={{ fontSize: "0.82rem", color: "#475569", fontWeight: 600 }}>Blocks</div>
+                        <BlockEditor blocks={f.blocks} setBlocks={(b) => setF((s) => ({ ...s, blocks: b }))} />
+                        <details>
+                            <summary style={{ fontSize: "0.8rem", color: "#94a3b8", cursor: "pointer" }}>Advanced: raw HTML (used only if no blocks above)</summary>
+                            <textarea style={{ ...input, minHeight: 120, fontFamily: "monospace", marginTop: 6 }} placeholder="Email HTML body" value={f.html} onChange={set("html")} />
+                        </details>
                     </div>
-                    {previewHtml
-                        ? <iframe title="Email preview" srcDoc={previewHtml} style={{ width: "100%", height: 460, border: "1px solid #e2e8f0", borderRadius: 8, background: "#fff" }} />
-                        : <div style={{ fontSize: "0.82rem", color: "#94a3b8", padding: 12, border: "1px dashed #e2e8f0", borderRadius: 8 }}>Add blocks (or click Draft), then Refresh preview to see your email.</div>}
-                </>
+                    {/* Main — live preview */}
+                    <div style={{ flex: "2 1 460px", minWidth: 300, display: "grid", gap: 8, position: "sticky", top: 12 }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                            <div style={{ fontSize: "0.82rem", color: "#475569", fontWeight: 600 }}>Preview {rendering && <span style={{ color: "#94a3b8", fontWeight: 400 }}>· updating…</span>}</div>
+                            <button type="button" onClick={() => refreshPreview()} disabled={rendering} style={ghost}>Refresh</button>
+                        </div>
+                        {previewHtml
+                            ? <iframe title="Email preview" srcDoc={previewHtml} style={{ width: "100%", height: 640, border: "1px solid #e2e8f0", borderRadius: 10, background: "#fff" }} />
+                            : <div style={{ fontSize: "0.85rem", color: "#94a3b8", padding: 40, border: "1px dashed #cbd5e1", borderRadius: 10, textAlign: "center", background: "#fff" }}>Add blocks in the sidebar (or click <b>Draft</b>) to see your email here.</div>}
+                    </div>
+                </div>
             ) : (
                 <textarea style={{ ...input, minHeight: 100 }} placeholder="SMS message" value={f.body} onChange={set("body")} />
             )}
