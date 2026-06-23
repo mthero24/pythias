@@ -8,7 +8,8 @@ const Step = new mongoose.Schema({
     delayHours: { type: Number, default: 0 },   // after enrollment (cumulative handled at enroll time)
     channel:    { type: String, enum: ["email", "sms"], default: "email" },
     subject:    { type: String },   // email
-    html:       { type: String },   // email
+    html:       { type: String },   // email (raw, or rendered from blocks)
+    blocks:     { type: Array },    // email builder blocks → rendered via React Email
     body:       { type: String },   // sms
 }, { _id: false });
 

@@ -1,6 +1,7 @@
 import { StorefrontFlow, StorefrontSegment, StorefrontCustomer } from "@pythias/mongo";
-import { enqueueMessage } from "@/lib/marketing";
-import { baseTemplate } from "@/lib/email";
+import { enqueueMessage, storeBaseUrl } from "@/lib/marketing";
+import { baseTemplate, renderBlocks } from "@/lib/email";
+import { resolveCampaignBlocks } from "@/lib/emailProducts";
 import { buildSegmentFilter } from "@/lib/segments";
 
 // Enroll a customer into all active flows for a trigger: enqueue each step into the outbox at a
@@ -12,6 +13,8 @@ export async function enrollFlows({ orgId, site, customer, trigger, token = "x" 
     if (!flows.length) return 0;
 
     const brand = site?.businessInfo?.legalName || site?.name || "Our Store";
+    const baseUrl = storeBaseUrl(site);
+    const logo = site?.logoUrl && site?.logoStyle !== "name" ? (site.logoUrl.startsWith("http") ? site.logoUrl : `${baseUrl}${site.logoUrl}`) : "";
     let enrolled = 0;
 
     for (const flow of flows) {
@@ -38,9 +41,16 @@ export async function enrollFlows({ orgId, site, customer, trigger, token = "x" 
                 type: "campaign", category: "marketing", scheduledAt,
                 dedupeKey: `flow:${flow._id}:${customer._id}:${token}:${i}`,
             };
-            const msg = step.channel === "sms"
-                ? await enqueueMessage({ ...common, body: `${step.body}\nReply STOP to opt out.` }).catch(() => null)
-                : await enqueueMessage({ ...common, subject: step.subject, html: await baseTemplate({ brand, contentHtml: step.html || "" }) }).catch(() => null);
+            let msg;
+            if (step.channel === "sms") {
+                msg = await enqueueMessage({ ...common, body: `${step.body}\nReply STOP to opt out.` }).catch(() => null);
+            } else {
+                const contentHtml = (Array.isArray(step.blocks) && step.blocks.length)
+                    ? await renderBlocks(await resolveCampaignBlocks(orgId, step.blocks, baseUrl))
+                    : (step.html || "");
+                const html = await baseTemplate({ brand, logo, contentHtml });
+                msg = await enqueueMessage({ ...common, subject: step.subject, html }).catch(() => null);
+            }
             if (msg) any = true;
         }
         if (any) { enrolled++; await StorefrontFlow.updateOne({ _id: flow._id }, { $inc: { "stats.enrolled": 1 } }).catch(() => {}); }

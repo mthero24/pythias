@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import { EmailBuilder } from "./EmailBuilder";
 
 const input = { width: "100%", padding: "9px 11px", borderRadius: 8, border: "1px solid #cbd5e1", fontSize: "0.9rem", boxSizing: "border-box" };
 const card = { background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: 16 };
@@ -66,13 +67,14 @@ function FlowEditor({ initial, segments, onClose, onSaved }) {
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState(null);
     const setStep = (i, k, v) => setF((s) => ({ ...s, steps: s.steps.map((x, j) => j === i ? { ...x, [k]: v } : x) }));
+    const setStepMerge = (i, patch) => setF((s) => ({ ...s, steps: s.steps.map((x, j) => j === i ? { ...x, ...patch } : x) }));
     const addStep = () => setF((s) => ({ ...s, steps: [...s.steps, { delayHours: 24, channel: "email", subject: "", html: "" }] }));
     const rmStep = (i) => setF((s) => ({ ...s, steps: s.steps.filter((_, j) => j !== i) }));
     const previewStep = async (st) => {
         const to = window.prompt(st.channel === "sms" ? "Send a preview text to which number? (+1…)" : "Send a preview email to which address?");
         if (!to) return;
         try {
-            const d = await (await fetch("/api/marketing/preview", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ channel: st.channel, subject: st.subject, html: st.html, body: st.body, to }) })).json();
+            const d = await (await fetch("/api/marketing/preview", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ channel: st.channel, subject: st.subject, html: st.html, blocks: st.blocks, body: st.body, to }) })).json();
             alert(d.error ? `Preview failed: ${d.error}` : "Preview sent ✓");
         } catch { alert("Preview failed"); }
     };
@@ -116,10 +118,9 @@ function FlowEditor({ initial, segments, onClose, onSaved }) {
                             <button onClick={() => previewStep(st)} style={{ ...ghost, marginLeft: "auto" }}>Preview</button>
                             <button onClick={() => rmStep(i)} style={{ ...ghost, color: "#dc2626" }}>×</button>
                         </div>
-                        {st.channel === "email" ? <>
-                            <input style={input} placeholder="Subject" value={st.subject || ""} onChange={(e) => setStep(i, "subject", e.target.value)} />
-                            <textarea style={{ ...input, minHeight: 80 }} placeholder="Email HTML" value={st.html || ""} onChange={(e) => setStep(i, "html", e.target.value)} />
-                        </> : <textarea style={{ ...input, minHeight: 60 }} placeholder="SMS message" value={st.body || ""} onChange={(e) => setStep(i, "body", e.target.value)} />}
+                        {st.channel === "email"
+                            ? <EmailBuilder value={{ subject: st.subject, html: st.html, blocks: st.blocks }} onChange={(v) => setStepMerge(i, v)} />
+                            : <textarea style={{ ...input, minHeight: 60 }} placeholder="SMS message" value={st.body || ""} onChange={(e) => setStep(i, "body", e.target.value)} />}
                     </div>
                 ))}
                 <button onClick={addStep} style={ghost}>+ Add step</button>

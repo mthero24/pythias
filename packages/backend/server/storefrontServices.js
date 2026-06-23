@@ -1631,10 +1631,28 @@ export async function aiFlow({ prompt, brand = "our store", orgId }) {
         const site = await StorefrontSite.findOne({ orgId }).select("name customDomain subdomain").lean().catch(() => null);
         if (site) { baseUrl = _storeBaseUrl(site); if (!brand || brand === "our store") brand = site.name || brand; }
     }
-    const instruction = `Design a marketing automation for "${brand}": "${prompt}". Triggers: signup,first_purchase,any_purchase,abandoned_cart,win_back. Each step has delayHours (from enrollment), channel "email", subject, and html (inline-styled inner content). Every CTA in html MUST be a real <a href> button with an ABSOLUTE https:// URL${baseUrl ? ` linking to ${baseUrl} (e.g. ${baseUrl}/products)` : ""} — relative URLs do not work in email. STRICT JSON only: {"name":"...","trigger":"signup","steps":[{"delayHours":0,"channel":"email","subject":"...","html":"..."}]}`;
-    const msg = await client.messages.create({ model: "claude-opus-4-8", max_tokens: 2500, thinking: { type: "adaptive" }, messages: [{ role: "user", content: instruction }] });
+    const instruction = `Design a marketing automation for "${brand}": "${prompt}". Triggers: signup,first_purchase,any_purchase,abandoned_cart,win_back. `
+        + `Each step has delayHours (from enrollment), channel "email", subject, and an array of content BLOCKS. Block types: `
+        + `{"type":"heading","text":"..."}, {"type":"text","text":"..."}, {"type":"image","src":"IMG[<vivid photorealistic scene>]"}, `
+        + `{"type":"products","heading":"...","query":"<1-3 word catalog search>"}, {"type":"button","label":"...","href":"${baseUrl ? `${baseUrl}/products` : "https://your-store/products"}"}, {"type":"divider"}. `
+        + `Each email step: a heading, supporting text, optionally an image (IMG[...]) and/or a products block, and a clear button CTA with an ABSOLUTE https URL. Never invent product names/prices. `
+        + `STRICT JSON only: {"name":"...","trigger":"signup","steps":[{"delayHours":0,"channel":"email","subject":"...","blocks":[...]}]}`;
+    const msg = await client.messages.create({ model: "claude-opus-4-8", max_tokens: 3000, thinking: { type: "adaptive" }, messages: [{ role: "user", content: instruction }] });
     const flow = parseJson(textOf(msg));
-    if (flow && Array.isArray(flow.steps)) flow.steps = flow.steps.map((s) => (s && s.html ? { ...s, html: absolutizeEmailLinks(s.html, baseUrl) } : s));
+    if (flow && Array.isArray(flow.steps)) {
+        for (const st of flow.steps) {
+            if (!Array.isArray(st.blocks)) continue;
+            for (const b of st.blocks) {
+                if (b?.type === "image" && typeof b.src === "string" && /IMG\[/i.test(b.src)) {
+                    const desc = (b.src.match(/IMG\[([^\]]+)\]/) || [])[1] || "";
+                    let url = "";
+                    if (orgId && desc && sceneGenAvailable()) { try { url = await generateImage({ prompt: `${desc}. Photorealistic product/lifestyle photography, on-brand, natural lighting, no text, no watermark.`, aspect: 1.5, orgId: String(orgId) }); } catch { url = ""; } }
+                    b.src = url;
+                }
+                if (b?.type === "button" && typeof b.href === "string" && b.href.startsWith("/") && baseUrl) b.href = `${baseUrl}${b.href}`;
+            }
+        }
+    }
     return flow;
 }
 
