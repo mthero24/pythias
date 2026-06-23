@@ -1,4 +1,4 @@
-import { baseTemplate, btn } from "@/lib/email";
+import { baseTemplate, btn, renderBlocks } from "@/lib/email";
 import { enqueueMessage, storeBaseUrl, unsubscribeUrl } from "@/lib/marketing";
 
 const brandOf = (site) => site?.businessInfo?.legalName || site?.name || "Our Store";
@@ -156,11 +156,22 @@ export async function enqueueSubscriptionFailed(site, { orgId, email, customerId
 
 export async function enqueueAbandonedCart(site, customer, { discountCode } = {}) {
     const brand = brandOf(site), logo = logoOf(site);
+    const base = storeBaseUrl(site);
+    // Show the buyer their actual cart items as product cards (cart lines carry a title/image/price snapshot).
+    const items = (customer.cart || []).slice(0, 6).map((l) => ({
+        title: l.title || "",
+        image: l.image && !/^https?:/i.test(l.image) ? `${base}${l.image}` : (l.image || ""),
+        price: l.priceCents ? `$${(l.priceCents / 100).toFixed(2)}` : "",
+        url: l.productId ? `${base}/products/${l.productId}` : `${base}/cart`,
+        qty: l.qty || 1,
+    }));
+    const cardsHtml = items.length ? await renderBlocks([{ type: "products", items }]) : "";
     const html = await baseTemplate({
         brand, logo, title: "You left something behind 🛒",
         contentHtml: `<p>Your cart is still waiting at ${brand}.</p>
+            ${cardsHtml}
             ${discountCode ? `<p>Here's <b>${discountCode}</b> for a little something off if you finish now.</p>` : ""}
-            <p style="margin:18px 0">${btn(`${storeBaseUrl(site)}/cart`, "Return to cart")}</p>`,
+            <p style="margin:18px 0">${btn(`${base}/cart`, "Return to cart")}</p>`,
         footerHtml: marketingFooter(site, "email", customer.email),
     });
     return enqueueMessage({
