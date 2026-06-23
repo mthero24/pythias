@@ -217,6 +217,16 @@ export async function placeOrder({ orgId, site, customer, items, shippingAddress
         await PlatformOrder.updateOne({ _id: order._id }, { $set: { items: insertedItems.map((d) => d._id) } });
     }
 
+    // Decrement on-hand stock for tracked catalog (self-fulfilled) products. The positional $ matches
+    // the ordered variant by sku; only fires when the product has trackInventory on (POD untouched).
+    for (const l of lines) {
+        if (!l.productId || !l.sku) continue;
+        await PlatformProduct.updateOne(
+            { _id: l.productId, orgId, trackInventory: true, "variantsArray.sku": l.sku },
+            { $inc: { "variantsArray.$.stock": -l.qty } }
+        ).catch(() => {});
+    }
+
     let earned = 0, wasFirstOrder = false;
     if (customer) {
         if (redeemApplied > 0) await redeemForOrder({ orgId, customerId: customer._id }, redeemApplied, order._id);

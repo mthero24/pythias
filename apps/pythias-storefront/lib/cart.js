@@ -10,7 +10,7 @@ export async function validateCart(orgId, items = []) {
         ? await PlatformProduct.find({ _id: { $in: ids }, orgId, active: { $ne: false } })
             .populate("variantsArray.color", "name")
             .populate("design", "images printType")
-            .select("title code productImages variantsArray design salePercent").lean()
+            .select("title code productImages variantsArray design salePercent trackInventory continueSellingOOS").lean()
         : [];
     const byId = Object.fromEntries(products.map((p) => [String(p._id), p]));
 
@@ -51,6 +51,13 @@ export async function validateCart(orgId, items = []) {
         if (!p) { errors.push(`Product unavailable`); continue; }
         const v = (p.variantsArray ?? []).find((x) => x.sku === it.sku) ?? (p.variantsArray ?? [])[0];
         if (!v || !(v.price > 0)) { errors.push(`${p.title}: variant unavailable`); continue; }
+
+        // Out-of-stock gate for catalog (buy-not-build) products the seller tracks inventory on.
+        if (p.trackInventory && !p.continueSellingOOS) {
+            const stock = Number(v.stock) || 0;
+            if (stock <= 0) { errors.push(`${p.title}: out of stock`); continue; }
+            if (stock < qty) { errors.push(`${p.title}: only ${stock} left in stock`); continue; }
+        }
 
         // Print-placement customization (single-image designs only): the buyer moved the one design onto
         // the chosen spot(s). Remap the design map to those spots from the REAL art (never trust the
