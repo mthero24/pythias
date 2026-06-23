@@ -35,9 +35,14 @@ export async function POST(req) {
             if (it.product && !seen.has(pid)) { seen.add(pid); products.push({ id: pid, title: it.name || it.styleCode || "your item" }); }
         }
         if (products.length) {
+            // Wait a few days after delivery before asking for a review (configurable factor;
+            // default 3 days) so the buyer has actually received and used the product.
+            const d = Number(site.reviewRequestDelayDays);
+            const delayDays = Number.isFinite(d) && d >= 0 ? d : 3;
             await enqueueReviewRequest(site, {
                 orgId: order.orgId, orderId: String(order._id), email: order.customerEmail,
                 customerId: order.storefrontCustomerId, products,
+                scheduledAt: new Date(Date.now() + delayDays * 24 * 3600 * 1000),
             }).catch(() => {});
         }
     }

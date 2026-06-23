@@ -91,7 +91,9 @@ export async function enqueueOrderStatus(site, { orgId, orderId, poNumber, email
 }
 
 // Post-delivery: ask the buyer to review what they bought (drives reviews → conversions).
-export async function enqueueReviewRequest(site, { orgId, orderId, email, customerId, products = [] }) {
+// scheduledAt lets the caller delay this until a few days after delivery (so the buyer has
+// actually used the product before we ask).
+export async function enqueueReviewRequest(site, { orgId, orderId, email, customerId, products = [], scheduledAt } = {}) {
     if (!email || !products.length) return null;
     const brand = brandOf(site), logo = logoOf(site);
     const links = products.slice(0, 6).map((p) =>
@@ -106,6 +108,7 @@ export async function enqueueReviewRequest(site, { orgId, orderId, email, custom
     return enqueueMessage({
         orgId, channel: "email", to: email, customerId,
         type: "campaign", category: "marketing", subject: `How was your ${brand} order?`, html,
+        ...(scheduledAt ? { scheduledAt } : {}),
         dedupeKey: `review_request:${orderId}`,
     });
 }

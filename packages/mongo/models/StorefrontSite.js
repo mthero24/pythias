@@ -110,6 +110,9 @@ const schema = new mongoose.Schema({
 
     // ── Content (the live, published site) ───────────────────────────────────
     theme:  { type: Theme, default: () => ({}) },
+    // Post-purchase email timing factors. Shipped notice is sent immediately; the review request
+    // waits this many days after delivery (so the buyer has actually used the product).
+    reviewRequestDelayDays: { type: Number, default: 3 },
     pages:  { type: [Page], default: [] },
     nav:    {
         // Header menu. `style`: "links" = horizontal top links (sections are hover dropdowns);
