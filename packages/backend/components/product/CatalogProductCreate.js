@@ -33,6 +33,26 @@ function fromImport(cj) {
     };
 }
 
+// Seed state from an EXISTING catalog product (edit mode). Carries _id so save updates in place.
+function fromEdit(prod) {
+    if (!prod?._id) return null;
+    const n = (x) => (x === 0 || x ? x : "");
+    return {
+        _id: prod._id,
+        title: prod.title || "", description: prod.description || "", brand: prod.brand || "", sku: prod.sku || "",
+        tags: prod.tags || [],
+        productImages: (prod.productImages || []).map((pi) => ({ image: pi.image || pi.url })).filter((x) => x.image),
+        variantsArray: (prod.variantsArray?.length ? prod.variantsArray : [{}]).map((v) => ({
+            name: v.name || "", sku: v.sku || "", upc: v.upc || "",
+            price: n(v.price), compareAtPrice: n(v.compareAtPrice), costPerItem: n(v.costPerItem),
+            stock: n(v.stock), weight: n(v.weight), supplierVid: v.supplierVid || "",
+            reorderPoint: n(v.reorderPoint), reorderTo: n(v.reorderTo),
+        })),
+        trackInventory: prod.trackInventory ?? true, continueSellingOOS: prod.continueSellingOOS ?? false,
+        source: prod.source || null,
+    };
+}
+
 const selectPortal = {
     menuPortalTarget: typeof document !== "undefined" ? document.body : null,
     menuPosition: "fixed",
@@ -58,7 +78,7 @@ const Section = ({ n, title, subtitle, action, children }) => (
     </Card>
 );
 
-export function CatalogProductCreate({ onSaved, onCancel, initial = null }) {
+export function CatalogProductCreate({ onSaved, onCancel, initial = null, editProduct = null }) {
     const [upc, setUpc] = useState("");
     const [looking, setLooking] = useState(false);
     const [lookupMsg, setLookupMsg] = useState(null);   // { severity, text }
@@ -67,7 +87,7 @@ export function CatalogProductCreate({ onSaved, onCancel, initial = null }) {
     const [uploading, setUploading] = useState(false);
     const [imgUrl, setImgUrl] = useState("");
     const fileRef = useRef(null);
-    const [p, setP] = useState(() => fromImport(initial) || { title: "", description: "", brand: "", sku: "", tags: [], productImages: [], variantsArray: [emptyVariant()], trackInventory: true, continueSellingOOS: false });
+    const [p, setP] = useState(() => fromEdit(editProduct) || fromImport(initial) || { title: "", description: "", brand: "", sku: "", tags: [], productImages: [], variantsArray: [emptyVariant()], trackInventory: true, continueSellingOOS: false });
     const set = (patch) => setP((s) => ({ ...s, ...patch }));
     const setVar = (i, patch) => setP((s) => ({ ...s, variantsArray: s.variantsArray.map((v, j) => (j === i ? { ...v, ...patch } : v)) }));
 
@@ -141,6 +161,7 @@ export function CatalogProductCreate({ onSaved, onCancel, initial = null }) {
         setSaving(true); setSaveErr("");
         try {
             const product = {
+                ...(p._id ? { _id: p._id } : {}),
                 title: p.title.trim(), description: p.description, brand: p.brand, sku: p.sku, tags: p.tags,
                 productImages: p.productImages.map((pi) => ({ image: pi.image })),
                 variantsArray: p.variantsArray.map((v) => ({
@@ -265,7 +286,7 @@ export function CatalogProductCreate({ onSaved, onCancel, initial = null }) {
                 <Button variant="text" color="inherit" onClick={onCancel}>Cancel</Button>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                     {saveErr ? <Typography variant="caption" color="error">{saveErr}</Typography> : (!canCreate && blockHint && <Typography variant="caption" color="text.secondary">{blockHint} to create</Typography>)}
-                    <Button variant="contained" size="large" onClick={save} disabled={!canCreate} startIcon={saving ? <CircularProgress size={16} color="inherit" /> : null}>{saving ? "Saving…" : "Create product"}</Button>
+                    <Button variant="contained" size="large" onClick={save} disabled={!canCreate} startIcon={saving ? <CircularProgress size={16} color="inherit" /> : null}>{saving ? "Saving…" : p._id ? "Save changes" : "Create product"}</Button>
                 </Box>
             </Box>
         </Box>

@@ -3,6 +3,8 @@ import { Box, Modal, Typography, Stepper, Step, StepLabel, StepButton, Snackbar,
 import axios from "axios";
 import { useState, useEffect, useRef, useCallback } from "react";
 import CloseIcon from '@mui/icons-material/Close';
+import { CatalogProductCreate } from "../product/CatalogProductCreate";
+import { CatalogPreview } from "../product/CatalogPreview";
 import { BlankStage } from "./stages/blankStage";
 import { ColorStage } from "./stages/colorStage";
 import { ProductImageStage } from "./stages/productImageStage";
@@ -122,6 +124,24 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
             targetRef.current.scrollTop = 0;
         }
       };
+    // Catalog (buy-not-build / imported) products use their own editor + preview — the blank/design
+    // stages below don't apply. POD products are untouched.
+    if (product?.isCatalogProduct) {
+        const closeCatalog = () => { setOpen(false); setPreview(false); };
+        return (
+            <Modal open={open} onClose={closeCatalog} id="catalog-product-modal">
+                <Box sx={style}>
+                    <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+                        <IconButton onClick={closeCatalog}><CloseIcon /></IconButton>
+                    </Box>
+                    {preview
+                        ? <CatalogPreview product={product} />
+                        : <CatalogProductCreate editProduct={product} onSaved={() => { closeCatalog(); if (typeof window !== "undefined") window.location.reload(); }} onCancel={closeCatalog} />}
+                </Box>
+            </Modal>
+        );
+    }
+
     return (
         <Modal
             open={open}
