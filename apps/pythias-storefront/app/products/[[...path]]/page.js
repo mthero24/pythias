@@ -21,7 +21,7 @@ const titleCase = (s) => String(s || "").replace(/\b\w/g, (c) => c.toUpperCase()
 
 async function resolveProductDoc(orgId, token) {
     const base = { orgId, active: { $ne: false } };
-    const SELECT = "title description productImages variantsArray design designTemplateId slug sku blanks defaultColor category department salePercent";
+    const SELECT = "title description productImages variantsArray design designTemplateId slug sku blanks defaultColor category department salePercent trackInventory continueSellingOOS";
     const pop = (qy) => qy.populate("variantsArray.color", "name hexcode").populate("variantsArray.blank", "sizes").populate("blanks", "bulletPoints sizeGuide images extraLocationPriceCents name code").populate("defaultColor", "name").select(SELECT);
     if (mongoose.Types.ObjectId.isValid(token)) {
         const byId = await pop(PlatformProduct.findOne({ ...base, _id: token })).lean().catch(() => null);

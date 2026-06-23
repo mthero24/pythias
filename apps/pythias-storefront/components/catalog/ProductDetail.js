@@ -27,6 +27,7 @@ export default async function ProductDetail({ site, product, host }) {
         color: v.color?.name ?? v.ids?.colorName ?? "",
         hex:   v.color?.hexcode ?? null,
         size:  resolveVariantSize(v, v.blank?.sizes),
+        stock: typeof v.stock === "number" ? v.stock : null,
     }));
     const prices = variants.map((v) => v.price).filter((n) => typeof n === "number" && n > 0);
     const minPrice = prices.length ? Math.min(...prices) : undefined;
@@ -175,6 +176,7 @@ export default async function ProductDetail({ site, product, host }) {
                             placement={placement} printRender={printRender}
                             rating={summary?.count > 0 ? { avg: summary.avg, count: summary.count } : null}
                             shipping={site.shipping || null} hasSizeChart={!!sizeGuide} salePercent={product.salePercent || 0}
+                            inventory={{ track: !!product.trackInventory, continueOOS: !!product.continueSellingOOS }}
                             customizeBlankId={primaryBlank ? String(primaryBlank._id) : ""} customizeArt={customizeArt} />
                     )}
 

@@ -17,7 +17,7 @@ const atWidth = (url, w) => { try { const u = new URL(url); u.searchParams.set("
 // Used for standard products; customizable (design-template) products keep their own CustomizableBuyBox.
 // `images` is [{ url, color }] (color = the colorName the image belongs to, or null for shared images).
 // `galleryScope`: "all" shows every image; "current" shows only the selected color's images (+ shared).
-export default function ProductView({ productId, title, images = [], variants = [], siblings = [], thumbs = "bottom", galleryScope = "all", placement = null, printRender = null, customizeBlankId = "", customizeArt = null, defaultColor = "", rating = null, shipping = null, hasSizeChart = false, salePercent = 0 }) {
+export default function ProductView({ productId, title, images = [], variants = [], siblings = [], thumbs = "bottom", galleryScope = "all", placement = null, printRender = null, customizeBlankId = "", customizeArt = null, defaultColor = "", rating = null, shipping = null, hasSizeChart = false, salePercent = 0, inventory = null }) {
     const { add } = useCart();
     const { price: money, t } = useI18n();
 
@@ -67,6 +67,8 @@ export default function ProductView({ productId, title, images = [], variants = 
     useEffect(() => { track("product_view", { productId }); }, [productId]);
 
     const match = useMemo(() => variants.find((v) => (!hasColors || v.color === color) && (!hasSizes || v.size === size)) ?? variants[0] ?? null, [variants, color, size, hasColors, hasSizes]);
+    // Out-of-stock for the selected variant (catalog products the seller tracks, OOS not allowed).
+    const stockOut = !!(inventory?.track && !inventory?.continueOOS && match && (match.stock ?? 0) <= 0);
 
     // Normalize images to [{url,color}] (fall back to variant images), deduped by url.
     const allImgs = useMemo(() => {
@@ -316,16 +318,22 @@ export default function ProductView({ productId, title, images = [], variants = 
 
                 {err && <div style={{ color: "#dc2626", fontSize: "0.88rem", marginBottom: 10 }}>{err}</div>}
 
-                {match && priceCents > 0 && (
+                {stockOut && (
+                    <div style={{ display: "inline-block", marginBottom: 12, padding: "6px 12px", borderRadius: 8, background: "#fef2f2", color: "#b91c1c", fontWeight: 700, fontSize: "0.9rem" }}>
+                        {t("product.outOfStock", "Out of stock")}
+                    </div>
+                )}
+
+                {match && priceCents > 0 && !stockOut && (
                     <div style={{ marginBottom: 12 }}>
                         <ExpressCheckout key={`${match.sku}-${priceCents}-${qty}`} items={[{ productId, sku: match.sku, qty }]} amountCents={priceCents * qty} />
                     </div>
                 )}
                 <div ref={buyBoxRef} style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                    <button onClick={addToCart} disabled={!match} style={{ flex: 1, padding: "14px 0", borderRadius: 10, border: "1px solid var(--sf-accent,#f59e0b)", background: "#fff", color: "var(--sf-accent,#f59e0b)", fontWeight: 700, fontSize: "1rem", cursor: match ? "pointer" : "not-allowed", opacity: match ? 1 : 0.5 }}>
-                        {added ? `${t("product.added", "Added")} ✓` : t("product.addToCart", "Add to cart")}
+                    <button onClick={addToCart} disabled={!match || stockOut} style={{ flex: 1, padding: "14px 0", borderRadius: 10, border: "1px solid var(--sf-accent,#f59e0b)", background: "#fff", color: "var(--sf-accent,#f59e0b)", fontWeight: 700, fontSize: "1rem", cursor: (match && !stockOut) ? "pointer" : "not-allowed", opacity: (match && !stockOut) ? 1 : 0.5 }}>
+                        {stockOut ? t("product.outOfStock", "Out of stock") : added ? `${t("product.added", "Added")} ✓` : t("product.addToCart", "Add to cart")}
                     </button>
-                    <button onClick={buyNow} disabled={!match} style={{ flex: 1, padding: "14px 0", borderRadius: 10, border: "none", background: match ? "var(--sf-accent,#f59e0b)" : "#cbd5e1", color: "#fff", fontWeight: 700, fontSize: "1rem", cursor: match ? "pointer" : "not-allowed" }}>
+                    <button onClick={buyNow} disabled={!match || stockOut} style={{ flex: 1, padding: "14px 0", borderRadius: 10, border: "none", background: (match && !stockOut) ? "var(--sf-accent,#f59e0b)" : "#cbd5e1", color: "#fff", fontWeight: 700, fontSize: "1rem", cursor: (match && !stockOut) ? "pointer" : "not-allowed" }}>
                         Buy now
                     </button>
                     <FavoriteHeart size={28} product={{ productId, title, image: img, priceCents, sku: match?.sku || "", color: match?.color || "", size: match?.size || "" }} />
