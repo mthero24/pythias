@@ -1,11 +1,12 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { redirect } from "next/navigation";
-import { Organization, UsageLedger } from "@pythias/mongo";
+import { Organization, UsageLedger, StorefrontSite } from "@pythias/mongo";
 import { recountUsage } from "@/lib/usageEnforce";
 import { Box, Container, Grid2, Typography, Card, CardContent, Stack, Chip, Divider } from "@mui/material";
 import UsageGauge from "@/components/UsageGauge";
 import TierBadge from "@/components/TierBadge";
+import StorefrontSetupGuide from "@/components/StorefrontSetupGuide";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +32,23 @@ export default async function DashboardPage({ params }) {
     const usage = { ...org.usage, ...(fresh || {}) };
     const firstName = session.user.firstName;
 
+    // Standalone storefront sellers get a getting-started checklist (done-state computed from real signals).
+    const isStorefront = org.orgType === "storefront";
+    let setupSteps = [];
+    if (isStorefront) {
+        const site = await StorefrontSite.findOne({ orgId: session.user.orgId }).select("status customDomain").lean().catch(() => null);
+        const wh = org.partnerWebhook || {};
+        setupSteps = [
+            { key: "store",    label: "Customize your store",       desc: "Pick a theme and set your brand",      href: `/${slug}/storefront`,   done: !!site },
+            { key: "product",  label: "Add your first product",     desc: "Build your catalog",                   href: `/${slug}/products`,     done: (usage.productsTotal || 0) > 0 },
+            { key: "payouts",  label: "Set up payouts",             desc: "Connect Stripe so you get paid",       href: `/${slug}/payouts`,      done: org.storefrontConnect?.status === "active" },
+            { key: "shipping", label: "Set your shipping rates",    desc: "Decide how you ship orders",           href: `/${slug}/settings`,     done: false },
+            { key: "webhook",  label: "Connect your order webhook", desc: "Push new orders into your own system", href: `/${slug}/integrations`, done: !!(wh.active && wh.url) },
+            { key: "domain",   label: "Connect your domain",        desc: "Use your own custom domain",           href: `/${slug}/settings`,     done: site?.customDomain?.status === "active" },
+            { key: "launch",   label: "Launch your store",          desc: "Publish and go live",                  href: `/${slug}/storefront`,   done: site?.status === "published" },
+        ];
+    }
+
     return (
         <Box sx={{ bgcolor: "background.default", minHeight: "100vh" }}>
             <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -44,6 +62,8 @@ export default async function DashboardPage({ params }) {
                     </Box>
                     <TierBadge tier={org.tier} status={org.status} />
                 </Stack>
+
+                {isStorefront && <StorefrontSetupGuide steps={setupSteps} storeKey={org.slug || "store"} />}
 
                 <Grid2 container spacing={3} sx={{ mb: 4 }}>
                     <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
@@ -60,13 +80,15 @@ export default async function DashboardPage({ params }) {
                             limit={limits.products}
                         />
                     </Grid2>
-                    <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
-                        <UsageGauge
-                            label="Designs"
-                            current={usage.designsTotal}
-                            limit={limits.designs}
-                        />
-                    </Grid2>
+                    {!isStorefront && (
+                        <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
+                            <UsageGauge
+                                label="Designs"
+                                current={usage.designsTotal}
+                                limit={limits.designs}
+                            />
+                        </Grid2>
+                    )}
                     <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
                         <UsageGauge
                             label="Users"
@@ -103,7 +125,7 @@ export default async function DashboardPage({ params }) {
                                     {[
                                         { label: "Orders", href: `/${slug}/orders` },
                                         { label: "Products", href: `/${slug}/products` },
-                                        { label: "Designs", href: `/${slug}/admin/designs` },
+                                        ...(isStorefront ? [] : [{ label: "Designs", href: `/${slug}/admin/designs` }]),
                                         { label: "Integrations", href: `/${slug}/integrations` },
                                     ].map(link => (
                                         <Box key={link.href}>
