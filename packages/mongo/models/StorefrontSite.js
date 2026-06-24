@@ -107,6 +107,13 @@ const schema = new mongoose.Schema({
     // Identifies this storefront to its white-label mobile app build (mobile has no host
     // header). The app sends this; the API resolves the org from it. Web uses the host.
     appKey:    { type: String, unique: true, sparse: true, index: true },
+    // Mobile-app add-on subscription (separate Stripe sub; set by the billing webhook on payment).
+    appSubscription: {
+        stripeSubscriptionId: { type: String },
+        status:               { type: String },   // active | canceled
+        startedAt:            { type: Date },
+        canceledAt:           { type: Date },
+    },
 
     // ── Content (the live, published site) ───────────────────────────────────
     theme:  { type: Theme, default: () => ({}) },

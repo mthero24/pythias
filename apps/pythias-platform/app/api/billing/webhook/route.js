@@ -1,8 +1,20 @@
 import { NextResponse } from "next/server";
+import crypto from "node:crypto";
 import { Organization, UsageLedger, StorefrontSite, PaymentReceived } from "@pythias/mongo";
 import { getLimits } from "@/lib/tiers";
 import { getStripe } from "@/lib/stripe";
 import { logError } from "@pythias/backend/server";
+
+// Enable the white-label mobile-app add-on for a store and mint its appKey (the app's tenant key)
+// if it doesn't have one yet. Idempotent — re-runs keep the existing key.
+async function enableMobileApp(orgId, subscriptionId) {
+    if (!orgId) return;
+    const site = await StorefrontSite.findOne({ orgId }).select("appKey").lean();
+    const set = { appEnabled: true, "appSubscription.status": "active", "appSubscription.startedAt": new Date() };
+    if (subscriptionId) set["appSubscription.stripeSubscriptionId"] = subscriptionId;
+    if (!site?.appKey) set.appKey = "app_" + crypto.randomBytes(20).toString("hex");
+    await StorefrontSite.findOneAndUpdate({ orgId }, { $set: set, $setOnInsert: { orgId } }, { upsert: true });
+}
 
 export async function POST(req) {
     const stripe = getStripe();
@@ -33,6 +45,12 @@ export async function POST(req) {
                         );
                         if (s.customer) await Organization.findByIdAndUpdate(s.metadata.orgId, { $set: { stripeCustomerId: s.customer } });
                     }
+                    break;
+                }
+                // White-label mobile-app add-on purchased → enable the app + mint its appKey.
+                if (s.metadata?.kind === "storefront_mobile_app" && s.metadata?.orgId) {
+                    await enableMobileApp(s.metadata.orgId, s.subscription || null);
+                    if (s.customer) await Organization.findByIdAndUpdate(s.metadata.orgId, { $set: { stripeCustomerId: s.customer } });
                     break;
                 }
                 // One-off onboarding / setup fee paid → record as received money (platform revenue).
@@ -105,6 +123,14 @@ export async function POST(req) {
                     await StorefrontSite.findOneAndUpdate(
                         { "subscription.stripeSubscriptionId": sub.id },
                         { $set: { plan: "none", "subscription.status": "canceled", "subscription.canceledAt": new Date() } }
+                    );
+                    break;
+                }
+                // Mobile-app add-on canceled → disable the app (keep appKey so it works again if they re-add).
+                if (sub.metadata?.kind === "storefront_mobile_app") {
+                    await StorefrontSite.findOneAndUpdate(
+                        { "appSubscription.stripeSubscriptionId": sub.id },
+                        { $set: { appEnabled: false, "appSubscription.status": "canceled", "appSubscription.canceledAt": new Date() } }
                     );
                     break;
                 }
