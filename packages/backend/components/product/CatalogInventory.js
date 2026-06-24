@@ -5,6 +5,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import EditIcon from '@mui/icons-material/Edit';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import CloseIcon from '@mui/icons-material/Close';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import axios from 'axios';
 import { CatalogProductCreate } from './CatalogProductCreate';
 import { CatalogPreview } from './CatalogPreview';
@@ -24,6 +25,10 @@ export function CatalogInventory({ products = [] }) {
     const [editP, setEditP] = useState(null);
     const [previewP, setPreviewP] = useState(null);
     const [selected, setSelected] = useState(() => new Set());
+    const [suggestP, setSuggestP] = useState(null);     // product whose levels we're suggesting
+    const [suggestData, setSuggestData] = useState(null);
+    const [suggesting, setSuggesting] = useState(false);
+    const [applying, setApplying] = useState(false);
 
     const isLow = (v) => v.supplierVid && (v.reorderPoint || 0) > 0 && (v.stock || 0) <= (v.reorderPoint || 0) && (v.reorderTo || 0) > (v.stock || 0) && !(Number(v.pendingReorderQty) > 0);
     // Pre-select the low-stock items so reordering them is one click — but the seller can pick/unpick.
@@ -82,6 +87,32 @@ export function CatalogInventory({ products = [] }) {
         setSelected(new Set());
         setMsg({ severity: placed ? "success" : "error", text: `${placed} order(s) placed.${errs.length ? ` ${errs.length} couldn't: ${errs.slice(0, 2).join("; ")}` : ""}` });
         setRunning(false);
+    };
+
+    // AI: analyze sales velocity for one product and suggest reorder levels per variant.
+    const runSuggest = async (p) => {
+        setSuggestP(p); setSuggestData(null); setSuggesting(true);
+        try {
+            const { data } = await axios.post("/api/admin/sourcing/suggest", { productId: p._id });
+            if (data.ok) setSuggestData(data);
+            else { setSuggestData(null); setSuggestP(null); setMsg({ severity: "error", text: data.error || "Couldn't generate suggestions." }); }
+        } catch (e) { setSuggestData(null); setSuggestP(null); setMsg({ severity: "error", text: e.response?.data?.error || "Couldn't generate suggestions." }); }
+        finally { setSuggesting(false); }
+    };
+
+    // Apply the suggested levels to the product's variants and persist them.
+    const applySuggestions = async () => {
+        if (!suggestP || !suggestData) return;
+        setApplying(true);
+        try {
+            for (const s of suggestData.suggestions) {
+                setVar(suggestP._id, s.sku, { reorderPoint: s.reorderPoint, reorderTo: s.restockTo });
+                await axios.post("/api/admin/sourcing/reorder", { levels: { productId: suggestP._id, sku: s.sku, reorderPoint: s.reorderPoint, reorderTo: s.restockTo } });
+            }
+            setMsg({ severity: "success", text: "Suggested reorder levels applied." });
+            setSuggestP(null); setSuggestData(null);
+        } catch (e) { setMsg({ severity: "error", text: e.response?.data?.error || "Couldn't apply suggestions." }); }
+        finally { setApplying(false); }
     };
 
     const orderOne = async (productId, sku) => {
@@ -146,6 +177,7 @@ export function CatalogInventory({ products = [] }) {
                                             <span>{p.title}</span>
                                             <Tooltip title="Edit"><IconButton size="small" onClick={() => setEditP(p)}><EditIcon sx={{ fontSize: "1rem" }} /></IconButton></Tooltip>
                                             <Tooltip title="Preview"><IconButton size="small" onClick={() => setPreviewP(p)}><VisibilityIcon sx={{ fontSize: "1rem" }} /></IconButton></Tooltip>
+                                            <Tooltip title="Suggest reorder levels with AI"><IconButton size="small" color="secondary" onClick={() => runSuggest(p)}><AutoAwesomeIcon sx={{ fontSize: "1rem" }} /></IconButton></Tooltip>
                                         </Box>
                                     ) : ""}</TableCell>
                                     <TableCell>{v.name || "—"}</TableCell>
@@ -188,6 +220,47 @@ export function CatalogInventory({ products = [] }) {
                 <Box sx={modalStyle}>
                     <Box sx={{ display: "flex", justifyContent: "flex-end" }}><IconButton onClick={() => setPreviewP(null)}><CloseIcon /></IconButton></Box>
                     {previewP && <CatalogPreview product={previewP} />}
+                </Box>
+            </Modal>
+
+            <Modal open={!!suggestP} onClose={() => { if (!applying) { setSuggestP(null); setSuggestData(null); } }}>
+                <Box sx={{ ...modalStyle, maxWidth: 760 }}>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+                        <Typography variant="h6" fontWeight={700}>Suggested reorder levels</Typography>
+                        <IconButton onClick={() => { if (!applying) { setSuggestP(null); setSuggestData(null); } }}><CloseIcon /></IconButton>
+                    </Box>
+                    <Typography variant="caption" color="text.secondary">{suggestP?.title}</Typography>
+                    {suggesting && <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, py: 4, justifyContent: "center", color: "text.secondary" }}><CircularProgress size={20} /><span>Analyzing your sales…</span></Box>}
+                    {suggestData && (
+                        <>
+                            <Table size="small" sx={{ mt: 1.5 }}>
+                                <TableHead><TableRow>
+                                    <TableCell>Option</TableCell><TableCell align="right">On hand</TableCell>
+                                    <TableCell align="right">Sold 30d</TableCell><TableCell align="right">~/day</TableCell>
+                                    <TableCell align="right">Now (at→to)</TableCell><TableCell align="right">Suggested (at→to)</TableCell>
+                                </TableRow></TableHead>
+                                <TableBody>
+                                    {suggestData.suggestions.map((s) => (
+                                        <TableRow key={s.sku}>
+                                            <TableCell><Tooltip title={s.reason || ""}><span>{s.name || s.sku}</span></Tooltip></TableCell>
+                                            <TableCell align="right">{s.stock}</TableCell>
+                                            <TableCell align="right">{s.sold30}</TableCell>
+                                            <TableCell align="right">{s.perDay}</TableCell>
+                                            <TableCell align="right" sx={{ color: "text.secondary" }}>{s.currentReorderPoint}→{s.currentReorderTo}</TableCell>
+                                            <TableCell align="right" sx={{ fontWeight: 700, color: "secondary.main" }}>{s.reorderPoint}→{s.restockTo}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
+                                {suggestData.aiUsed ? "AI suggestion based on your recent sales velocity and supplier lead time." : "Based on your recent sales velocity (AI unavailable — using the velocity model)."} Hover an option for the reasoning.
+                            </Typography>
+                            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1.5, mt: 2 }}>
+                                <Button color="inherit" disabled={applying} onClick={() => { setSuggestP(null); setSuggestData(null); }}>Cancel</Button>
+                                <Button variant="contained" disabled={applying} startIcon={applying ? <CircularProgress size={16} color="inherit" /> : null} onClick={applySuggestions}>{applying ? "Applying…" : "Apply these levels"}</Button>
+                            </Box>
+                        </>
+                    )}
                 </Box>
             </Modal>
         </Box>
