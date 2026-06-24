@@ -3,7 +3,7 @@ import { ScrollView, View, Text, TextInput, TouchableOpacity, ActivityIndicator,
 import { useStripe } from "@stripe/stripe-react-native";
 import { useCart } from "../cart";
 import { useStore, useAccent } from "../theme";
-import { API_BASE, APP_KEY } from "../config";
+import { postJson } from "../api";
 import { trackEvent } from "../analytics";
 
 // Address + email → /api/checkout/intent → Stripe PaymentSheet (cards / Apple Pay / Google Pay / Link).
@@ -36,13 +36,9 @@ export default function CheckoutScreen({ navigation }) {
         }
         setBusy(true);
         try {
-            const res = await fetch(`${API_BASE}/api/checkout/intent`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "x-pythias-app-key": APP_KEY },
-                body: JSON.stringify({ items: lineItems, shippingAddress: form, email: form.email }),
-            });
-            const data = await res.json();
-            if (data.error) { Alert.alert("Checkout error", String(data.error)); return; }
+            // Authenticated client → attaches the buyer's bearer token (if logged in) so the order links
+            // to their account + applies rewards. Throws on error (caught below).
+            const data = await postJson("/api/checkout/intent", { items: lineItems, shippingAddress: form, email: form.email });
             if (data.free && data.orderId) { goConfirm(null, data.totals?.totalCents || 0); return; }   // fully covered — already placed
             if (!data.clientSecret) { Alert.alert("Checkout error", "Couldn't start payment."); return; }
 
