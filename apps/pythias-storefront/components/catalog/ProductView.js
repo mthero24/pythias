@@ -17,7 +17,7 @@ const atWidth = (url, w) => { try { const u = new URL(url); u.searchParams.set("
 // Used for standard products; customizable (design-template) products keep their own CustomizableBuyBox.
 // `images` is [{ url, color }] (color = the colorName the image belongs to, or null for shared images).
 // `galleryScope`: "all" shows every image; "current" shows only the selected color's images (+ shared).
-export default function ProductView({ productId, title, images = [], variants = [], siblings = [], thumbs = "bottom", galleryScope = "all", placement = null, printRender = null, customizeBlankId = "", customizeArt = null, defaultColor = "", rating = null, shipping = null, hasSizeChart = false, salePercent = 0, inventory = null }) {
+export default function ProductView({ productId, title, images = [], variants = [], siblings = [], thumbs = "bottom", galleryScope = "all", placement = null, printRender = null, customizeBlankId = "", customizeArt = null, defaultColor = "", rating = null, shipping = null, hasSizeChart = false, salePercent = 0, inventory = null, isCatalogProduct = false }) {
     const { add } = useCart();
     const { price: money, t } = useI18n();
 
@@ -373,11 +373,16 @@ export default function ProductView({ productId, title, images = [], variants = 
                     <span>🔒 Secure checkout</span>
                 </div>
 
-                <a href={customizeHref} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 14, padding: "13px 0", borderRadius: 10,
-                    border: "1px dashed var(--sf-accent,#f59e0b)", color: "var(--sf-accent,#f59e0b)", fontWeight: 700, fontSize: "0.96rem", textDecoration: "none" }}>
-                    🎨 Customize this design
-                </a>
-                <div style={{ fontSize: "0.78rem", color: "var(--sf-muted,#64748b)", marginTop: 6, textAlign: "center" }}>Open it in the design studio — add text, art, or edit with AI.</div>
+                {/* Bought / imported (catalog) products aren't customizable POD designs — hide the studio CTA. */}
+                {!isCatalogProduct && (
+                    <>
+                        <a href={customizeHref} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 14, padding: "13px 0", borderRadius: 10,
+                            border: "1px dashed var(--sf-accent,#f59e0b)", color: "var(--sf-accent,#f59e0b)", fontWeight: 700, fontSize: "0.96rem", textDecoration: "none" }}>
+                            🎨 Customize this design
+                        </a>
+                        <div style={{ fontSize: "0.78rem", color: "var(--sf-muted,#64748b)", marginTop: 6, textAlign: "center" }}>Open it in the design studio — add text, art, or edit with AI.</div>
+                    </>
+                )}
 
                 {placementOptions.length > 0 && (
                     <div style={{ marginTop: 22, borderTop: "1px solid var(--sf-border, #e5e7eb)", paddingTop: 16 }}>

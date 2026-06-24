@@ -178,6 +178,7 @@ export default async function ProductDetail({ site, product, host }) {
                             rating={summary?.count > 0 ? { avg: summary.avg, count: summary.count } : null}
                             shipping={site.shipping || null} hasSizeChart={!!sizeGuide} salePercent={product.salePercent || 0}
                             inventory={{ track: !!product.trackInventory, continueOOS: !!product.continueSellingOOS }}
+                            isCatalogProduct={!!product.isCatalogProduct}
                             customizeBlankId={primaryBlank ? String(primaryBlank._id) : ""} customizeArt={customizeArt} />
                     )}
 
