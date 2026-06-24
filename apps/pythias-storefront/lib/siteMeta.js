@@ -18,7 +18,10 @@ export async function siteMetadata({ title, description, image, path } = {}) {
     const desc = description || homeSeo.description || `Shop ${name}`;
     const ogImage = image || homeSeo.ogImage || site.theme?.logoUrl;
     const images = ogImage ? [ogImage] : undefined;
-    const origin = host ? `https://${host}` : undefined;
+    // Canonical/OG URL prefers the seller's active custom domain so pages served on the (noindexed)
+    // Pythias subdomain still point Google at the one indexable URL — consolidating link equity.
+    const canonHost = (site.customDomain?.status === "active" && site.customDomain?.hostname) ? site.customDomain.hostname : host;
+    const origin = canonHost ? `https://${canonHost}` : undefined;
     const url = origin ? `${origin}${path || ""}` : undefined;
 
     return {

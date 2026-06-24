@@ -29,7 +29,16 @@ export async function middleware(req) {
         const to = map[key] ?? map[pathname];
         if (to && to !== pathname) return NextResponse.redirect(new URL(to, origin), 308);
     }
-    return NextResponse.next();
+
+    const res = NextResponse.next();
+    // Keep Pythias-provided store subdomains OUT of Google — only a seller's registered custom domain
+    // should be indexed (else the subdomain duplicates the store and the wrong URL ranks).
+    const base = (process.env.STOREFRONT_BASE_DOMAIN || "pythias.store").toLowerCase();
+    const h = host.toLowerCase().split(":")[0];
+    if (h === base || h.endsWith("." + base) || h === "localhost" || h.endsWith(".localhost") || h.startsWith("127.")) {
+        res.headers.set("X-Robots-Tag", "noindex, nofollow");
+    }
+    return res;
 }
 
 // Skip assets, API, and the SEO files (let them serve directly).
