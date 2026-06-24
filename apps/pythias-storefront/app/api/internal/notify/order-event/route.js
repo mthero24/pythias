@@ -5,6 +5,7 @@ import { assertInternal } from "@/lib/internal";
 import { enqueueOrderStatus, enqueueReviewRequest } from "@/lib/emailFlows";
 import { enrollFlows } from "@/lib/flows";
 import { storeBaseUrl } from "@/lib/marketing";
+import { sendExpoPush } from "@/lib/push";
 
 // POST /api/internal/notify/order-event  (from the platform provider-callback)
 // Body: { orderId, status, trackingUrl? }
@@ -78,5 +79,19 @@ export async function POST(req) {
             }).catch(() => {});
         }
     }
+    // Push notification to the buyer's app devices (independent of the email flow above).
+    if (trigger && order.storefrontCustomerId) {
+        try {
+            const c = await StorefrontCustomer.findById(order.storefrontCustomerId).select("pushTokens").lean();
+            const tokens = (c?.pushTokens || []).map((t) => t.token).filter(Boolean);
+            if (tokens.length) {
+                const msg = status === "delivered"
+                    ? { title: "Delivered 🎉", body: `Order ${order.poNumber} was delivered.` }
+                    : { title: "On its way 📦", body: `Order ${order.poNumber} has shipped.` };
+                await sendExpoPush(tokens, { ...msg, data: { orderId: String(order._id), type: `order_${status}` } });
+            }
+        } catch { /* non-fatal */ }
+    }
+
     return NextResponse.json({ ok: true, via: usedFlow ? "flow" : "transactional" });
 }

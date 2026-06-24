@@ -25,3 +25,10 @@ export async function registerForPush() {
         if (token) await registerPushToken(token, Platform.OS);
     } catch { /* non-fatal */ }
 }
+
+// Subscribe to notification taps; calls handler(data) with the push's data payload. Returns a sub.
+export function onNotificationTap(handler) {
+    return Notifications.addNotificationResponseReceivedListener((resp) => {
+        handler(resp?.notification?.request?.content?.data || {});
+    });
+}

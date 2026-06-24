@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { initAnalytics, trackScreen } from "./src/analytics";
+import { onNotificationTap } from "./src/push";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { StatusBar } from "expo-status-bar";
@@ -47,6 +48,11 @@ export default function App() {
     useEffect(() => {
         initAnalytics();
         getConfig().then(setCfg).catch((e) => setErr(e.message || "load failed"));
+        // Tapping an order push opens the buyer's orders.
+        const sub = onNotificationTap((data) => {
+            if (typeof data?.type === "string" && data.type.startsWith("order_")) navRef.current?.navigate("Orders");
+        });
+        return () => sub?.remove?.();
     }, []);
 
     if (err) return <Centered><Text style={styles.muted}>Couldn't load the store. Try again later.</Text></Centered>;
