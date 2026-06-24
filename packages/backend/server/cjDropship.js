@@ -8,6 +8,10 @@ let _tok = null; // { accessToken, accessExpiry, refreshToken, refreshExpiry }
 
 const cents = (v) => Math.round((parseFloat(v) || 0) * 100);
 const gToOz = (g) => (g ? Math.round((parseFloat(g) / 28.3495) * 10) / 10 : 0); // CJ weights are grams
+// Platform margin folded into the cost the reseller sees/pays (we pay the supplier the raw wholesale
+// and keep the difference). Applied ONCE here, so import/reorder both use the marked-up cost.
+const MARGIN_MULT = 1 + (Number(process.env.CATALOG_SOURCING_MARGIN_PCT) || 2) / 100;
+const costWithMargin = (v) => Math.round(cents(v) * MARGIN_MULT);
 
 export const cjConfigured = () => !!process.env.CJ_API_KEY;
 
@@ -53,7 +57,7 @@ export async function cjSearch({ keyword = "", categoryId = "", page = 1, pageSi
         page, total: d?.total ?? null,
         products: list.map((p) => ({
             pid: p.pid, title: p.productNameEn || p.productName || "", image: p.productImage || "",
-            sku: p.productSku || "", costCents: cents(p.sellPrice), category: p.categoryName || "", supplier: p.supplierName || "",
+            sku: p.productSku || "", costCents: costWithMargin(p.sellPrice), category: p.categoryName || "", supplier: p.supplierName || "",
         })),
     };
 }
@@ -66,7 +70,7 @@ export async function cjGetProduct(pid) {
     if (!images.length && p.productImage) images.push(p.productImage);
     const variants = (p.variants || []).map((v) => ({
         cjVid: v.vid, sku: v.variantSku || v.vid, name: v.variantNameEn || "", upc: v.barcode || "",
-        costCents: cents(v.variantSellPrice), suggestedRetailCents: cents(v.variantSugSellPrice),
+        costCents: costWithMargin(v.variantSellPrice), suggestedRetailCents: cents(v.variantSugSellPrice),
         weightOz: gToOz(v.variantWeight), image: v.variantImage || images[0] || "", inventory: Number(v.inventoryNum) || 0,
     }));
     return {

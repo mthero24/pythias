@@ -60,7 +60,7 @@ export function CatalogInventory({ products = [] }) {
         setBusy(productId + sku); setMsg(null);
         try {
             const { data } = await axios.post("/api/admin/sourcing/reorder", { order: { productId, sku, qty } });
-            if (data.ok) { setVar(productId, sku, { pendingReorderQty: data.qty }); setMsg({ severity: "success", text: `Ordered ${data.qty} units (${sku}). Pay the draft in your supplier account.` }); }
+            if (data.ok) { setVar(productId, sku, { pendingReorderQty: data.qty }); setMsg({ severity: "success", text: `Ordered ${data.qty} units (${sku})${data.billedCents ? ` — $${(data.billedCents / 100).toFixed(2)} charged to your wallet` : ""}.` }); }
             else setMsg({ severity: "error", text: data.error || "Order failed." });
         } catch (e) { setMsg({ severity: "error", text: e.response?.data?.error || "Order failed." }); }
         finally { setBusy(""); }

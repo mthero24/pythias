@@ -64,7 +64,7 @@ export function SourcingBrowser({ open, onClose, onImport }) {
                                 </Box>
                                 <CardContent sx={{ p: 1, flex: 1, display: "flex", flexDirection: "column", "&:last-child": { pb: 1 } }}>
                                     <Typography variant="body2" sx={{ fontWeight: 500, lineHeight: 1.25, mb: 0.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", minHeight: "2.4em" }} title={p.title}>{p.title}</Typography>
-                                    <Typography variant="caption" color="text.secondary">Wholesale {money(p.costCents)}</Typography>
+                                    <Typography variant="caption" color="text.secondary">Cost {money(p.costCents)}</Typography>
                                     {p.category && <Chip label={p.category} size="small" sx={{ alignSelf: "flex-start", mt: 0.5, height: 18, fontSize: ".6rem" }} />}
                                     <Box sx={{ flex: 1 }} />
                                     <Button size="small" variant="contained" sx={{ mt: 1 }} disabled={importing === p.pid} onClick={() => importProduct(p.pid)}>{importing === p.pid ? "Importing…" : "Import"}</Button>
