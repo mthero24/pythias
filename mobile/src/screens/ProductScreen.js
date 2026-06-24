@@ -35,7 +35,7 @@ export default function ProductScreen({ route, navigation }) {
     const addToCart = () => {
         if (!sel) return;
         add({ sku: sel.sku, productId: p.id, title: p.title, variantLabel: variantLabel(sel), image: heroImg, priceCents });
-        navigation.navigate("Cart");
+        navigation.navigate("Main", { screen: "Cart" });
     };
 
     return (

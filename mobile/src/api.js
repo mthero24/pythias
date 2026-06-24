@@ -1,21 +1,35 @@
 import { APP_KEY, API_BASE } from "./config";
 
 // Thin client for the headless storefront API. Every request carries the store's app key so the
-// server resolves the tenant (resolveOrg → x-pythias-app-key). Mirrors what the web sends via Host.
+// server resolves the tenant (resolveOrg → x-pythias-app-key). A logged-in customer's bearer token
+// is attached automatically once set by the auth context.
+let _token = null;
+export function setAuthToken(t) { _token = t || null; }
+
 async function req(path, opts = {}) {
-    const res = await fetch(`${API_BASE}${path}`, {
-        ...opts,
-        headers: {
-            "Content-Type": "application/json",
-            "x-pythias-app-key": APP_KEY,
-            ...(opts.headers || {}),
-        },
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.json();
+    const headers = {
+        "Content-Type": "application/json",
+        "x-pythias-app-key": APP_KEY,
+        ...(_token ? { Authorization: `Bearer ${_token}` } : {}),
+        ...(opts.headers || {}),
+    };
+    const res = await fetch(`${API_BASE}${path}`, { ...opts, headers });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data?.error) throw new Error((data && (data.error || data.message)) || `HTTP ${res.status}`);
+    return data;
 }
 
+// Catalog
 export const getConfig = () => req("/api/app/config");
 export const getProducts = (query = "") => req(`/api/app/products${query ? `?${query}` : ""}`);
 export const getProduct = (id) => req(`/api/app/products/${encodeURIComponent(id)}`);
-// Checkout + account endpoints already exist and accept the app key (see /api/checkout/*, /api/account/*).
+
+// Account (bearer token attached when logged in)
+export const login = (email, password) => req("/api/account/login", { method: "POST", body: JSON.stringify({ email, password }) });
+export const signup = (payload) => req("/api/account/signup", { method: "POST", body: JSON.stringify(payload) });
+export const getMe = () => req("/api/account/me");
+export const getOrders = () => req("/api/account/orders");
+export const getFavorites = () => req("/api/account/favorites");
+
+// Raw POST helper for screens that need it (e.g. checkout).
+export const postJson = (path, body) => req(path, { method: "POST", body: JSON.stringify(body) });

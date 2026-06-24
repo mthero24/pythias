@@ -1,25 +1,36 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, ActivityIndicator, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { StatusBar } from "expo-status-bar";
 import { StripeProvider } from "@stripe/stripe-react-native";
 import { getConfig } from "./src/api";
 import { StoreContext } from "./src/theme";
 import { CartProvider, useCart } from "./src/cart";
+import { AuthProvider } from "./src/auth";
 import HomeScreen from "./src/screens/HomeScreen";
 import ProductScreen from "./src/screens/ProductScreen";
 import CartScreen from "./src/screens/CartScreen";
 import CheckoutScreen from "./src/screens/CheckoutScreen";
+import SearchScreen from "./src/screens/SearchScreen";
+import AccountScreen from "./src/screens/AccountScreen";
+import OrdersScreen from "./src/screens/OrdersScreen";
 
+const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-function CartButton({ navigation, accent }) {
+const icon = (emoji) => ({ color }) => <Text style={{ fontSize: 20, color }}>{emoji}</Text>;
+
+function Tabs({ accent, storeName }) {
     const { count } = useCart();
     return (
-        <TouchableOpacity onPress={() => navigation.navigate("Cart")} style={{ paddingHorizontal: 4 }}>
-            <Text style={{ color: accent, fontWeight: "700", fontSize: 15 }}>Cart{count ? ` (${count})` : ""}</Text>
-        </TouchableOpacity>
+        <Tab.Navigator screenOptions={{ tabBarActiveTintColor: accent, headerTitleStyle: { fontWeight: "700" } }}>
+            <Tab.Screen name="Shop" component={HomeScreen} options={{ title: storeName, tabBarIcon: icon("🛍️") }} />
+            <Tab.Screen name="Search" component={SearchScreen} options={{ tabBarIcon: icon("🔍") }} />
+            <Tab.Screen name="Cart" component={CartScreen} options={{ tabBarIcon: icon("🛒"), tabBarBadge: count || undefined }} />
+            <Tab.Screen name="Account" component={AccountScreen} options={{ tabBarIcon: icon("👤") }} />
+        </Tab.Navigator>
     );
 }
 
@@ -35,26 +46,25 @@ export default function App() {
     if (!cfg) return <Centered><ActivityIndicator size="large" /></Centered>;
 
     const accent = cfg.theme?.accent || "#f59e0b";
+    const storeName = cfg.store?.name || "Shop";
     return (
         <StripeProvider publishableKey={cfg.stripePublishableKey || ""} merchantIdentifier="merchant.com.pythias">
             <StoreContext.Provider value={cfg}>
-                <CartProvider>
-                    <NavigationContainer>
-                        <StatusBar style="dark" />
-                        <Stack.Navigator
-                            screenOptions={({ navigation }) => ({
-                                headerTintColor: accent,
-                                headerTitleStyle: { fontWeight: "700" },
-                                headerRight: () => <CartButton navigation={navigation} accent={accent} />,
-                            })}
-                        >
-                            <Stack.Screen name="Home" component={HomeScreen} options={{ title: cfg.store?.name || "Shop" }} />
-                            <Stack.Screen name="Product" component={ProductScreen} options={{ title: "" }} />
-                            <Stack.Screen name="Cart" component={CartScreen} options={{ title: "Cart" }} />
-                            <Stack.Screen name="Checkout" component={CheckoutScreen} options={{ title: "Checkout" }} />
-                        </Stack.Navigator>
-                    </NavigationContainer>
-                </CartProvider>
+                <AuthProvider>
+                    <CartProvider>
+                        <NavigationContainer>
+                            <StatusBar style="dark" />
+                            <Stack.Navigator screenOptions={{ headerTintColor: accent, headerTitleStyle: { fontWeight: "700" } }}>
+                                <Stack.Screen name="Main" options={{ headerShown: false }}>
+                                    {() => <Tabs accent={accent} storeName={storeName} />}
+                                </Stack.Screen>
+                                <Stack.Screen name="Product" component={ProductScreen} options={{ title: "" }} />
+                                <Stack.Screen name="Checkout" component={CheckoutScreen} options={{ title: "Checkout" }} />
+                                <Stack.Screen name="Orders" component={OrdersScreen} options={{ title: "My orders" }} />
+                            </Stack.Navigator>
+                        </NavigationContainer>
+                    </CartProvider>
+                </AuthProvider>
             </StoreContext.Provider>
         </StripeProvider>
     );
