@@ -1,4 +1,4 @@
-import { PlatformOrder, PlatformItem, StorefrontCustomer, StorefrontSession, screenOrder } from "@pythias/mongo";
+import { PlatformOrder, PlatformItem, PlatformProduct, StorefrontCustomer, StorefrontSession, screenOrder } from "@pythias/mongo";
 import { validateCart } from "@/lib/cart";
 import { enrollFlows } from "@/lib/flows";
 import { computeRedeemable, redeemForOrder, earnForOrder } from "@/lib/rewards";
