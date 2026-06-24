@@ -5,6 +5,7 @@ import CreatableSelect from 'react-select/creatable';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import LinkIcon from '@mui/icons-material/Link';
 import axios from 'axios';
@@ -21,7 +22,7 @@ function fromImport(cj) {
     if (!cj) return null;
     const c = (n) => (n ? (n / 100) : "");
     return {
-        title: cj.title || "", description: cj.description || "", brand: "", sku: "", tags: [],
+        title: cj.title || "", description: cj.description || "", brand: "", sku: "", tags: [], category: cj.category || "", department: "",
         productImages: (cj.images || []).map((i) => ({ image: i })),
         variantsArray: (cj.variants?.length ? cj.variants : [{}]).map((v) => ({
             name: v.name || "", sku: v.sku || "", upc: v.upc || "",
@@ -40,7 +41,7 @@ function fromEdit(prod) {
     return {
         _id: prod._id,
         title: prod.title || "", description: prod.description || "", brand: prod.brand || "", sku: prod.sku || "",
-        tags: prod.tags || [],
+        tags: prod.tags || [], category: prod.category?.[0] || "", department: prod.department?.[0] || "",
         productImages: (prod.productImages || []).map((pi) => ({ image: pi.image || pi.url })).filter((x) => x.image),
         variantsArray: (prod.variantsArray?.length ? prod.variantsArray : [{}]).map((v) => ({
             name: v.name || "", sku: v.sku || "", upc: v.upc || "",
@@ -87,20 +88,45 @@ export function CatalogProductCreate({ onSaved, onCancel, initial = null, editPr
     const [uploading, setUploading] = useState(false);
     const [imgUrl, setImgUrl] = useState("");
     const fileRef = useRef(null);
-    const [p, setP] = useState(() => fromEdit(editProduct) || fromImport(initial) || { title: "", description: "", brand: "", sku: "", tags: [], productImages: [], variantsArray: [emptyVariant()], trackInventory: true, continueSellingOOS: false });
+    const [p, setP] = useState(() => fromEdit(editProduct) || fromImport(initial) || { title: "", description: "", brand: "", sku: "", tags: [], category: "", department: "", productImages: [], variantsArray: [emptyVariant()], trackInventory: true, continueSellingOOS: false });
+    const [aiDesc, setAiDesc] = useState(false);
+    const [aiTags, setAiTags] = useState(false);
     const set = (patch) => setP((s) => ({ ...s, ...patch }));
     const setVar = (i, patch) => setP((s) => ({ ...s, variantsArray: s.variantsArray.map((v, j) => (j === i ? { ...v, ...patch } : v)) }));
 
-    // Generate SKUs for catalog variants (the POD SKU generator needs blank/color/size, which these
-    // don't have). Base from the title + a per-variant suffix (option name or index). Fills blanks only.
+    // Generate each variant's SKU FROM THE PRODUCT SKU (the POD generator needs blank/color/size,
+    // which these don't have). Single variant → the base; multiple → base + a per-variant suffix
+    // (option name slug, with an index to guarantee uniqueness). Regenerates all variant SKUs.
+    const skuBase = () => ((p.sku || p.title || "PROD").replace(/[^a-z0-9]/gi, "").slice(0, 10).toUpperCase()) || "PROD";
+    const variantSku = (base, v, i, single) => single ? base : `${base}-${i + 1}${(v.name || "").trim() ? `-${v.name.replace(/[^a-z0-9]/gi, "").slice(0, 8).toUpperCase()}` : ""}`;
     const genSkus = () => {
-        const base = ((p.sku || p.title || "PROD").replace(/[^a-z0-9]/gi, "").slice(0, 8).toUpperCase()) || "PROD";
-        setP((s) => ({
-            ...s,
-            variantsArray: s.variantsArray.map((v, i) => v.sku ? v : ({
-                ...v, sku: `${base}-${(v.name || "").replace(/[^a-z0-9]/gi, "").slice(0, 6).toUpperCase() || (i + 1)}`,
-            })),
-        }));
+        const base = skuBase();
+        const single = p.variantsArray.length <= 1;
+        setP((s) => ({ ...s, variantsArray: s.variantsArray.map((v, i) => ({ ...v, sku: variantSku(base, v, i, single) })) }));
+    };
+
+    // AI: write a product description from the title/brand/category.
+    const genDescription = async () => {
+        if (!p.title.trim()) { setLookupMsg({ severity: "warning", text: "Add a title first." }); return; }
+        setAiDesc(true);
+        try {
+            const res = await axios.post("/api/ai", { prompt: `Write a compelling 2-3 sentence ecommerce product description. Product: "${p.title}"${p.brand ? ` by ${p.brand}` : ""}${p.category ? `, category: ${p.category}` : ""}. Return only the description text — no quotes, no preamble.` });
+            const text = String(res.data || "").replace(/```/g, "").replace(/^"|"$/g, "").trim();
+            if (text) set({ description: text });
+        } catch { setLookupMsg({ severity: "error", text: "Couldn't generate a description." }); }
+        finally { setAiDesc(false); }
+    };
+    // AI: generate tags.
+    const genTags = async () => {
+        if (!p.title.trim()) { setLookupMsg({ severity: "warning", text: "Add a title first." }); return; }
+        setAiTags(true);
+        try {
+            const res = await axios.post("/api/ai", { prompt: `Generate 10 short ecommerce product tags for "${p.title}"${p.brand ? ` by ${p.brand}` : ""}${p.category ? ` in category ${p.category}` : ""}${p.description ? `. Description: ${p.description.slice(0, 200)}` : ""}. Return only JSON {"tags":[]}.` });
+            const cleaned = String(res.data || "").replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+            const { tags } = JSON.parse(cleaned);
+            if (Array.isArray(tags)) set({ tags: [...new Set([...(p.tags || []), ...tags.map((t) => String(t))])] });
+        } catch { setLookupMsg({ severity: "error", text: "Couldn't generate tags." }); }
+        finally { setAiTags(false); }
     };
 
     const multi = p.variantsArray.length > 1;
@@ -163,9 +189,10 @@ export function CatalogProductCreate({ onSaved, onCancel, initial = null, editPr
             const product = {
                 ...(p._id ? { _id: p._id } : {}),
                 title: p.title.trim(), description: p.description, brand: p.brand, sku: p.sku, tags: p.tags,
+                category: p.category ? [p.category] : [], department: p.department ? [p.department] : [],
                 productImages: p.productImages.map((pi) => ({ image: pi.image })),
-                variantsArray: p.variantsArray.map((v) => ({
-                    name: v.name, sku: v.sku, upc: v.upc,
+                variantsArray: p.variantsArray.map((v, i) => ({
+                    name: v.name, sku: v.sku || variantSku(skuBase(), v, i, p.variantsArray.length <= 1), upc: v.upc,
                     price: Number(v.price) || 0, compareAtPrice: Number(v.compareAtPrice) || 0,
                     costPerItem: Number(v.costPerItem) || 0, weight: Number(v.weight) || 0,
                     stock: Number(v.stock) || 0, supplierVid: v.supplierVid || "",
@@ -206,11 +233,22 @@ export function CatalogProductCreate({ onSaved, onCancel, initial = null, editPr
             <Section n={2} title="Product details">
                 <Grid2 container spacing={2}>
                     <Grid2 size={12}><TextField fullWidth label="Title" required value={p.title} onChange={(e) => set({ title: e.target.value })} placeholder="What the product is called" /></Grid2>
-                    <Grid2 size={12}><TextField fullWidth multiline minRows={3} label="Description" value={p.description} onChange={(e) => set({ description: e.target.value })} placeholder="What buyers see on the product page" /></Grid2>
-                    <Grid2 size={{ xs: 12, sm: 6 }}><TextField fullWidth label="Brand" value={p.brand} onChange={(e) => set({ brand: e.target.value })} /></Grid2>
-                    <Grid2 size={{ xs: 12, sm: 6 }}><TextField fullWidth label="Product SKU" value={p.sku} onChange={(e) => set({ sku: e.target.value })} helperText="Optional — your own product code" /></Grid2>
                     <Grid2 size={12}>
-                        <Typography variant="caption" sx={{ display: "block", marginBottom: 0.5 }}>Tags</Typography>
+                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 0.5 }}>
+                            <Typography variant="caption">Description</Typography>
+                            <Button size="small" disabled={aiDesc} startIcon={aiDesc ? <CircularProgress size={12} /> : <AutoFixHighIcon fontSize="small" />} onClick={genDescription}>Write with AI</Button>
+                        </Box>
+                        <TextField fullWidth multiline minRows={3} value={p.description} onChange={(e) => set({ description: e.target.value })} placeholder="What buyers see on the product page" />
+                    </Grid2>
+                    <Grid2 size={{ xs: 12, sm: 6 }}><TextField fullWidth label="Brand" value={p.brand} onChange={(e) => set({ brand: e.target.value })} /></Grid2>
+                    <Grid2 size={{ xs: 12, sm: 6 }}><TextField fullWidth label="Product SKU" value={p.sku} onChange={(e) => set({ sku: e.target.value })} helperText="Variant SKUs are generated from this" /></Grid2>
+                    <Grid2 size={{ xs: 12, sm: 6 }}><TextField fullWidth label="Department" value={p.department} onChange={(e) => set({ department: e.target.value })} helperText="e.g. Electronics, Home" /></Grid2>
+                    <Grid2 size={{ xs: 12, sm: 6 }}><TextField fullWidth label="Category" value={p.category} onChange={(e) => set({ category: e.target.value })} helperText="e.g. Phone Cases" /></Grid2>
+                    <Grid2 size={12}>
+                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 0.5 }}>
+                            <Typography variant="caption">Tags</Typography>
+                            <Button size="small" disabled={aiTags} startIcon={aiTags ? <CircularProgress size={12} /> : <AutoFixHighIcon fontSize="small" />} onClick={genTags}>Generate with AI</Button>
+                        </Box>
                         <CreatableSelect {...selectPortal} isMulti placeholder="Type a tag and press enter…" value={(p.tags || []).map((t) => ({ value: t, label: t }))} onChange={(nv) => set({ tags: (nv || []).map((t) => t.value) })} />
                     </Grid2>
                 </Grid2>
