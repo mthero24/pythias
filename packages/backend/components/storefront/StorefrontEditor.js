@@ -84,12 +84,14 @@ export default function StorefrontEditor({ viewUrl }) {
     const [work, setWork]       = useState(null); // { theme, pages, nav, footer, analytics, businessInfo, seo }
     const [toast, setToast]     = useState(null);
     const [savedTick, setSavedTick] = useState(0); // bumped after each silent autosave → preview reloads
+    const [appEnabled, setAppEnabled] = useState(false); // mobile-app add-on active (billing-controlled)
 
     useEffect(() => {
         fetch("/api/storefront").then((r) => r.json()).then((d) => {
             if (d.error) return;
             const s = d.site;
             setStatus(s.status ?? "draft");
+            setAppEnabled(!!s.appEnabled);
             const base = (s.draft && Object.keys(s.draft).length) ? s.draft : pick(s, LIVE_FIELDS);
             base.name ??= s.name;   // store name lives at the top level; ensure it loads even from an older draft
             base.theme ??= {}; base.pages ??= [{ slug: "home", title: "Home", sections: [] }];
@@ -152,7 +154,7 @@ export default function StorefrontEditor({ viewUrl }) {
                 <Tab label="SEO & Tracking" sx={{ textTransform: "none" }} />
             </Tabs>
 
-            {tab === 0 && <DesignTab work={work} set={set} />}
+            {tab === 0 && <DesignTab work={work} set={set} appEnabled={appEnabled} />}
             {tab === 1 && <SectionsTab work={work} set={set} viewUrl={viewUrl} previewTick={savedTick} />}
             {tab === 2 && <LandingPagesTab viewUrl={viewUrl} />}
             {tab === 3 && <SeoTab work={work} set={set} />}
@@ -554,7 +556,16 @@ function FooterMenuEditor({ work, set }) {
 }
 
 // ── Design: theme presets + colors/fonts + logo ──────────────────────────────
-function DesignTab({ work, set }) {
+function DesignTab({ work, set, appEnabled }) {
+    const [appBusy, setAppBusy] = useState(false);
+    const getApp = async () => {
+        setAppBusy(true);
+        try {
+            const d = await (await fetch("/api/storefront/app-subscribe", { method: "POST", headers: { "Content-Type": "application/json" } })).json();
+            if (d.url) { window.location.href = d.url; return; }
+            throw new Error(d.error || "Couldn't start checkout");
+        } catch (e) { setAppBusy(false); alert(e.message); }
+    };
     const theme = work.theme ?? {};
     const colors = theme.colors ?? {};
     const fonts = theme.fonts ?? {};
@@ -600,6 +611,19 @@ function DesignTab({ work, set }) {
     const setTheme = (key, val) => set((w) => { w.theme = { ...w.theme, [key]: val }; });
     return (
         <Box>
+            <Section icon={<TabletMacIcon fontSize="small" />} title="Mobile app" subtitle="Your own branded iOS + Android shopping app — a Storefront add-on." defaultOpen={false}>
+            {appEnabled ? (
+                <Typography sx={{ color: "#16a34a", fontWeight: 600 }}>✓ Your mobile app add-on is active — we build and submit your branded app from your store&apos;s brand.</Typography>
+            ) : (
+                <Box>
+                    <Typography sx={{ color: "#475569", mb: 1.5, fontSize: ".9rem" }}>
+                        Give your customers a branded native app — push notifications, your design studio, the full shopping experience. We generate it from your store&apos;s brand and publish it under our developer accounts.
+                    </Typography>
+                    <Button variant="contained" disabled={appBusy} onClick={getApp}>{appBusy ? "Starting…" : "Get the app"}</Button>
+                </Box>
+            )}
+            </Section>
+
             <Section icon={<ImageIcon fontSize="small" />} title="Logo & favicon" subtitle="Upload your store logo and the little browser-tab icon.">
             <Box sx={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                 <ImageUploadField
