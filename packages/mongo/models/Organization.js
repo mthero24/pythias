@@ -99,6 +99,13 @@ const schema = new mongoose.Schema({
             weight: { type: Number, default: 8 },    // ounces (fallback when items have no weight)
         },
     },
+    // ── Auto-reorder (Phase 3) — opt-in scheduled restock of low catalog stock ─────────
+    // When enabled, a daily cron sweeps this org's CJ-sourced catalog variants and restocks any
+    // at/below their reorder point (charged to the wallet, same as a manual reorder).
+    autoReorder: {
+        enabled:   { type: Boolean, default: false },
+        lastRunAt: { type: Date },
+    },
     // ── Partner API / webhook settings ───────────────────────────────
     partnerWebhook: {
         url:       { type: String },           // partner's endpoint Pythias POSTs to

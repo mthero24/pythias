@@ -281,6 +281,24 @@ module.exports = {
       log_date_format: "YYYY-MM-DD HH:mm Z",
     },
     {
+      name: "auto-reorder-platform",
+      cwd: "apps/pythias-platform",
+      script: "scripts/runAutoReorder.js",
+      exec_mode: "fork",
+      instances: 1,
+      autorestart: false,
+      cron_restart: "0 10 * * *", // daily 10:00 UTC (6am EST) — restock low catalog stock for opted-in sellers
+      watch: false,
+      env: {
+        NODE_ENV: "production",
+        PORT: 3010,
+      },
+      out_file: "logs/auto-reorder-platform-out.log",
+      error_file: "logs/auto-reorder-platform-error.log",
+      merge_logs: false,
+      log_date_format: "YYYY-MM-DD HH:mm Z",
+    },
+    {
       name: "storefront-payout-reconcile",
       cwd: "apps/pythias-storefront",
       script: "scripts/runPayoutReconcile.js",

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
-import { Box, Typography, Card, Table, TableHead, TableRow, TableCell, TableBody, Chip, Button, Alert, CircularProgress, TextField, InputAdornment, Modal, IconButton, Tooltip, Checkbox } from '@mui/material';
+import { Box, Typography, Card, Table, TableHead, TableRow, TableCell, TableBody, Chip, Button, Alert, CircularProgress, TextField, InputAdornment, Modal, IconButton, Tooltip, Checkbox, Switch, FormControlLabel } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import EditIcon from '@mui/icons-material/Edit';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -16,8 +16,10 @@ const modalStyle = { position: "absolute", top: "50%", left: "50%", transform: "
 // variant (not the POD PlatformInventory model). This is where sellers place restock orders with the
 // supplier — a low-stock sweep, per-variant manual order, and a "Receive" action that adds delivered
 // reorders to stock.
-export function CatalogInventory({ products = [] }) {
+export function CatalogInventory({ products = [], autoReorder = false }) {
     const [rows, setRows] = useState(products);
+    const [autoOn, setAutoOn] = useState(!!autoReorder);
+    const [autoBusy, setAutoBusy] = useState(false);
     const [busy, setBusy] = useState("");
     const [running, setRunning] = useState(false);
     const [msg, setMsg] = useState(null);
@@ -54,6 +56,17 @@ export function CatalogInventory({ products = [] }) {
         if (!v) return;
         try { await axios.post("/api/admin/sourcing/reorder", { levels: { productId, sku, reorderPoint: Number(v.reorderPoint) || 0, reorderTo: Number(v.reorderTo) || 0 } }); }
         catch { /* ignore */ }
+    };
+
+    // Opt in/out of the daily auto-reorder cron (restocks low CJ-sourced stock to wallet).
+    const toggleAuto = async () => {
+        const next = !autoOn; setAutoOn(next); setAutoBusy(true);
+        try {
+            const { data } = await axios.post("/api/admin/sourcing/auto-reorder", { enabled: next });
+            if (!data.ok) { setAutoOn(!next); setMsg({ severity: "error", text: data.error || "Couldn't update auto-reorder." }); }
+            else setMsg({ severity: next ? "success" : "info", text: next ? "Auto-reorder on — low stock is restocked daily (charged to your wallet)." : "Auto-reorder off." });
+        } catch { setAutoOn(!next); setMsg({ severity: "error", text: "Couldn't update auto-reorder." }); }
+        finally { setAutoBusy(false); }
     };
 
     // Save a manual on-hand count (direct adjustment — they just type the new number).
@@ -141,6 +154,9 @@ export function CatalogInventory({ products = [] }) {
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1, flexWrap: "wrap", gap: 1 }}>
                 <Typography variant="h6" fontWeight={700}>Bought / imported products</Typography>
                 <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
+                    <Tooltip title="When on, low CJ-sourced stock is automatically restocked once a day and charged to your wallet.">
+                        <FormControlLabel sx={{ mr: 0.5 }} control={<Switch size="small" checked={autoOn} disabled={autoBusy} onChange={toggleAuto} />} label={<Typography variant="body2">Auto-reorder daily</Typography>} />
+                    </Tooltip>
                     <TextField size="small" placeholder="Search name, SKU, UPC…" value={q} onChange={(e) => setQ(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> }} sx={{ width: 240 }} />
                     <Button variant="contained" size="small" onClick={reorderSelected} disabled={running || selected.size === 0} startIcon={running ? <CircularProgress size={14} color="inherit" /> : null}>{running ? "Ordering…" : `Reorder selected (${selected.size})`}</Button>
                 </Box>
