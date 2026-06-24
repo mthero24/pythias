@@ -12,14 +12,17 @@
 #   EXPO_PUBLIC_THEME_BG="#ffffff" \
 #   ./scripts/build-store.sh [--submit]
 #
-# Prereqs: `npm i -g eas-cli && eas login` as the Pythias Expo account. Per-store assets/icon.png +
-# assets/splash.png must be generated from the store's brand identity and placed before running.
+# Prereqs: `npm i -g eas-cli && eas login` as the Pythias Expo account. Brand assets (icon/splash) are
+# auto-generated from the store's brand by generate-assets.js below — review them before submitting.
 set -e
 
 : "${EXPO_PUBLIC_APP_KEY:?set EXPO_PUBLIC_APP_KEY (the store's StorefrontSite.appKey)}"
 : "${EXPO_PUBLIC_STORE_NAME:?set EXPO_PUBLIC_STORE_NAME}"
 : "${EXPO_PUBLIC_IOS_BUNDLE:?set EXPO_PUBLIC_IOS_BUNDLE}"
 : "${EXPO_PUBLIC_ANDROID_PKG:?set EXPO_PUBLIC_ANDROID_PKG}"
+
+echo "Generating brand assets (icon + splash) from the store's brand…"
+node scripts/generate-assets.js
 
 echo "Building app for: $EXPO_PUBLIC_STORE_NAME ($EXPO_PUBLIC_APP_KEY)"
 eas build --platform all --profile production --non-interactive
