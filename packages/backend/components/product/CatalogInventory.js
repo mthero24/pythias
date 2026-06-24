@@ -1,8 +1,15 @@
 "use client";
 import { useState } from 'react';
-import { Box, Typography, Card, Table, TableHead, TableRow, TableCell, TableBody, Chip, Button, Alert, CircularProgress, TextField, InputAdornment } from '@mui/material';
+import { Box, Typography, Card, Table, TableHead, TableRow, TableCell, TableBody, Chip, Button, Alert, CircularProgress, TextField, InputAdornment, Modal, IconButton, Tooltip } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
+import EditIcon from '@mui/icons-material/Edit';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
+import { CatalogProductCreate } from './CatalogProductCreate';
+import { CatalogPreview } from './CatalogPreview';
+
+const modalStyle = { position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "92%", maxWidth: 980, maxHeight: "90vh", bgcolor: "background.paper", boxShadow: 24, p: 3, overflow: "auto", borderRadius: 2 };
 
 // On-hand inventory + reordering for catalog (buy-not-build / imported) products. Stock lives on the
 // variant (not the POD PlatformInventory model). This is where sellers place restock orders with the
@@ -14,6 +21,8 @@ export function CatalogInventory({ products = [] }) {
     const [running, setRunning] = useState(false);
     const [msg, setMsg] = useState(null);
     const [q, setQ] = useState("");
+    const [editP, setEditP] = useState(null);
+    const [previewP, setPreviewP] = useState(null);
 
     const term = q.trim().toLowerCase();
     const filtered = term
@@ -95,7 +104,13 @@ export function CatalogInventory({ products = [] }) {
                             const low = (v.reorderPoint || 0) > 0 && (v.stock || 0) <= (v.reorderPoint || 0);
                             return (
                                 <TableRow key={`${p._id}-${i}`}>
-                                    <TableCell>{i === 0 ? p.title : ""}</TableCell>
+                                    <TableCell>{i === 0 ? (
+                                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+                                            <span>{p.title}</span>
+                                            <Tooltip title="Edit"><IconButton size="small" onClick={() => setEditP(p)}><EditIcon sx={{ fontSize: "1rem" }} /></IconButton></Tooltip>
+                                            <Tooltip title="Preview"><IconButton size="small" onClick={() => setPreviewP(p)}><VisibilityIcon sx={{ fontSize: "1rem" }} /></IconButton></Tooltip>
+                                        </Box>
+                                    ) : ""}</TableCell>
                                     <TableCell>{v.name || "—"}</TableCell>
                                     <TableCell sx={{ fontFamily: "monospace", fontSize: ".8rem" }}>{v.sku || "—"}</TableCell>
                                     <TableCell align="right" sx={{ fontWeight: 600, color: low ? "error.main" : "inherit" }}>{v.stock ?? 0}</TableCell>
@@ -120,6 +135,19 @@ export function CatalogInventory({ products = [] }) {
                     </TableBody>
                 </Table>
             </Card>
+
+            <Modal open={!!editP} onClose={() => setEditP(null)}>
+                <Box sx={modalStyle}>
+                    <Box sx={{ display: "flex", justifyContent: "flex-end" }}><IconButton onClick={() => setEditP(null)}><CloseIcon /></IconButton></Box>
+                    {editP && <CatalogProductCreate editProduct={editP} onSaved={() => { setEditP(null); if (typeof window !== "undefined") window.location.reload(); }} onCancel={() => setEditP(null)} />}
+                </Box>
+            </Modal>
+            <Modal open={!!previewP} onClose={() => setPreviewP(null)}>
+                <Box sx={modalStyle}>
+                    <Box sx={{ display: "flex", justifyContent: "flex-end" }}><IconButton onClick={() => setPreviewP(null)}><CloseIcon /></IconButton></Box>
+                    {previewP && <CatalogPreview product={previewP} />}
+                </Box>
+            </Modal>
         </Box>
     );
 }
