@@ -339,7 +339,7 @@ export default function ProductView({ productId, title, images = [], variants = 
                         <span style={{ minWidth: 40, textAlign: "center", fontWeight: 600 }}>{qty}</span>
                         <button onClick={() => setQty((n) => Math.min(99, n + 1))} aria-label="Increase quantity" style={qtyBtn}>+</button>
                     </div>
-                    {qty > 1 && priceCents > 0 && <span style={{ marginLeft: "auto", fontWeight: 700 }}>Total {money(priceCents * qty)}</span>}
+                    {qty > 1 && dispPriceCents > 0 && <span style={{ marginLeft: "auto", fontWeight: 700 }}>Total {money(dispPriceCents * qty)}</span>}
                 </div>
 
                 {err && <div style={{ color: "#dc2626", fontSize: "0.88rem", marginBottom: 10 }}>{err}</div>}
