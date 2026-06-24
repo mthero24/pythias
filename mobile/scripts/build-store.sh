@@ -1,0 +1,30 @@
+#!/bin/bash
+# Build (and optionally submit) ONE store's white-label app. Each store gets its own branded binary
+# from this single codebase by injecting its EXPO_PUBLIC_* config + brand assets at build time.
+#
+# Usage:
+#   EXPO_PUBLIC_APP_KEY=app_xxx \
+#   EXPO_PUBLIC_STORE_NAME="Print Threads" \
+#   EXPO_PUBLIC_STORE_SLUG=print-threads \
+#   EXPO_PUBLIC_STORE_SCHEME=printthreads \
+#   EXPO_PUBLIC_IOS_BUNDLE=com.pythias.printthreads \
+#   EXPO_PUBLIC_ANDROID_PKG=com.pythias.printthreads \
+#   EXPO_PUBLIC_THEME_BG="#ffffff" \
+#   ./scripts/build-store.sh [--submit]
+#
+# Prereqs: `npm i -g eas-cli && eas login` as the Pythias Expo account. Per-store assets/icon.png +
+# assets/splash.png must be generated from the store's brand identity and placed before running.
+set -e
+
+: "${EXPO_PUBLIC_APP_KEY:?set EXPO_PUBLIC_APP_KEY (the store's StorefrontSite.appKey)}"
+: "${EXPO_PUBLIC_STORE_NAME:?set EXPO_PUBLIC_STORE_NAME}"
+: "${EXPO_PUBLIC_IOS_BUNDLE:?set EXPO_PUBLIC_IOS_BUNDLE}"
+: "${EXPO_PUBLIC_ANDROID_PKG:?set EXPO_PUBLIC_ANDROID_PKG}"
+
+echo "Building app for: $EXPO_PUBLIC_STORE_NAME ($EXPO_PUBLIC_APP_KEY)"
+eas build --platform all --profile production --non-interactive
+
+if [ "$1" = "--submit" ]; then
+  echo "Submitting to App Store + Google Play (Pythias accounts)…"
+  eas submit --platform all --profile production --non-interactive
+fi
