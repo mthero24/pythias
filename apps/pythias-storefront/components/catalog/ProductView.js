@@ -144,6 +144,13 @@ export default function ProductView({ productId, title, images = [], variants = 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [gallery, printRender, selectedPlacement, isNative, color]);
     useEffect(() => { setActiveIdx(0); }, [color, placeKey]);
+    // Free-form option selected → show that variant's image (jump to it in the gallery if present).
+    useEffect(() => {
+        if (!hasOptions || !match?.image) return;
+        const idx = viewGallery.indexOf(match.image);
+        if (idx >= 0) setActiveIdx(idx);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [option]);
     // Store-wide automatic discount (display-only; from window.__SF__). Checkout re-applies it once, so we
     // adjust only the SHOWN price below — priceCents still feeds cart/express-pay at full value.
     const [autoPct, setAutoPct] = useState(0);
@@ -171,7 +178,9 @@ export default function ProductView({ productId, title, images = [], variants = 
 
     const pickPlacement = (opt) => setPlaceKey(opt.key);   // carousel follows via viewGallery + reset effect
     const safeIdx = activeIdx < viewGallery.length ? activeIdx : 0;
-    const img = viewGallery[safeIdx] || (hasColors && colors.find((c) => c.name === color)?.image) || match?.image || viewGallery[0] || null;
+    // When an option's variant image isn't part of the gallery, show it directly.
+    const optionImg = hasOptions && match?.image && !viewGallery.includes(match.image) ? match.image : null;
+    const img = optionImg || viewGallery[safeIdx] || (hasColors && colors.find((c) => c.name === color)?.image) || match?.image || viewGallery[0] || null;
     const styleCount = siblings.length + 1;
 
     const pickColor = (name) => {

@@ -13,7 +13,7 @@ import axios from 'axios';
 // them themselves. Enter a UPC → we look it up (UPCitemdb → Claude web_search) and prefill; or fill
 // it all in manually. Single-variant by default; expand to variations on demand. Saves via /api/admin/products.
 
-const emptyVariant = (upc = "") => ({ name: "", sku: "", price: "", compareAtPrice: "", costPerItem: "", upc, stock: "", weight: "", supplierVid: "", reorderPoint: "", reorderTo: "" });
+const emptyVariant = (upc = "") => ({ name: "", sku: "", price: "", compareAtPrice: "", costPerItem: "", upc, stock: "", weight: "", supplierVid: "", reorderPoint: "", reorderTo: "", image: "" });
 
 // Seed state from a wholesale import (CJ product): cost prefilled from wholesale, price from the
 // supplier's suggested retail (editable), UPC/weight/images carried, supplierVid kept for reorder.
@@ -26,7 +26,7 @@ function fromImport(cj) {
         variantsArray: (cj.variants?.length ? cj.variants : [{}]).map((v) => ({
             name: v.name || "", sku: v.sku || "", upc: v.upc || "",
             price: c(v.suggestedRetailCents), compareAtPrice: "", costPerItem: c(v.costCents),
-            stock: "", weight: v.weightOz || "", supplierVid: v.cjVid || "", reorderPoint: "", reorderTo: "",
+            stock: "", weight: v.weightOz || "", supplierVid: v.cjVid || "", reorderPoint: "", reorderTo: "", image: v.image || "",
         })),
         trackInventory: true, continueSellingOOS: false,
         source: cj.pid ? { supplier: "cj", pid: cj.pid } : null,
@@ -46,7 +46,7 @@ function fromEdit(prod) {
             name: v.name || "", sku: v.sku || "", upc: v.upc || "",
             price: n(v.price), compareAtPrice: n(v.compareAtPrice), costPerItem: n(v.costPerItem),
             stock: n(v.stock), weight: n(v.weight), supplierVid: v.supplierVid || "",
-            reorderPoint: n(v.reorderPoint), reorderTo: n(v.reorderTo),
+            reorderPoint: n(v.reorderPoint), reorderTo: n(v.reorderTo), image: v.image || "",
         })),
         trackInventory: prod.trackInventory ?? true, continueSellingOOS: prod.continueSellingOOS ?? false,
         source: prod.source || null,
@@ -170,6 +170,7 @@ export function CatalogProductCreate({ onSaved, onCancel, initial = null, editPr
                     costPerItem: Number(v.costPerItem) || 0, weight: Number(v.weight) || 0,
                     stock: Number(v.stock) || 0, supplierVid: v.supplierVid || "",
                     reorderPoint: Number(v.reorderPoint) || 0, reorderTo: Number(v.reorderTo) || 0,
+                    image: v.image || "",
                     color: null, size: null, blank: null,
                 })),
                 isNFProduct: true, isCatalogProduct: true,
@@ -253,6 +254,16 @@ export function CatalogProductCreate({ onSaved, onCancel, initial = null, editPr
                             <Box sx={{ display: "flex", gap: 1, alignItems: "center", marginBottom: 1.5 }}>
                                 <TextField fullWidth size="small" label={`Variation ${i + 1} name`} placeholder="e.g. Small / Red" value={v.name} onChange={(e) => setVar(i, { name: e.target.value })} />
                                 <IconButton size="small" onClick={() => set({ variantsArray: p.variantsArray.filter((_, j) => j !== i) })}><DeleteIcon fontSize="small" /></IconButton>
+                            </Box>
+                        )}
+                        {p.productImages.length > 0 && (
+                            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, marginBottom: 1.5, flexWrap: "wrap" }}>
+                                <Typography variant="caption" sx={{ color: "#475569", fontWeight: 600 }}>Variant image:</Typography>
+                                {p.productImages.map((pi, k) => (
+                                    <Box key={k} onClick={() => setVar(i, { image: v.image === pi.image ? "" : pi.image })} title="Use this image for this variant" sx={{ width: 38, height: 38, borderRadius: 1, overflow: "hidden", cursor: "pointer", border: v.image === pi.image ? "2px solid" : "1px solid", borderColor: v.image === pi.image ? "primary.main" : "divider", display: "flex", alignItems: "center", justifyContent: "center", background: "#fff" }}>
+                                        <img src={pi.image} alt="" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+                                    </Box>
+                                ))}
                             </Box>
                         )}
                         <Grid2 container spacing={1.5}>
