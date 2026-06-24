@@ -16,10 +16,12 @@ const modalStyle = { position: "absolute", top: "50%", left: "50%", transform: "
 // variant (not the POD PlatformInventory model). This is where sellers place restock orders with the
 // supplier — a low-stock sweep, per-variant manual order, and a "Receive" action that adds delivered
 // reorders to stock.
-export function CatalogInventory({ products = [], autoReorder = false }) {
+export function CatalogInventory({ products = [], autoReorder = false, autoDropship = false }) {
     const [rows, setRows] = useState(products);
     const [autoOn, setAutoOn] = useState(!!autoReorder);
     const [autoBusy, setAutoBusy] = useState(false);
+    const [dropOn, setDropOn] = useState(!!autoDropship);
+    const [dropBusy, setDropBusy] = useState(false);
     const [busy, setBusy] = useState("");
     const [running, setRunning] = useState(false);
     const [msg, setMsg] = useState(null);
@@ -58,9 +60,22 @@ export function CatalogInventory({ products = [], autoReorder = false }) {
         catch { /* ignore */ }
     };
 
+    // Dropship vs. stock-and-reorder are opposite models, so turning one on turns the other off.
+    const toggleDropship = async () => {
+        const next = !dropOn; setDropOn(next); setDropBusy(true);
+        if (next && autoOn) { setAutoOn(false); axios.post("/api/admin/sourcing/auto-reorder", { enabled: false }).catch(() => {}); }
+        try {
+            const { data } = await axios.post("/api/admin/sourcing/auto-dropship", { enabled: next });
+            if (!data.ok) { setDropOn(!next); setMsg({ severity: "error", text: data.error || "Couldn't update dropship." }); }
+            else setMsg({ severity: next ? "success" : "info", text: next ? "Dropship on — each order is purchased from the supplier and shipped to the buyer (charged to your wallet)." : "Dropship off." });
+        } catch { setDropOn(!next); setMsg({ severity: "error", text: "Couldn't update dropship." }); }
+        finally { setDropBusy(false); }
+    };
+
     // Opt in/out of the daily auto-reorder cron (restocks low CJ-sourced stock to wallet).
     const toggleAuto = async () => {
         const next = !autoOn; setAutoOn(next); setAutoBusy(true);
+        if (next && dropOn) { setDropOn(false); axios.post("/api/admin/sourcing/auto-dropship", { enabled: false }).catch(() => {}); }
         try {
             const { data } = await axios.post("/api/admin/sourcing/auto-reorder", { enabled: next });
             if (!data.ok) { setAutoOn(!next); setMsg({ severity: "error", text: data.error || "Couldn't update auto-reorder." }); }
@@ -154,6 +169,9 @@ export function CatalogInventory({ products = [], autoReorder = false }) {
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1, flexWrap: "wrap", gap: 1 }}>
                 <Typography variant="h6" fontWeight={700}>Bought / imported products</Typography>
                 <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
+                    <Tooltip title="When on, each order for a CJ-sourced product is purchased from the supplier and shipped straight to the buyer — no stock needed. Charged to your wallet.">
+                        <FormControlLabel sx={{ mr: 0.5 }} control={<Switch size="small" color="secondary" checked={dropOn} disabled={dropBusy} onChange={toggleDropship} />} label={<Typography variant="body2">Dropship per order</Typography>} />
+                    </Tooltip>
                     <Tooltip title="When on, low CJ-sourced stock is automatically restocked once a day and charged to your wallet.">
                         <FormControlLabel sx={{ mr: 0.5 }} control={<Switch size="small" checked={autoOn} disabled={autoBusy} onChange={toggleAuto} />} label={<Typography variant="body2">Auto-reorder daily</Typography>} />
                     </Tooltip>

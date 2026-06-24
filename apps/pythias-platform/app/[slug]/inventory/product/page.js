@@ -40,7 +40,7 @@ export default async function ProductInventoryPage({ searchParams }) {
     const catalogProducts = await PlatformProduct.find({ orgId, isCatalogProduct: true })
         .select("title description brand sku tags category department productImages variantsArray source trackInventory continueSellingOOS isCatalogProduct active")
         .sort({ _id: -1 }).lean();
-    const org = await Organization.findById(orgId).select("autoReorder").lean();
+    const org = await Organization.findById(orgId).select("autoReorder autoDropship").lean();
 
     const parsed = filter ? JSON.parse(filter) : {};
     const find = { orgId };
@@ -81,7 +81,7 @@ export default async function ProductInventoryPage({ searchParams }) {
             }
             bought={
                 <div style={{ maxWidth: 1200, margin: "0 auto", padding: 16 }}>
-                    <CatalogInventory products={serialize(catalogProducts)} autoReorder={!!org?.autoReorder?.enabled} />
+                    <CatalogInventory products={serialize(catalogProducts)} autoReorder={!!org?.autoReorder?.enabled} autoDropship={!!org?.autoDropship?.enabled} />
                 </div>
             }
         />

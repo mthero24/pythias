@@ -4,7 +4,7 @@ import { PlatformOrder, PlatformItem, Organization } from "@pythias/mongo";
 import { routeOrder } from "@/functions/routeOrder";
 import { routeDropship, routeWarehouse } from "@/functions/routeAltVerticals";
 import { assertInternal } from "@/lib/internal";
-import { logError } from "@pythias/backend/server";
+import { logError, findCjDropshipItems, fulfillCjDropshipOrder } from "@pythias/backend/server";
 import { notifyPartner } from "@/lib/notifyPartner";
 import { shapeOrder } from "@/lib/partnerShape";
 
@@ -24,33 +24,53 @@ export async function POST(req) {
     const order = await PlatformOrder.findById(orderId);
     if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
 
-    const org = await Organization.findById(order.orgId, "orgType wallet _id").lean();
+    const org = await Organization.findById(order.orgId, "orgType wallet _id autoDropship").lean();
     if (!org) return NextResponse.json({ error: "Org not found" }, { status: 404 });
+
+    // Load the order's items once. If the seller opted into auto-dropship, supplier-ship any CJ-sourced
+    // catalog items straight to the buyer right here — those items are then excluded from fulfiller
+    // routing. Runs for every org type (a storefront seller can dropship too) and never throws into the
+    // order flow (the buyer already paid).
+    const allItems = await PlatformItem.find({ order: order._id });
+    const dropshipGroups = [];
+    const dropshippedIds = new Set();
+    if (org.autoDropship?.enabled) {
+        try {
+            const cjItems = await findCjDropshipItems(allItems);
+            if (cjItems.length) {
+                const g = await fulfillCjDropshipOrder(order, cjItems, org);
+                if (g) dropshipGroups.push(g);
+                cjItems.forEach((c) => dropshippedIds.add(String(c.item._id)));
+            }
+        } catch (e) {
+            console.error(`[route-order] CJ dropship failed for ${orderId}:`, e.message);
+        }
+    }
+    const items = allItems.filter((it) => !dropshippedIds.has(String(it._id)));
+
     if (org.orgType !== "commerce") {
         // Non-commerce orgs fulfill their own orders — we never route to our fulfillers.
         // A standalone storefront seller self-fulfills; if they've set up their own order webhook,
         // push the new order there (notifyPartner no-ops unless their webhook is active). We do NOT
-        // touch Commerce/Fulfillment Cloud routing for them.
+        // touch Commerce/Fulfillment Cloud routing for them (CJ dropship above already ran, if opted in).
         if (org.orgType === "storefront") {
             try {
-                const items = await PlatformItem.find({ order: order._id }).lean();
-                await notifyPartner(order.orgId, "order.received", shapeOrder({ ...order.toObject(), items }));
+                await notifyPartner(order.orgId, "order.received", shapeOrder({ ...order.toObject(), items: items.map((i) => (i.toObject ? i.toObject() : i)) }));
             } catch (e) {
                 console.error(`[route-order] storefront order.received webhook failed for ${orderId}:`, e.message);
             }
         }
-        return NextResponse.json({ routed: false, reason: "not_commerce" });
+        if (dropshipGroups.length) { order.fulfillmentGroups = [...(order.fulfillmentGroups || []), ...dropshipGroups]; await order.save(); }
+        return NextResponse.json({ routed: dropshipGroups.some((g) => g.status === "ordered"), groups: dropshipGroups, reason: "not_commerce" });
     }
-
-    const items = await PlatformItem.find({ order: order._id });
 
     // Split by vertical (default "pod" → unchanged behavior for existing all-POD orders).
     const buckets = { pod: [], dropship: [], warehouse: [] };
     for (const it of items) (buckets[it.vertical] || buckets.pod).push(it);
 
     try {
-        const groups = [];
-        let anyRouted = false;
+        const groups = [...dropshipGroups];
+        let anyRouted = dropshipGroups.some((g) => g.status === "ordered");
 
         if (buckets.pod.length) {
             const r = await routeOrder(order, buckets.pod, org);

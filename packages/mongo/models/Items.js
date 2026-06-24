@@ -98,6 +98,9 @@ const schema = new mongoose.Schema(
     sku: {
       type: String,
     },
+    // CJ dropship — set when a CJ-sourced catalog item is supplier-shipped straight to the buyer.
+    supplierOrderId: { type: String },
+    supplierShipStatus: { type: String }, // "ordered" | "needs_funding" | "failed"
     label: { type: String },
     vendor: String,
     batchID: String,

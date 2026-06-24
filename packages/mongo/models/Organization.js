@@ -106,6 +106,11 @@ const schema = new mongoose.Schema({
         enabled:   { type: Boolean, default: false },
         lastRunAt: { type: Date },
     },
+    // ── Auto-dropship (Phase 3) — opt-in: supplier ships CJ-sourced catalog items straight to the
+    // buyer when an order is placed (purchased + shipped per order, charged to the wallet; no stock held).
+    autoDropship: {
+        enabled: { type: Boolean, default: false },
+    },
     // ── Partner API / webhook settings ───────────────────────────────
     partnerWebhook: {
         url:       { type: String },           // partner's endpoint Pythias POSTs to
