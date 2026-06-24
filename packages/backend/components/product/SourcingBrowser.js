@@ -14,17 +14,21 @@ export function SourcingBrowser({ open, onClose, onImport }) {
     const [loading, setLoading] = useState(false);
     const [err, setErr] = useState("");
     const [res, setRes] = useState(null);          // { products, total }
+    const [page, setPage] = useState(1);
     const [importing, setImporting] = useState(""); // pid being imported
+    const PAGE_SIZE = 24;
+    const totalPages = res?.total ? Math.ceil(res.total / PAGE_SIZE) : 1;
 
-    const search = async () => {
+    const runSearch = async (pageNum = 1) => {
         if (!q.trim()) return;
-        setLoading(true); setErr(""); setRes(null);
+        setLoading(true); setErr("");
         try {
-            const { data } = await axios.post("/api/admin/sourcing/search", { keyword: q, pageSize: 24 });
-            if (data.error) setErr(data.error); else setRes(data);
+            const { data } = await axios.post("/api/admin/sourcing/search", { keyword: q, page: pageNum, pageSize: PAGE_SIZE });
+            if (data.error) { setErr(data.error); } else { setRes(data); setPage(pageNum); }
         } catch (e) { setErr(e.response?.data?.error || "Search failed."); }
         finally { setLoading(false); }
     };
+    const search = () => runSearch(1);   // a new search always starts at page 1
 
     const importProduct = async (pid) => {
         setImporting(pid); setErr("");
@@ -75,6 +79,14 @@ export function SourcingBrowser({ open, onClose, onImport }) {
                 </Grid2>
 
                 {!res && !loading && <Box sx={{ textAlign: "center", py: 6, color: "text.secondary" }}><Typography>Search to find products from our wholesale network.</Typography></Box>}
+
+                {res && res.products.length > 0 && totalPages > 1 && (
+                    <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 2, mt: 3 }}>
+                        <Button variant="outlined" size="small" disabled={page <= 1 || loading} onClick={() => runSearch(page - 1)}>Previous</Button>
+                        <Typography variant="body2" color="text.secondary">Page {page} of {totalPages.toLocaleString()}</Typography>
+                        <Button variant="outlined" size="small" disabled={page >= totalPages || loading} onClick={() => runSearch(page + 1)}>Next</Button>
+                    </Box>
+                )}
             </Box>
         </Modal>
     );

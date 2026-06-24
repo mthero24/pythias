@@ -1,4 +1,4 @@
-import { TikTokAuth, PlatformDesign as Design, PlatformOrder as Order, SkuToUpc, PlatformColor as Colors, PlatformBlank as Blanks, PlatformItem as Item } from "@pythias/mongo";
+import { TikTokAuth, PlatformDesign as Design, PlatformOrder as Order, SkuToUpc, PlatformColor as Colors, PlatformBlank as Blanks, PlatformItem as Item, PlatformProduct as Products } from "@pythias/mongo";
 import {
   getAuthorizedShops,
   getAccessTokenFromRefreshToken,
@@ -442,6 +442,48 @@ export const processOrders = async (orders)=>{
             let items = [];
             for (let i of o.line_items) {
                 console.log(i.seller_sku, i);
+                // Catalog (buy-not-build / imported) products: match the variant directly by sku/upc and
+                // create a plain item (no blank/color/design). POD products fall through unchanged.
+                const catProduct = await Products.findOne({
+                    isCatalogProduct: true,
+                    $or: [
+                        { variantsArray: { $elemMatch: { sku: i.seller_sku } } },
+                        { variantsArray: { $elemMatch: { sku: i.sku } } },
+                        { variantsArray: { $elemMatch: { upc: i.seller_sku } } },
+                        { variantsArray: { $elemMatch: { upc: i.sku } } },
+                    ],
+                });
+                if (catProduct) {
+                    const cv = (catProduct.variantsArray || []).find(v =>
+                        v.sku === i.seller_sku || v.sku === i.sku || v.upc === i.seller_sku || v.upc === i.sku);
+                    if (cv) {
+                        const catItem = new Item({
+                            pieceId: await generatePieceID(),
+                            paid: true,
+                            sku: cv.sku || i.seller_sku || i.sku,
+                            upc: cv.upc || i.upc,
+                            orderItemId: i.id || i.orderItemId,
+                            blank: null,
+                            styleCode: catProduct.sku || cv.sku || "",
+                            sizeName: cv.name || "",
+                            colorName: "",
+                            color: null,
+                            size: null,
+                            design: null,
+                            designRef: null,
+                            order: order._id,
+                            shippingType: order.shippingType,
+                            quantity: 1,
+                            status: order.status,
+                            name: i.name,
+                            date: order.date,
+                            ...(o.orgId ? { orgId: o.orgId } : {}),
+                        });
+                        await catItem.save();
+                        items.push(catItem);
+                        continue;
+                    }
+                }
                 let sku = await SkuToUpc.findOne({ sku: i.seller_sku });
                 let design;
                 let blank;
