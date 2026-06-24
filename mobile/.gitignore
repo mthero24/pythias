@@ -1,0 +1,10 @@
+node_modules/
+.expo/
+dist/
+web-build/
+*.log
+.env*.local
+ios/
+android/
+# Per-store generated assets (icon/splash) are produced by the build pipeline, not committed.
+assets/generated/
