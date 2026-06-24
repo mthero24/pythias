@@ -38,7 +38,7 @@ export default async function ProductInventoryPage({ searchParams }) {
     // Catalog (buy-not-build / imported) products track stock on the variant, not PlatformInventory —
     // surface them here too so "added products" show up on the inventory page.
     const catalogProducts = await PlatformProduct.find({ orgId, isCatalogProduct: true })
-        .select("title description brand sku tags productImages variantsArray source trackInventory continueSellingOOS isCatalogProduct")
+        .select("title description brand sku tags category department productImages variantsArray source trackInventory continueSellingOOS isCatalogProduct")
         .sort({ _id: -1 }).lean();
 
     const parsed = filter ? JSON.parse(filter) : {};

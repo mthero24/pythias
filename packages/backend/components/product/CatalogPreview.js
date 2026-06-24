@@ -34,6 +34,13 @@ export function CatalogPreview({ product }) {
                     {p.brand && <Chip label={p.brand} size="small" sx={{ mb: 1 }} />}
                     {p.description && <Typography variant="body2" color="text.secondary" sx={{ mb: 2, whiteSpace: "pre-wrap" }}>{p.description}</Typography>}
                     {p.sku && <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>SKU: {p.sku}</Typography>}
+                    {(p.department?.length > 0 || p.category?.length > 0) && (
+                        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
+                            {p.department?.length > 0 ? `Department: ${p.department.join(", ")}` : ""}
+                            {p.department?.length > 0 && p.category?.length > 0 ? " · " : ""}
+                            {p.category?.length > 0 ? `Category: ${p.category.join(", ")}` : ""}
+                        </Typography>
+                    )}
                     {p.source?.supplier && <Chip size="small" label={`Sourced from ${String(p.source.supplier).toUpperCase()}`} sx={{ mt: 1 }} />}
                     {(p.tags || []).length > 0 && <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 1.5 }}>{p.tags.map((t, i) => <Chip key={i} size="small" variant="outlined" label={t} />)}</Box>}
                 </Box>
