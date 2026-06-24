@@ -102,7 +102,7 @@ export function CatalogProductCreate({ onSaved, onCancel, initial = null, editPr
     const genSkus = () => {
         const base = skuBase();
         const single = p.variantsArray.length <= 1;
-        setP((s) => ({ ...s, variantsArray: s.variantsArray.map((v, i) => ({ ...v, sku: variantSku(base, v, i, single) })) }));
+        setP((s) => ({ ...s, sku: s.sku || base, variantsArray: s.variantsArray.map((v, i) => ({ ...v, sku: variantSku(base, v, i, single) })) }));
     };
 
     // AI: write a product description from the title/brand/category.
