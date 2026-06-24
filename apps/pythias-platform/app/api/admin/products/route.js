@@ -170,7 +170,7 @@ async function buildPlatformDoc(raw, orgId) {
         tags: raw.tags ?? [],
         category: Array.isArray(raw.category) ? raw.category : (raw.category ? [raw.category] : []),
         department: Array.isArray(dept) ? dept : (dept ? [dept] : []),
-        active: true,
+        active: raw.active ?? true,
         variants: null,
         variantsArray,
         ...computeProductFacets({ variantsArray }),   // keep Atlas facet fields in sync (findByIdAndUpdate skips the hook)

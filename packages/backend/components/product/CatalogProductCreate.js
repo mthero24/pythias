@@ -50,7 +50,7 @@ function fromEdit(prod) {
             reorderPoint: n(v.reorderPoint), reorderTo: n(v.reorderTo), image: v.image || "",
         })),
         trackInventory: prod.trackInventory ?? true, continueSellingOOS: prod.continueSellingOOS ?? false,
-        source: prod.source || null,
+        source: prod.source || null, active: prod.active !== false,
     };
 }
 
@@ -88,9 +88,10 @@ export function CatalogProductCreate({ onSaved, onCancel, initial = null, editPr
     const [uploading, setUploading] = useState(false);
     const [imgUrl, setImgUrl] = useState("");
     const fileRef = useRef(null);
-    const [p, setP] = useState(() => fromEdit(editProduct) || fromImport(initial) || { title: "", description: "", brand: "", sku: "", tags: [], category: "", department: "", productImages: [], variantsArray: [emptyVariant()], trackInventory: true, continueSellingOOS: false });
+    const [p, setP] = useState(() => fromEdit(editProduct) || fromImport(initial) || { title: "", description: "", brand: "", sku: "", tags: [], category: "", department: "", productImages: [], variantsArray: [emptyVariant()], trackInventory: true, continueSellingOOS: false, active: true });
     const [aiDesc, setAiDesc] = useState(false);
     const [aiTags, setAiTags] = useState(false);
+    const [ordering, setOrdering] = useState(false);
     const set = (patch) => setP((s) => ({ ...s, ...patch }));
     const setVar = (i, patch) => setP((s) => ({ ...s, variantsArray: s.variantsArray.map((v, j) => (j === i ? { ...v, ...patch } : v)) }));
 
@@ -182,9 +183,10 @@ export function CatalogProductCreate({ onSaved, onCancel, initial = null, editPr
     const removeImage = (i) => setP((s) => ({ ...s, productImages: s.productImages.filter((_, j) => j !== i) }));
     const makePrimary = (i) => setP((s) => { const imgs = [...s.productImages]; const [it] = imgs.splice(i, 1); imgs.unshift(it); return { ...s, productImages: imgs }; });
 
-    const save = async () => {
+    const save = async ({ orderStock = false, active } = {}) => {
         if (!canCreate) { setSaveErr(blockHint ? `${blockHint} before creating.` : ""); return; }
-        setSaving(true); setSaveErr("");
+        if (orderStock) setOrdering(true); else setSaving(true);
+        setSaveErr("");
         try {
             const product = {
                 ...(p._id ? { _id: p._id } : {}),
@@ -195,20 +197,38 @@ export function CatalogProductCreate({ onSaved, onCancel, initial = null, editPr
                     name: v.name, sku: v.sku || variantSku(skuBase(), v, i, p.variantsArray.length <= 1), upc: v.upc,
                     price: Number(v.price) || 0, compareAtPrice: Number(v.compareAtPrice) || 0,
                     costPerItem: Number(v.costPerItem) || 0, weight: Number(v.weight) || 0,
-                    stock: Number(v.stock) || 0, supplierVid: v.supplierVid || "",
+                    // When ordering initial stock, sourced variants start at 0 on-hand — the order is pending until received.
+                    stock: (orderStock && v.supplierVid) ? 0 : (Number(v.stock) || 0),
+                    supplierVid: v.supplierVid || "",
                     reorderPoint: Number(v.reorderPoint) || 0, reorderTo: Number(v.reorderTo) || 0,
                     image: v.image || "",
                     color: null, size: null, blank: null,
                 })),
                 isNFProduct: true, isCatalogProduct: true,
                 trackInventory: p.trackInventory, continueSellingOOS: p.continueSellingOOS,
+                active: active ?? (p.active !== false),
                 ...(p.source ? { source: p.source } : {}),
             };
             const res = await axios.post("/api/admin/products", { products: [product] });
-            if (res.data.error) setSaveErr(res.data.msg || "Save failed.");
-            else onSaved?.();
+            if (res.data.error) { setSaveErr(res.data.msg || "Save failed."); return; }
+            if (orderStock) {
+                // Order the entered stock qty for each sourced variant (matched to the saved variant by vid).
+                const savedP = res.data.products?.[0];
+                const qtyByVid = {};
+                p.variantsArray.forEach((v) => { if (v.supplierVid) qtyByVid[v.supplierVid] = Number(v.stock) || 0; });
+                const errs = [];
+                for (const sv of (savedP?.variantsArray || [])) {
+                    const qty = qtyByVid[sv.supplierVid] || 0;
+                    if (sv.supplierVid && qty > 0) {
+                        const r = await axios.post("/api/admin/sourcing/reorder", { order: { productId: savedP._id, sku: sv.sku, qty } });
+                        if (!r.data.ok) errs.push(`${sv.sku}: ${r.data.error || "order failed"}`);
+                    }
+                }
+                if (errs.length) { setSaveErr(`Product saved, but an order didn't go through: ${errs.join("; ")}`); return; }
+            }
+            onSaved?.();
         } catch { setSaveErr("Save failed. Please try again."); }
-        finally { setSaving(false); }
+        finally { setSaving(false); setOrdering(false); }
     };
 
     const num = { inputProps: { min: 0, step: "0.01" } };
@@ -332,10 +352,18 @@ export function CatalogProductCreate({ onSaved, onCancel, initial = null, editPr
 
             {/* Sticky action bar — always reachable */}
             <Box sx={{ position: "sticky", bottom: 0, marginTop: 1, paddingY: 1.5, paddingX: 0.5, bgcolor: "background.paper", borderTop: "1px solid", borderColor: "divider", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 2, zIndex: 3 }}>
-                <Button variant="text" color="inherit" onClick={onCancel}>Cancel</Button>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <Button variant="text" color="inherit" onClick={onCancel}>Cancel</Button>
+                    {p._id && (p.active !== false
+                        ? <Button variant="text" color="error" disabled={saving || ordering} onClick={() => save({ active: false })}>Deactivate</Button>
+                        : <Button variant="text" color="success" disabled={saving || ordering} onClick={() => save({ active: true })}>Reactivate</Button>)}
+                </Box>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                     {saveErr ? <Typography variant="caption" color="error">{saveErr}</Typography> : (!canCreate && blockHint && <Typography variant="caption" color="text.secondary">{blockHint} to create</Typography>)}
-                    <Button variant="contained" size="large" onClick={save} disabled={!canCreate} startIcon={saving ? <CircularProgress size={16} color="inherit" /> : null}>{saving ? "Saving…" : p._id ? "Save changes" : "Create product"}</Button>
+                    {!p._id && p.variantsArray.some((v) => v.supplierVid && Number(v.stock) > 0) && (
+                        <Button variant="outlined" size="large" onClick={() => save({ orderStock: true })} disabled={!canCreate || ordering || saving} startIcon={ordering ? <CircularProgress size={16} /> : null}>{ordering ? "Ordering…" : "Create & order stock"}</Button>
+                    )}
+                    <Button variant="contained" size="large" onClick={() => save()} disabled={!canCreate || ordering} startIcon={saving ? <CircularProgress size={16} color="inherit" /> : null}>{saving ? "Saving…" : p._id ? "Save changes" : "Create product"}</Button>
                 </Box>
             </Box>
         </Box>
