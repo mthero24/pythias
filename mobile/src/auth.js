@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { setAuthToken, login as apiLogin, signup as apiSignup, getMe } from "./api";
+import { registerForPush } from "./push";
 
 // Customer auth: bearer token + customer, persisted to AsyncStorage. The token is pushed into the
 // api client (setAuthToken) so all requests are authenticated once logged in.
@@ -16,7 +17,7 @@ export function AuthProvider({ children }) {
         AsyncStorage.getItem(TOKEN_KEY).then(async (t) => {
             if (t) {
                 setAuthToken(t); setToken(t);
-                try { const me = await getMe(); setCustomer(me.customer || null); }
+                try { const me = await getMe(); setCustomer(me.customer || null); registerForPush(); }
                 catch { setAuthToken(null); setToken(null); await AsyncStorage.removeItem(TOKEN_KEY); }
             }
         }).finally(() => setReady(true));
@@ -30,11 +31,12 @@ export function AuthProvider({ children }) {
     const login = useCallback(async (email, password) => {
         const r = await apiLogin(email, password);
         await persist(r.token, r.customer);
+        registerForPush();
     }, [persist]);
 
     const signup = useCallback(async (payload) => {
         const r = await apiSignup(payload);
-        if (r.token) await persist(r.token, r.customer);
+        if (r.token) { await persist(r.token, r.customer); registerForPush(); }
         return r;
     }, [persist]);
 

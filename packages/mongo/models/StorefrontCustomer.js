@@ -48,6 +48,9 @@ const schema = new mongoose.Schema({
     stripeCustomerId: { type: String },      // saved payment methods
     rewardsBalance:   { type: Number, default: 0 },   // reward dollars (cents)
 
+    // Expo push tokens for the white-label mobile app (one per device the buyer logs in on).
+    pushTokens: { type: [{ token: String, platform: String, updatedAt: Date }], default: [] },
+
     // A "lead" is a popup/newsletter signup with no password yet (can be claimed later by signup).
     isLead:            { type: Boolean, default: false },
     emailVerified:     { type: Boolean, default: false },
