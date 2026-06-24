@@ -299,6 +299,24 @@ module.exports = {
       log_date_format: "YYYY-MM-DD HH:mm Z",
     },
     {
+      name: "dropship-retry-platform",
+      cwd: "apps/pythias-platform",
+      script: "scripts/runDropshipRetry.js",
+      exec_mode: "fork",
+      instances: 1,
+      autorestart: false,
+      cron_restart: "20 * * * *", // hourly at :20 — re-attempt dropship orders left needs_funding
+      watch: false,
+      env: {
+        NODE_ENV: "production",
+        PORT: 3010,
+      },
+      out_file: "logs/dropship-retry-platform-out.log",
+      error_file: "logs/dropship-retry-platform-error.log",
+      merge_logs: false,
+      log_date_format: "YYYY-MM-DD HH:mm Z",
+    },
+    {
       name: "storefront-payout-reconcile",
       cwd: "apps/pythias-storefront",
       script: "scripts/runPayoutReconcile.js",

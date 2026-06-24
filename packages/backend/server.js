@@ -14,7 +14,7 @@ export { getLabelRates, buyShippingLabel, getShipmentRate, labelMarkupCents, shi
 export { cjSearch, cjGetProduct, cjInventoryBySku, cjCreateOrder, cjFreight, cjOrderDetail, cjConfigured } from "./server/cjDropship.js";
 export { runCjReorder, placeReorder, receiveReorder, setReorderLevels, setOnHand } from "./server/cjReorder.js";
 export { suggestReorderLevels } from "./server/sourcingSuggest.js";
-export { findCjDropshipItems, fulfillCjDropshipOrder } from "./server/cjFulfill.js";
+export { findCjDropshipItems, fulfillCjDropshipOrder, retryNeedsFunding } from "./server/cjFulfill.js";
 export { generatePickLabel, generatePickLabels } from "./server/generatePickLabel.js";
 export { LABEL_TEMPLATE_DEFAULT, DEFAULT_FIELD_POSITIONS, SIZE_TO_ZPL, FIELD_SIZES, FIELD_ROTATIONS, ROTATION_TO_DEG, ROTATION_LABELS, SIZE_TO_PX, PREMIER_DEFAULT_FIELDS, PO_LABEL_TEMPLATE_DEFAULT } from "./lib/labelConstants.js";
 // Shared storefront-management services (keyed on orgId) — mounted by platform + premier.

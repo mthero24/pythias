@@ -3,7 +3,7 @@
 // seller's wallet (goods incl. margin + shipping). Mirrors placeOneReorder but ships to the customer
 // instead of the seller's return address, and is triggered on order placement (not low stock).
 
-import { PlatformProduct, PlatformItem, Organization } from "@pythias/mongo";
+import { PlatformProduct, PlatformItem, Organization, PlatformOrder } from "@pythias/mongo";
 import { cjFreight, cjCreateOrder } from "./cjDropship.js";
 
 function shipToFromOrder(a = {}) {
@@ -78,4 +78,38 @@ export async function fulfillCjDropshipOrder(order, cjItems, org) {
     await Organization.updateOne({ _id: org._id }, { $inc: { "wallet.balance": -billedCents } });
     await mark(ids, "ordered", { supplierOrderId: cjOrderId });
     return { ...base, status: "ordered", ref: cjOrderId, logistic: opt.logisticName, billedCents };
+}
+
+// Retry sweep: re-attempt dropship orders that were left "needs_funding" (seller's wallet was short).
+// Runs on a cron; once the wallet is topped up, the order ships. Idempotent — fulfilled items carry a
+// supplierOrderId and are skipped. Skips orgs that have since turned dropship off.
+export async function retryNeedsFunding() {
+    const stuck = await PlatformItem.find({
+        supplierShipStatus: "needs_funding",
+        $or: [{ supplierOrderId: { $exists: false } }, { supplierOrderId: "" }, { supplierOrderId: null }],
+    }).select("_id order sku quantity supplierOrderId").lean();
+    if (!stuck.length) return { ok: true, orders: 0, fulfilled: 0 };
+
+    const byOrder = {};
+    for (const it of stuck) { const k = String(it.order); (byOrder[k] = byOrder[k] || []).push(it); }
+
+    let fulfilled = 0; const results = [];
+    for (const [orderId, items] of Object.entries(byOrder)) {
+        try {
+            const order = await PlatformOrder.findById(orderId);
+            if (!order) continue;
+            const org = await Organization.findById(order.orgId).select("wallet _id autoDropship").lean();
+            if (!org?.autoDropship?.enabled) continue;            // seller turned dropship off — leave it
+            const cjItems = await findCjDropshipItems(items);
+            if (!cjItems.length) continue;
+            const g = await fulfillCjDropshipOrder(order, cjItems, org);
+            if (g?.status === "ordered") {
+                fulfilled++;
+                order.fulfillmentGroups = [...(order.fulfillmentGroups || []), g];
+                await order.save();
+            }
+            results.push({ order: orderId, status: g?.status });
+        } catch (e) { console.error(`[dropship-retry] order ${orderId}: ${e.message}`); }
+    }
+    return { ok: true, orders: Object.keys(byOrder).length, fulfilled, results };
 }
