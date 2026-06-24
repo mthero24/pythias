@@ -28,6 +28,7 @@ export default async function ProductDetail({ site, product, host }) {
         hex:   v.color?.hexcode ?? null,
         size:  resolveVariantSize(v, v.blank?.sizes),
         stock: typeof v.stock === "number" ? v.stock : null,
+        name:  v.name || "",   // free-form option label for catalog (buy-not-build) products
     }));
     const prices = variants.map((v) => v.price).filter((n) => typeof n === "number" && n > 0);
     const minPrice = prices.length ? Math.min(...prices) : undefined;

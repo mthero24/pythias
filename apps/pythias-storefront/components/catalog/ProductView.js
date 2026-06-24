@@ -25,6 +25,9 @@ export default function ProductView({ productId, title, images = [], variants = 
         [v.color, { name: v.color, hex: v.hex || null, image: variants.find((x) => x.color === v.color && x.image)?.image || null }])).values()], [variants]);
     const sizes = useMemo(() => [...new Set(variants.map((v) => v.size).filter(Boolean))], [variants]);
     const hasColors = colors.length > 0, hasSizes = sizes.length > 0;
+    // Free-form options (catalog / buy-not-build products: no color/size, just a name per variant).
+    const options = useMemo(() => (!hasColors && !hasSizes) ? [...new Set(variants.map((v) => v.name).filter(Boolean))] : [], [variants, hasColors, hasSizes]);
+    const hasOptions = options.length > 0;
 
     // Start on the product's default color (if it's an available variant color), else the first color.
     const [color, setColor] = useState(() => {
@@ -32,6 +35,7 @@ export default function ProductView({ productId, title, images = [], variants = 
         return (defaultColor && names.includes(defaultColor)) ? defaultColor : (colors[0]?.name || "");
     });
     const [size, setSize] = useState(sizes[0] || "");
+    const [option, setOption] = useState(options[0] || "");
     const [qty, setQty] = useState(1);
     const placeSpots = placement?.spots || [];
     const [placeKey, setPlaceKey] = useState(null);
@@ -66,7 +70,11 @@ export default function ProductView({ productId, title, images = [], variants = 
 
     useEffect(() => { track("product_view", { productId }); }, [productId]);
 
-    const match = useMemo(() => variants.find((v) => (!hasColors || v.color === color) && (!hasSizes || v.size === size)) ?? variants[0] ?? null, [variants, color, size, hasColors, hasSizes]);
+    const match = useMemo(() => (
+        hasOptions
+            ? (variants.find((v) => v.name === option) ?? variants[0] ?? null)
+            : (variants.find((v) => (!hasColors || v.color === color) && (!hasSizes || v.size === size)) ?? variants[0] ?? null)
+    ), [variants, color, size, option, hasColors, hasSizes, hasOptions]);
     // Out-of-stock for the selected variant (catalog products the seller tracks, OOS not allowed).
     const stockOut = !!(inventory?.track && !inventory?.continueOOS && match && (match.stock ?? 0) <= 0);
 
@@ -288,6 +296,15 @@ export default function ProductView({ productId, title, images = [], variants = 
                                 return <button key={s} onClick={() => setSize(s)} style={{ padding: "8px 16px", borderRadius: 8, cursor: "pointer", border: `1px solid ${on ? "var(--sf-accent,#f59e0b)" : "rgba(0,0,0,0.2)"}`, background: on ? "var(--sf-accent,#f59e0b)" : "#fff", color: on ? "#fff" : "#334155", fontWeight: 600 }}>{s}</button>;
                             })}
                         </div>
+                    </div>
+                )}
+
+                {hasOptions && (
+                    <div style={{ marginBottom: 18 }}>
+                        <div style={{ fontWeight: 700, fontSize: "0.82rem", marginBottom: 6 }}>Option</div>
+                        <select value={option} onChange={(e) => setOption(e.target.value)} style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid rgba(0,0,0,0.2)", fontSize: "0.95rem", maxWidth: "100%", minWidth: 240 }}>
+                            {options.map((o) => <option key={o} value={o}>{o}</option>)}
+                        </select>
                     </div>
                 )}
 
