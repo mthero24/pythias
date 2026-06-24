@@ -1,6 +1,6 @@
 "use client";
-import { useState } from 'react';
-import { Box, Typography, Card, Table, TableHead, TableRow, TableCell, TableBody, Chip, Button, Alert, CircularProgress, TextField, InputAdornment, Modal, IconButton, Tooltip } from '@mui/material';
+import { useState, useEffect } from 'react';
+import { Box, Typography, Card, Table, TableHead, TableRow, TableCell, TableBody, Chip, Button, Alert, CircularProgress, TextField, InputAdornment, Modal, IconButton, Tooltip, Checkbox } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import EditIcon from '@mui/icons-material/Edit';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -23,6 +23,17 @@ export function CatalogInventory({ products = [] }) {
     const [q, setQ] = useState("");
     const [editP, setEditP] = useState(null);
     const [previewP, setPreviewP] = useState(null);
+    const [selected, setSelected] = useState(() => new Set());
+
+    const isLow = (v) => v.supplierVid && (v.reorderPoint || 0) > 0 && (v.stock || 0) <= (v.reorderPoint || 0) && (v.reorderTo || 0) > (v.stock || 0) && !(Number(v.pendingReorderQty) > 0);
+    // Pre-select the low-stock items so reordering them is one click — but the seller can pick/unpick.
+    useEffect(() => {
+        const s = new Set();
+        rows.forEach((p) => (p.variantsArray || []).forEach((v) => { if (isLow(v)) s.add(`${p._id}|${v.sku}`); }));
+        setSelected(s);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const toggle = (key) => setSelected((s) => { const n = new Set(s); n.has(key) ? n.delete(key) : n.add(key); return n; });
 
     const term = q.trim().toLowerCase();
     const filtered = term
@@ -40,18 +51,37 @@ export function CatalogInventory({ products = [] }) {
         catch { /* ignore */ }
     };
 
-    const runSweep = async () => {
+    // Save a manual on-hand count (direct adjustment — they just type the new number).
+    const saveOnHand = async (productId, sku) => {
+        const v = rows.find((x) => x._id === productId)?.variantsArray.find((x) => x.sku === sku);
+        if (!v) return;
+        try { await axios.post("/api/admin/sourcing/reorder", { onHand: { productId, sku, stock: Number(v.stock) || 0 } }); }
+        catch { /* ignore */ }
+    };
+
+    // Reorder only the variants the seller selected (low-stock are pre-checked). Each is restocked up to
+    // its "restock to" level (or +1 as a floor), charged to the wallet.
+    const reorderSelected = async () => {
+        const picks = [];
+        rows.forEach((p) => (p.variantsArray || []).forEach((v) => {
+            const key = `${p._id}|${v.sku}`;
+            if (selected.has(key) && v.supplierVid && !(Number(v.pendingReorderQty) > 0)) {
+                picks.push({ productId: p._id, sku: v.sku, qty: Math.max(1, (Number(v.reorderTo) || 0) - (Number(v.stock) || 0)) });
+            }
+        }));
+        if (!picks.length) { setMsg({ severity: "info", text: "Select the items you want to reorder first." }); return; }
         setRunning(true); setMsg(null);
-        try {
-            const { data } = await axios.post("/api/admin/sourcing/reorder", {});
-            if (data.error) { setMsg({ severity: "error", text: data.error }); return; }
-            setRows((rs) => rs.map((p) => ({ ...p, variantsArray: p.variantsArray.map((v) => {
-                const hit = (data.results || []).find((r) => r.ok && r.sku === v.sku);
-                return hit ? { ...v, pendingReorderQty: hit.qty } : v;
-            }) })));
-            setMsg({ severity: data.placed ? "success" : "info", text: data.placed ? `${data.placed} restock order(s) placed.` : "Nothing was low on stock." });
-        } catch (e) { setMsg({ severity: "error", text: e.response?.data?.error || "Reorder failed." }); }
-        finally { setRunning(false); }
+        let placed = 0; const errs = [];
+        for (const pk of picks) {
+            try {
+                const { data } = await axios.post("/api/admin/sourcing/reorder", { order: { productId: pk.productId, sku: pk.sku, qty: pk.qty } });
+                if (data.ok) { setVar(pk.productId, pk.sku, { pendingReorderQty: data.qty }); placed++; }
+                else errs.push(data.error || pk.sku);
+            } catch (e) { errs.push(e.response?.data?.error || pk.sku); }
+        }
+        setSelected(new Set());
+        setMsg({ severity: placed ? "success" : "error", text: `${placed} order(s) placed.${errs.length ? ` ${errs.length} couldn't: ${errs.slice(0, 2).join("; ")}` : ""}` });
+        setRunning(false);
     };
 
     const orderOne = async (productId, sku) => {
@@ -81,7 +111,7 @@ export function CatalogInventory({ products = [] }) {
                 <Typography variant="h6" fontWeight={700}>Bought / imported products</Typography>
                 <Box sx={{ display: "flex", gap: 1, alignItems: "center", flexWrap: "wrap" }}>
                     <TextField size="small" placeholder="Search name, SKU, UPC…" value={q} onChange={(e) => setQ(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> }} sx={{ width: 240 }} />
-                    <Button variant="contained" size="small" onClick={runSweep} disabled={running} startIcon={running ? <CircularProgress size={14} color="inherit" /> : null}>{running ? "Ordering…" : "Reorder low stock"}</Button>
+                    <Button variant="contained" size="small" onClick={reorderSelected} disabled={running || selected.size === 0} startIcon={running ? <CircularProgress size={14} color="inherit" /> : null}>{running ? "Ordering…" : `Reorder selected (${selected.size})`}</Button>
                 </Box>
             </Box>
             {msg && <Alert severity={msg.severity} sx={{ mb: 1.5 }} onClose={() => setMsg(null)}>{msg.text}</Alert>}
@@ -89,6 +119,7 @@ export function CatalogInventory({ products = [] }) {
                 <Table size="small">
                     <TableHead>
                         <TableRow>
+                            <TableCell padding="checkbox" />
                             <TableCell>Product</TableCell><TableCell>Option</TableCell><TableCell>SKU</TableCell>
                             <TableCell align="right">On hand</TableCell><TableCell align="right">Reorder at</TableCell>
                             <TableCell align="right">Restock to</TableCell><TableCell align="right">Pending</TableCell>
@@ -97,13 +128,19 @@ export function CatalogInventory({ products = [] }) {
                     </TableHead>
                     <TableBody>
                         {filtered.length === 0 && (
-                            <TableRow><TableCell colSpan={9} align="center" sx={{ py: 3, color: "text.secondary" }}>{rows.length === 0 ? "No bought or imported products yet." : "No matches."}</TableCell></TableRow>
+                            <TableRow><TableCell colSpan={10} align="center" sx={{ py: 3, color: "text.secondary" }}>{rows.length === 0 ? "No bought or imported products yet." : "No matches."}</TableCell></TableRow>
                         )}
                         {filtered.flatMap((p) => (p.variantsArray || []).map((v, i) => {
                             const pending = Number(v.pendingReorderQty) || 0;
                             const low = (v.reorderPoint || 0) > 0 && (v.stock || 0) <= (v.reorderPoint || 0);
+                            const key = `${p._id}|${v.sku}`;
                             return (
-                                <TableRow key={`${p._id}-${i}`}>
+                                <TableRow key={`${p._id}-${i}`} selected={selected.has(key)}>
+                                    <TableCell padding="checkbox">
+                                        {v.supplierVid && pending === 0
+                                            ? <Checkbox size="small" checked={selected.has(key)} onChange={() => toggle(key)} />
+                                            : null}
+                                    </TableCell>
                                     <TableCell>{i === 0 ? (
                                         <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
                                             <span>{p.title}</span>
@@ -113,7 +150,12 @@ export function CatalogInventory({ products = [] }) {
                                     ) : ""}</TableCell>
                                     <TableCell>{v.name || "—"}</TableCell>
                                     <TableCell sx={{ fontFamily: "monospace", fontSize: ".8rem" }}>{v.sku || "—"}</TableCell>
-                                    <TableCell align="right" sx={{ fontWeight: 600, color: low ? "error.main" : "inherit" }}>{v.stock ?? 0}</TableCell>
+                                    <TableCell align="right">
+                                        <TextField variant="standard" type="number" value={v.stock ?? 0}
+                                            onChange={(e) => setVar(p._id, v.sku, { stock: e.target.value })}
+                                            onBlur={() => saveOnHand(p._id, v.sku)}
+                                            inputProps={{ min: 0, style: { textAlign: "right", width: 50, fontWeight: 600, color: low ? "#d32f2f" : "inherit" } }} />
+                                    </TableCell>
                                     <TableCell align="right">{v.supplierVid
                                         ? <TextField variant="standard" type="number" value={v.reorderPoint ?? ""} onChange={(e) => setVar(p._id, v.sku, { reorderPoint: e.target.value })} onBlur={() => saveLevels(p._id, v.sku)} inputProps={{ min: 0, style: { textAlign: "right", width: 46 } }} />
                                         : "—"}</TableCell>

@@ -85,6 +85,15 @@ export async function setReorderLevels(orgId, productId, sku, reorderPoint, reor
     return { ok: r.matchedCount > 0, reorderPoint: rp, reorderTo: rt };
 }
 
+// Manually set a variant's on-hand stock (direct count adjustment from the inventory page).
+export async function setOnHand(orgId, productId, sku, stock) {
+    const s = Math.max(0, Math.round(Number(stock) || 0));
+    const r = await PlatformProduct.updateOne({ _id: productId, orgId, "variantsArray.sku": sku }, {
+        $set: { "variantsArray.$.stock": s },
+    });
+    return { ok: r.matchedCount > 0, stock: s };
+}
+
 // Mark a pending reorder received: add the pending qty to on-hand stock and clear the pending flag.
 export async function receiveReorder(orgId, productId, sku) {
     const p = await PlatformProduct.findOne({ _id: productId, orgId }).select("variantsArray").lean();

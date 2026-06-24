@@ -12,7 +12,7 @@ export { generateUPC } from "./server/generateUpcs.js";
 export { lookupUpc } from "./server/upcLookup.js";
 export { getLabelRates, buyShippingLabel, getShipmentRate, labelMarkupCents, shippingLabelsConfigured } from "./server/shippingLabels.js";
 export { cjSearch, cjGetProduct, cjInventoryBySku, cjCreateOrder, cjFreight, cjOrderDetail, cjConfigured } from "./server/cjDropship.js";
-export { runCjReorder, placeReorder, receiveReorder, setReorderLevels } from "./server/cjReorder.js";
+export { runCjReorder, placeReorder, receiveReorder, setReorderLevels, setOnHand } from "./server/cjReorder.js";
 export { generatePickLabel, generatePickLabels } from "./server/generatePickLabel.js";
 export { LABEL_TEMPLATE_DEFAULT, DEFAULT_FIELD_POSITIONS, SIZE_TO_ZPL, FIELD_SIZES, FIELD_ROTATIONS, ROTATION_TO_DEG, ROTATION_LABELS, SIZE_TO_PX, PREMIER_DEFAULT_FIELDS, PO_LABEL_TEMPLATE_DEFAULT } from "./lib/labelConstants.js";
 // Shared storefront-management services (keyed on orgId) — mounted by platform + premier.

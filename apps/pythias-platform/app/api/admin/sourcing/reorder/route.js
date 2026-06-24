@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
-import { runCjReorder, placeReorder, receiveReorder, setReorderLevels } from "@pythias/backend/server";
+import { runCjReorder, placeReorder, receiveReorder, setReorderLevels, setOnHand } from "@pythias/backend/server";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +20,9 @@ export async function POST(req) {
         }
         if (body?.levels?.productId && body?.levels?.sku) {
             return NextResponse.json(await setReorderLevels(token.orgId, body.levels.productId, body.levels.sku, body.levels.reorderPoint, body.levels.reorderTo));
+        }
+        if (body?.onHand?.productId && body?.onHand?.sku) {
+            return NextResponse.json(await setOnHand(token.orgId, body.onHand.productId, body.onHand.sku, body.onHand.stock));
         }
         return NextResponse.json(await runCjReorder(token.orgId));
     } catch (e) {
