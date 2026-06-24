@@ -45,6 +45,7 @@ export {
   getProductAnalytics as getProductAnalyticsTikTok,
   getOrCreateBrand as getOrCreateBrandTikTok,
   getShippingProvidersTikTok,
+  getOrderDetailTikTok,
   fulfillOrderTikTok,
 } from "./functions/tiktokpy";
 export { TikTokDashboard } from "./components/TikTokDashboard";

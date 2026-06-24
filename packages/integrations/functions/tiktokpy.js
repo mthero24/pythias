@@ -481,7 +481,9 @@ export const searchBrands = async (brand_name, credentials, shop_cipher) => {
     const config = await getConfig();
     const baseUrl = "https://open-api.tiktokglobalshop.com/product/202309/brands";
     const accessToken = credentials.access_token;
-    const params = { app_key: config.app_key, shop_cipher, version: "202309", brand_name, page_size: 10 };
+    // NOTE: the brands endpoint is seller-level — TikTok REJECTS shop_cipher here ("the 'shop_cipher'
+    // query parameter is not required for this request", code 36009004). Do not include it.
+    const params = { app_key: config.app_key, version: "202309", brand_name, page_size: 10 };
     let signUrl = buildUrl(baseUrl, params);
     const { signature, timestamp } = tiktokShop.signByUrl(signUrl, config.app_secret);
     params["sign"] = signature; params["timestamp"] = timestamp; params["access_token"] = accessToken;
@@ -500,7 +502,8 @@ export const createBrand = async (brand_name, credentials, shop_cipher) => {
     const config = await getConfig();
     const baseUrl = "https://open-api.tiktokglobalshop.com/product/202309/brands";
     const accessToken = credentials.access_token;
-    const params = { app_key: config.app_key, shop_cipher, version: "202309" };
+    // Seller-level endpoint — TikTok rejects shop_cipher here (code 36009004). Do not include it.
+    const params = { app_key: config.app_key, version: "202309" };
     const body = { name: brand_name };
     let signUrl = buildUrl(baseUrl, params);
     const { signature, timestamp } = tiktokShop.signByUrl(signUrl, config.app_secret, body);
@@ -587,11 +590,36 @@ export const getProductAnalytics = async (product_id, credentials, shop_cipher, 
     return { error: false, analytics: data?.products?.[0] ?? data ?? null };
 };
 
-export const getShippingProvidersTikTok = async (credentials, shop_cipher) => {
+// Get the order detail (incl. delivery_option_id + line item ids) for one or more order ids.
+export const getOrderDetailTikTok = async (order_ids, credentials, shop_cipher) => {
     const config = await getConfig();
-    const baseUrl = "https://open-api.tiktokglobalshop.com/logistics/202309/shipping_providers";
+    const ids = Array.isArray(order_ids) ? order_ids.join(",") : String(order_ids);
+    const baseUrl = "https://open-api.tiktokglobalshop.com/order/202309/orders";
     const accessToken = credentials.access_token;
-    const params = { app_key: config.app_key, shop_cipher, version: "202309" };
+    const params = { app_key: config.app_key, shop_cipher, ids, version: "202309" };
+    let signUrl = buildUrl(baseUrl, params);
+    const { signature, timestamp } = tiktokShop.signByUrl(signUrl, config.app_secret);
+    params["sign"] = signature; params["timestamp"] = timestamp; params["access_token"] = accessToken;
+    let errRes;
+    const result = await axios.get(buildUrl(baseUrl, params), {
+        headers: { "Content-Type": "application/json", "x-tts-access-token": accessToken },
+    }).catch(e => { errRes = e.response?.data; });
+    if (errRes) {
+        if (errRes.code == 36009004 || errRes.code == 105002) return { error: true, msg: "refresh" };
+        return { error: true, msg: errRes.code };
+    }
+    return { error: false, orders: result?.data?.data?.orders ?? [] };
+};
+
+// Shipping providers are scoped to a delivery option. The correct path is
+// /logistics/202309/delivery_options/{delivery_option_id}/shipping_providers — calling the bare
+// /logistics/202309/shipping_providers returns 40006 "no schema found". (No `version` query param.)
+export const getShippingProvidersTikTok = async (credentials, shop_cipher, delivery_option_id) => {
+    const config = await getConfig();
+    if (!delivery_option_id) return { error: true, msg: "missing delivery_option_id" };
+    const baseUrl = `https://open-api.tiktokglobalshop.com/logistics/202309/delivery_options/${delivery_option_id}/shipping_providers`;
+    const accessToken = credentials.access_token;
+    const params = { app_key: config.app_key, shop_cipher };
     let signUrl = buildUrl(baseUrl, params);
     const { signature, timestamp } = tiktokShop.signByUrl(signUrl, config.app_secret);
     params["sign"] = signature; params["timestamp"] = timestamp; params["access_token"] = accessToken;
@@ -617,8 +645,9 @@ export const fulfillOrderTikTok = async (order_id, { line_item_ids, tracking_num
     };
     // Only scope to specific line items when we actually have their ids; otherwise TikTok
     // packs every unfulfilled line item in the order into the package (the whole order ships).
+    // Per the "Mark Package As Shipped" API: order_line_item_ids is a LIST OF STRINGS.
     if (Array.isArray(line_item_ids) && line_item_ids.length) {
-        body.order_line_items = line_item_ids.map(id => ({ id }));
+        body.order_line_item_ids = line_item_ids;
     }
     let signUrl = buildUrl(baseUrl, params);
     const { signature, timestamp } = tiktokShop.signByUrl(signUrl, config.app_secret, body);

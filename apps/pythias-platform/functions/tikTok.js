@@ -11,6 +11,7 @@ import {
   generatePieceID,
   getOrCreateBrandTikTok,
   getShippingProvidersTikTok,
+  getOrderDetailTikTok,
   fulfillOrderTikTok,
 } from "@pythias/integrations";
 import { maybeDropshipOrder } from "@pythias/backend/server";
@@ -72,17 +73,29 @@ export async function shipOrderTikTok({ order, items, trackingNumber, provider }
     const shopCipher = credentials.shop_list?.[0]?.shop_cipher;
     if (!shopCipher) return { error: true, msg: "No TikTok shop cipher available" };
 
-    let provRes = await getShippingProvidersTikTok(credentials, shopCipher);
+    // Shipping providers are scoped to the order's delivery option, so fetch the order detail first.
+    let detail = await getOrderDetailTikTok(order.poNumber, credentials, shopCipher);
+    if (detail?.error && detail?.msg === "refresh") {
+        credentials = await refresh(credentials, shopCipher);
+        detail = await getOrderDetailTikTok(order.poNumber, credentials, shopCipher);
+    }
+    if (detail?.error) return { error: true, msg: `Could not load TikTok order detail (${detail.msg})` };
+    const tikTokOrder = detail.orders?.[0];
+    const deliveryOptionId = tikTokOrder?.delivery_option_id;
+    if (!deliveryOptionId) return { error: true, msg: "No TikTok delivery_option_id on order" };
+
+    let provRes = await getShippingProvidersTikTok(credentials, shopCipher, deliveryOptionId);
     if (provRes?.error && provRes?.msg === "refresh") {
         credentials = await refresh(credentials, shopCipher);
-        provRes = await getShippingProvidersTikTok(credentials, shopCipher);
+        provRes = await getShippingProvidersTikTok(credentials, shopCipher, deliveryOptionId);
     }
     if (provRes?.error) return { error: true, msg: `Could not load TikTok shipping providers (${provRes.msg})` };
     const shippingProviderId = matchTikTokProvider(provRes.providers, provider);
     if (!shippingProviderId) return { error: true, msg: "No matching TikTok shipping provider" };
 
-    const line_item_ids = (items || [])
-        .map(i => i.orderItemId)
+    const line_item_ids = (tikTokOrder?.line_items?.length
+        ? tikTokOrder.line_items.map(li => li.id)
+        : (items || []).map(i => i.orderItemId))
         .filter(Boolean);
 
     let res = await fulfillOrderTikTok(
@@ -442,6 +455,12 @@ export const processOrders = async (orders)=>{
             //save order
             let items = [];
             for (let i of o.line_items) {
+                // TikTok line items expose `seller_sku` / `sku_name` / `id` (no `sku`/`name`/`orderItemId`).
+                // Normalize onto the fields the parser + item builders below read, so blank/color/size/
+                // design resolve instead of landing a completely blank item.
+                i.sku = i.sku || i.seller_sku;
+                i.name = i.name || i.sku_name || i.product_name;
+                i.orderItemId = i.id || i.orderItemId;
                 console.log(i.seller_sku, i);
                 // Catalog (buy-not-build / imported) products: match the variant directly by sku/upc and
                 // create a plain item (no blank/color/design). POD products fall through unchanged.
@@ -503,11 +522,13 @@ export const processOrders = async (orders)=>{
                     blank = await Blanks.findOne({
                     code: i.sku?.split("_")[0],
                     });
-                    color = await Colors.findOne({
-                    name: i.sku?.split("_")[1],
-                    });
-                    if (!color)
-                    await Colors.findOne({ name: i.sku?.split("_")[2] });
+                    // The color segment of the SKU is the color's SKU (lowercase, e.g. "camo"),
+                    // not its display name ("Camo") — match on sku first, then case-insensitive name.
+                    const colorSku = i.sku?.split("_")[1];
+                    color = colorSku
+                        ? (await Colors.findOne({ sku: colorSku })
+                            || await Colors.findOne({ name: new RegExp(`^${colorSku.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") }))
+                        : null;
                     if (blank) {
                     size = blank.sizes?.filter(
                         (s) =>
