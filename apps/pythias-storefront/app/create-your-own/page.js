@@ -15,9 +15,11 @@ export async function generateMetadata() {
     });
 }
 
-export default async function CreateYourOwnPage() {
+export default async function CreateYourOwnPage({ searchParams }) {
     const site = await resolveSite((await headers()).get("host"));
     if (!site) return <NoSite />;
+    // Embed mode (?embed=1) renders the bare studio for the native app's WebView — no store chrome.
+    const embed = (await searchParams)?.embed === "1";
 
     const docs = await Blank.find({ orgId: site.orgId, active: { $ne: false } })
         .populate("colors", "name hexcode")
@@ -94,6 +96,8 @@ export default async function CreateYourOwnPage() {
         description: `Online design studio to create custom t-shirts, hoodies and apparel at ${name}. Upload artwork, add text, or generate a design with AI.`,
         potentialAction: { "@type": "CreateAction", name: "Design custom apparel" },
     };
+
+    if (embed) return <CreateYourOwn blanks={blanks} embed />;
 
     return (
         <SiteFrame site={site}>

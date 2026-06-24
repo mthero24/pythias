@@ -15,6 +15,11 @@ export async function GET(req) {
 
     const theme = site.theme || {};
     const ann = site.announcement || {};
+    // The store's canonical web host — the app loads web surfaces (e.g. the design studio WebView) here.
+    const base = (process.env.STOREFRONT_BASE_DOMAIN || "pythias.store").toLowerCase();
+    const storeHost = (site.customDomain?.status === "active" && site.customDomain?.hostname)
+        ? site.customDomain.hostname
+        : (site.subdomain ? `${site.subdomain}.${base}` : null);
 
     return NextResponse.json({
         store: {
@@ -24,6 +29,7 @@ export async function GET(req) {
             logoUrl: theme.logoUrl || site.logoUrl || "",
             logoStyle: site.logoStyle || "logo",
             logoHeight: site.logoHeight || 32,
+            url: storeHost ? `https://${storeHost}` : "",
         },
         // The full theme token set — the app reads primary/accent/fonts/etc. and themes itself to match web.
         theme: {

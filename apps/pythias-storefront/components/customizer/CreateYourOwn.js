@@ -87,7 +87,7 @@ const TEXT_SHAPES = [
     { id: "wave", label: "Wave", icon: "∿" }, { id: "circle", label: "Circle", icon: "◯" }, { id: "flag", label: "Flag", icon: "⚑" },
 ];
 
-export default function CreateYourOwn({ blanks = [] }) {
+export default function CreateYourOwn({ blanks = [], embed = false }) {
     const canvasElRef = useRef(null), fcRef = useRef(null), bgRef = useRef(null), zoneRef = useRef(null), wrapRef = useRef(null);
     const curZoneRef = useRef(zoneFromBox(DEFAULT_BOX));
     const artRef = useRef({});   // sideKey -> [fabric objects]
@@ -463,13 +463,20 @@ export default function CreateYourOwn({ blanks = [] }) {
                 if (s.dataUrl) { const d = await (await fetch("/api/customizer/upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dataUrl: s.dataUrl }) })).json(); if (!d.error) artworkUrl = d.url; }
                 sidesOut.push({ view: s.view, location: s.location, artworkUrl, place: s.place, styleImage: s.styleImage });
             }
-            add({
+            const line = {
                 blankId: blank.id, styleCode: blank.code, title: blank.name,
                 color: color?.color || "", size: size.name, sku: size.sku || `${blank.code}-${color?.color || ""}-${size.name}`,
                 priceCents: unitCents, wholesaleCents: size.wholesaleCents, image: cartImage,
                 personalization: { mode: "studio", side: sidesOut[0]?.view || "front", artworkUrl: sidesOut[0]?.artworkUrl || null, sides: sidesOut },
                 customKey: `cy${Date.now()}${Math.floor(Math.random() * 1000)}`,
-            }, Math.max(1, qty));
+            };
+            const n = Math.max(1, qty);
+            // In the native app's WebView, hand the line back to the app's cart instead of the web cart.
+            if (embed && typeof window !== "undefined" && window.ReactNativeWebView) {
+                window.ReactNativeWebView.postMessage(JSON.stringify({ type: "addToCart", line, qty: n }));
+            } else {
+                add(line, n);
+            }
             setAdded(true); setTimeout(() => setAdded(false), 3000);
         } catch (e) { setMsg(e.message); } finally { setBusy(""); }
     };

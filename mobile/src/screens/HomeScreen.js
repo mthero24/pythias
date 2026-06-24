@@ -26,6 +26,12 @@ export default function HomeScreen({ navigation }) {
             numColumns={2}
             contentContainerStyle={{ padding: 6 }}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+            ListHeaderComponent={
+                <TouchableOpacity onPress={() => navigation.navigate("DesignStudio")}
+                    style={[styles.designBanner, { borderColor: accent }]}>
+                    <Text style={[styles.designText, { color: accent }]}>🎨  Design your own</Text>
+                </TouchableOpacity>
+            }
             ListEmptyComponent={<View style={styles.center}><Text style={styles.muted}>No products yet.</Text></View>}
             renderItem={({ item }) => (
                 <TouchableOpacity style={styles.card} activeOpacity={0.85}
@@ -55,4 +61,6 @@ const styles = StyleSheet.create({
     imgPlaceholder: { backgroundColor: "#f1f1f1" },
     title: { fontSize: 13, fontWeight: "500", color: "#111", paddingHorizontal: 8, paddingTop: 8 },
     price: { fontSize: 14, fontWeight: "700", paddingHorizontal: 8, paddingTop: 2, paddingBottom: 10 },
+    designBanner: { margin: 6, padding: 16, borderRadius: 12, borderWidth: 1, borderStyle: "dashed", alignItems: "center" },
+    designText: { fontSize: 15, fontWeight: "700" },
 });

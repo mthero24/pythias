@@ -17,7 +17,9 @@ export default function CheckoutScreen({ navigation }) {
     const [busy, setBusy] = useState(false);
 
     const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
-    const lineItems = items.map((i) => ({ productId: i.productId, sku: i.sku, qty: i.qty }));
+    const lineItems = items.map((i) => i.blankId
+        ? { blankId: i.blankId, size: i.size, color: i.color, sku: i.sku, personalization: i.personalization, qty: i.qty }   // custom studio design
+        : { productId: i.productId, sku: i.sku, qty: i.qty });
 
     useEffect(() => { trackEvent("begin_checkout"); }, []);
 

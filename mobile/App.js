@@ -19,6 +19,7 @@ import SearchScreen from "./src/screens/SearchScreen";
 import AccountScreen from "./src/screens/AccountScreen";
 import OrdersScreen from "./src/screens/OrdersScreen";
 import ConfirmationScreen from "./src/screens/ConfirmationScreen";
+import DesignStudioScreen from "./src/screens/DesignStudioScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -86,6 +87,7 @@ export default function App() {
                                 <Stack.Screen name="Checkout" component={CheckoutScreen} options={{ title: "Checkout" }} />
                                 <Stack.Screen name="Confirmation" component={ConfirmationScreen} options={{ title: "Order confirmed", headerBackVisible: false }} />
                                 <Stack.Screen name="Orders" component={OrdersScreen} options={{ title: "My orders" }} />
+                                <Stack.Screen name="DesignStudio" component={DesignStudioScreen} options={{ title: "Design your own" }} />
                             </Stack.Navigator>
                         </NavigationContainer>
                     </CartProvider>
