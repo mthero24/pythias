@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { resolveOrg } from "@/lib/resolveOrg";
+import { STOREFRONT_PUBLISHABLE_KEY } from "@/lib/stripe";
 
 // GET /api/app/config — bootstrap for the white-label native mobile app.
 // The app sends its x-pythias-app-key header (resolveOrg maps it → the store). We return the store's
@@ -41,6 +42,8 @@ export async function GET(req) {
             giftCards: !!site.giftCards?.enabled,
             cartAddOns: Array.isArray(site.cartAddOns) ? site.cartAddOns.filter((a) => a?.enabled).length > 0 : false,
         },
+        // Stripe publishable key (storefront/marketplace) for the app's in-app PaymentSheet.
+        stripePublishableKey: STOREFRONT_PUBLISHABLE_KEY || "",
         // Endpoints the app drives off of (kept here so the binary doesn't hard-code paths).
         endpoints: {
             products: "/api/app/products",
