@@ -3,6 +3,7 @@ import { ScrollView, View, Text, Image, TouchableOpacity, ActivityIndicator, Sty
 import { getProduct } from "../api";
 import { useAccent } from "../theme";
 import { useCart } from "../cart";
+import { trackEvent } from "../analytics";
 
 // Product detail from /api/app/products/:id with a variant selector + add-to-cart.
 export default function ProductScreen({ route, navigation }) {
@@ -35,6 +36,7 @@ export default function ProductScreen({ route, navigation }) {
     const addToCart = () => {
         if (!sel) return;
         add({ sku: sel.sku, productId: p.id, title: p.title, variantLabel: variantLabel(sel), image: heroImg, priceCents });
+        trackEvent("add_to_cart", { productId: p.id });
         navigation.navigate("Main", { screen: "Cart" });
     };
 

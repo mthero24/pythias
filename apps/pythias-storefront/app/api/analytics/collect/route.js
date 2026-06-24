@@ -7,7 +7,7 @@ const bumpExperiment = (orgId, experimentId, variant, inc) => {
     if (!experimentId || !mongoose.Types.ObjectId.isValid(experimentId) || !variant) return null;
     return StorefrontExperimentStat.updateOne({ orgId, experimentId: new mongoose.Types.ObjectId(experimentId), variant }, { $inc: inc }, { upsert: true });
 };
-import { resolveSite } from "@/lib/resolveSite";
+import { resolveOrg } from "@/lib/resolveOrg";
 import { dayKey, deviceFromUA, domainOf, cleanPath } from "@/lib/analytics";
 import { sendGa4 } from "@/lib/ga4";
 
@@ -31,9 +31,13 @@ export async function POST(req) {
     const sessionId = b?.sessionId;
     if (!sessionId) return QUIET();
 
-    const site = await resolveSite(req.headers.get("host"));
+    const ctx = await resolveOrg(req);
+    const site = ctx?.site;
     if (!site) return QUIET();
     const orgId = site.orgId;
+    // The native app has no Host header — derive one for the GA4 page_location URL.
+    const host = req.headers.get("host") || site.customDomain?.hostname
+        || (site.subdomain ? `${site.subdomain}.${process.env.STOREFRONT_BASE_DOMAIN || "pythias.store"}` : "app");
     const now = new Date();
 
     try {
@@ -61,7 +65,7 @@ export async function POST(req) {
             }
             await StorefrontPathStat.updateOne({ orgId, date: dayKey(now), path }, { $inc: { views: 1 } }, { upsert: true });
             // Mirror to GA4 server-side (blocker-proof; the gtag loader is unreliable per-ID).
-            await sendGa4(site, sessionId, [{ name: "page_view", params: { page_location: `https://${req.headers.get("host") || ""}${path}`, page_referrer: b.referrer || undefined } }]);
+            await sendGa4(site, sessionId, [{ name: "page_view", params: { page_location: `https://${host}${path}`, page_referrer: b.referrer || undefined } }]);
             return QUIET();
         }
 

@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { resolveSite } from "@/lib/resolveSite";
+import { resolveOrg } from "@/lib/resolveOrg";
 import { PlatformOrder, PlatformItem } from "@pythias/mongo";
 
 // GET /api/checkout/confirmation?pi=<paymentIntentId> — minimal, non-PII order summary for the
@@ -8,7 +8,8 @@ import { PlatformOrder, PlatformItem } from "@pythias/mongo";
 // Returns only what the buyer should re-see: order #, item names, gift add-ons, totals — no address/email.
 // The order is created asynchronously by the webhook, so the client polls until it appears.
 export async function GET(req) {
-    const site = await resolveSite(req.headers.get("host"));
+    const ctx = await resolveOrg(req);
+    const site = ctx?.site;
     if (!site) return NextResponse.json({ error: "Unknown storefront" }, { status: 404 });
     const pi = new URL(req.url).searchParams.get("pi");
     if (!pi) return NextResponse.json({ error: false, order: null });

@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ScrollView, View, Text, TextInput, TouchableOpacity, ActivityIndicator, Alert, StyleSheet } from "react-native";
 import { useStripe } from "@stripe/stripe-react-native";
 import { useCart } from "../cart";
 import { useStore, useAccent } from "../theme";
 import { API_BASE, APP_KEY } from "../config";
+import { trackEvent } from "../analytics";
 
 // Address + email → /api/checkout/intent → Stripe PaymentSheet (cards / Apple Pay / Google Pay / Link).
 // On success the Stripe webhook places the order server-side (same path as web), so we just confirm.
@@ -18,10 +19,12 @@ export default function CheckoutScreen({ navigation }) {
     const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
     const lineItems = items.map((i) => ({ productId: i.productId, sku: i.sku, qty: i.qty }));
 
-    const onSuccess = () => {
+    useEffect(() => { trackEvent("begin_checkout"); }, []);
+
+    const goConfirm = (pi, revenueCents) => {
+        trackEvent("purchase", { revenueCents: revenueCents || 0, items: lineItems.map((i) => ({ productId: i.productId, qty: i.qty })) });
         clear();
-        navigation.reset({ index: 0, routes: [{ name: "Home" }] });
-        Alert.alert("Order placed", "Thank you! You'll receive an email confirmation shortly.");
+        navigation.reset({ index: 1, routes: [{ name: "Main" }, { name: "Confirmation", params: { pi } }] });
     };
 
     const pay = async () => {
@@ -38,9 +41,10 @@ export default function CheckoutScreen({ navigation }) {
             });
             const data = await res.json();
             if (data.error) { Alert.alert("Checkout error", String(data.error)); return; }
-            if (data.free && data.orderId) { onSuccess(); return; }      // fully covered — already placed
+            if (data.free && data.orderId) { goConfirm(null, data.totals?.totalCents || 0); return; }   // fully covered — already placed
             if (!data.clientSecret) { Alert.alert("Checkout error", "Couldn't start payment."); return; }
 
+            const piId = String(data.clientSecret).split("_secret_")[0];
             const init = await initPaymentSheet({
                 merchantDisplayName: store?.store?.name || "Store",
                 paymentIntentClientSecret: data.clientSecret,
@@ -51,7 +55,7 @@ export default function CheckoutScreen({ navigation }) {
 
             const { error } = await presentPaymentSheet();
             if (error) { if (error.code !== "Canceled") Alert.alert("Payment", error.message); return; }
-            onSuccess();
+            goConfirm(piId, data.totals?.totalCents || subtotalCents);
         } catch (e) {
             Alert.alert("Error", e.message || "Checkout failed.");
         } finally {

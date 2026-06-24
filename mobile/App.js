@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
+import { initAnalytics, trackScreen } from "./src/analytics";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { StatusBar } from "expo-status-bar";
@@ -16,6 +17,7 @@ import CheckoutScreen from "./src/screens/CheckoutScreen";
 import SearchScreen from "./src/screens/SearchScreen";
 import AccountScreen from "./src/screens/AccountScreen";
 import OrdersScreen from "./src/screens/OrdersScreen";
+import ConfirmationScreen from "./src/screens/ConfirmationScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -39,8 +41,13 @@ function Tabs({ accent, storeName }) {
 export default function App() {
     const [cfg, setCfg] = useState(null);
     const [err, setErr] = useState(null);
+    const navRef = useRef();
+    const routeNameRef = useRef();
 
-    useEffect(() => { getConfig().then(setCfg).catch((e) => setErr(e.message || "load failed")); }, []);
+    useEffect(() => {
+        initAnalytics();
+        getConfig().then(setCfg).catch((e) => setErr(e.message || "load failed"));
+    }, []);
 
     if (err) return <Centered><Text style={styles.muted}>Couldn't load the store. Try again later.</Text></Centered>;
     if (!cfg) return <Centered><ActivityIndicator size="large" /></Centered>;
@@ -52,7 +59,18 @@ export default function App() {
             <StoreContext.Provider value={cfg}>
                 <AuthProvider>
                     <CartProvider>
-                        <NavigationContainer>
+                        <NavigationContainer
+                            ref={navRef}
+                            onReady={() => {
+                                const n = navRef.current?.getCurrentRoute()?.name;
+                                routeNameRef.current = n;
+                                if (n) trackScreen(`/${n.toLowerCase()}`);
+                            }}
+                            onStateChange={() => {
+                                const cur = navRef.current?.getCurrentRoute()?.name;
+                                if (cur && cur !== routeNameRef.current) { trackScreen(`/${cur.toLowerCase()}`); routeNameRef.current = cur; }
+                            }}
+                        >
                             <StatusBar style="dark" />
                             <Stack.Navigator screenOptions={{ headerTintColor: accent, headerTitleStyle: { fontWeight: "700" } }}>
                                 <Stack.Screen name="Main" options={{ headerShown: false }}>
@@ -60,6 +78,7 @@ export default function App() {
                                 </Stack.Screen>
                                 <Stack.Screen name="Product" component={ProductScreen} options={{ title: "" }} />
                                 <Stack.Screen name="Checkout" component={CheckoutScreen} options={{ title: "Checkout" }} />
+                                <Stack.Screen name="Confirmation" component={ConfirmationScreen} options={{ title: "Order confirmed", headerBackVisible: false }} />
                                 <Stack.Screen name="Orders" component={OrdersScreen} options={{ title: "My orders" }} />
                             </Stack.Navigator>
                         </NavigationContainer>

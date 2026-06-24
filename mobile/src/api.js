@@ -31,5 +31,11 @@ export const getMe = () => req("/api/account/me");
 export const getOrders = () => req("/api/account/orders");
 export const getFavorites = () => req("/api/account/favorites");
 
+// Checkout confirmation (polled after payment — order is placed async by the webhook).
+export const getConfirmation = (pi) => req(`/api/checkout/confirmation?pi=${encodeURIComponent(pi)}`);
+
+// Register this device's Expo push token so the store can notify the buyer of order updates.
+export const registerPushToken = (token, platform) => req("/api/app/push-token", { method: "POST", body: JSON.stringify({ token, platform }) });
+
 // Raw POST helper for screens that need it (e.g. checkout).
 export const postJson = (path, body) => req(path, { method: "POST", body: JSON.stringify(body) });
