@@ -67,6 +67,7 @@ export default function TermsPage() {
                     <Section number="3" title="Subscription & Billing">
                         <Li>Subscriptions are billed monthly or annually in advance. Fees are non-refundable except as required by law.</Li>
                         <Li>Usage overages (orders, products, etc.) are billed at the rates specified in your plan.</Li>
+                        <Li>For products sourced through the Pythias wholesale supplier network, Pythias places and pays the supplier order on your behalf and charges your wallet the listed cost plus applicable shipping. The listed cost may include a service margin over the supplier&apos;s wholesale price, which Pythias retains as compensation for sourcing, payment processing, and platform services.</Li>
                         <Li>We may update pricing with 30 days written notice. Continued use after the notice period constitutes acceptance.</Li>
                         <Li>Failure to pay may result in suspension of your account after a 7-day grace period.</Li>
                     </Section>
