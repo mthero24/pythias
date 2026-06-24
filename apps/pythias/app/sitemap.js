@@ -11,6 +11,7 @@ const ROUTES = [
     { url: "/features",                  priority: 0.9,  changeFrequency: "monthly" },
     { url: "/how-it-works",              priority: 0.9,  changeFrequency: "monthly" },
     { url: "/integrations",              priority: 0.85, changeFrequency: "monthly" },
+    { url: "/integrations/etsy",         priority: 0.85, changeFrequency: "monthly" },
     { url: "/setup-guides/integrations",         priority: 0.9,  changeFrequency: "monthly" },
     { url: "/setup-guides/integrations/marketplace-variables", priority: 0.8, changeFrequency: "monthly" },
     { url: "/setup-guides/integrations/shopify",       priority: 0.8, changeFrequency: "monthly" },
