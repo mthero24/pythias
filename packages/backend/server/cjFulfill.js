@@ -4,7 +4,31 @@
 // instead of the seller's return address, and is triggered on order placement (not low stock).
 
 import { PlatformProduct, PlatformItem, Organization, PlatformOrder } from "@pythias/mongo";
-import { cjFreight, cjCreateOrder } from "./cjDropship.js";
+import { cjFreight, cjCreateOrder, cjBalance } from "./cjDropship.js";
+import { sendAdminAlert } from "./adminAlert.js";
+
+// Alert the Pythias admins to fund CJ when its account balance can't cover a placed dropship order
+// (the order is a CJ draft + the seller's wallet is already charged — it just won't ship until funded).
+// Throttled so an unfunded period doesn't spam.
+let _lastFundAlert = 0;
+async function alertIfUnderfunded(order, billedCents) {
+    try {
+        const bal = await cjBalance();
+        if ((bal.amountCents || 0) >= billedCents) return;                 // float covers it → auto-pays
+        if (Date.now() - _lastFundAlert < 10 * 60 * 1000) return;          // throttle to 1 / 10 min
+        _lastFundAlert = Date.now();
+        await sendAdminAlert({
+            subject: "⚠️ Fund CJ — a dropship order is waiting to ship",
+            html: `<p>A dropship order was placed, but the CJ account balance can't cover it — so it won't ship until you top up CJ.</p>
+                   <ul>
+                     <li><b>Order:</b> ${order.poNumber || order._id}</li>
+                     <li><b>This order:</b> $${(billedCents / 100).toFixed(2)}</li>
+                     <li><b>CJ balance:</b> $${((bal.amountCents || 0) / 100).toFixed(2)}</li>
+                   </ul>
+                   <p>Fund the CJ balance (and confirm auto-payment is on) to release this and any other pending drafts. The seller's wallet has already been charged.</p>`,
+        });
+    } catch (e) { console.error("[dropship] fund alert failed:", e?.message); }
+}
 
 function shipToFromOrder(a = {}) {
     const country = a.country || "US";
@@ -77,6 +101,7 @@ export async function fulfillCjDropshipOrder(order, cjItems, org) {
 
     await Organization.updateOne({ _id: org._id }, { $inc: { "wallet.balance": -billedCents } });
     await mark(ids, "ordered", { supplierOrderId: cjOrderId });
+    await alertIfUnderfunded(order, billedCents);   // ping admins to fund CJ if the float can't pay this draft
     return { ...base, status: "ordered", ref: cjOrderId, logistic: opt.logisticName, billedCents };
 }
 

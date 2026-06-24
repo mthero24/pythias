@@ -49,6 +49,12 @@ async function cj(path, { method = "GET", query, body } = {}) {
     return j.data;
 }
 
+// Pythias's CJ account balance — drives the settlement monitor + "fund CJ" alerts.
+export async function cjBalance() {
+    const d = await cj("/shopping/pay/getBalance");
+    return { amountCents: cents(d?.amount), freezeCents: cents(d?.freezeAmount), noWithdrawalCents: cents(d?.noWithdrawalAmount) };
+}
+
 // Search the CJ catalog → lightweight cards for the browse UI.
 export async function cjSearch({ keyword = "", categoryId = "", page = 1, pageSize = 20 } = {}) {
     const d = await cj("/product/list", { query: { pageNum: page, pageSize, productNameEn: keyword, categoryId } });
