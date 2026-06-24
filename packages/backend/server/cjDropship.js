@@ -68,11 +68,18 @@ export async function cjGetProduct(pid) {
     const p = await cj("/product/query", { query: { pid } });
     const images = (Array.isArray(p.productImageSet) ? p.productImageSet : []).filter(Boolean);
     if (!images.length && p.productImage) images.push(p.productImage);
-    const variants = (p.variants || []).map((v) => ({
-        cjVid: v.vid, sku: v.variantSku || v.vid, name: v.variantNameEn || "", upc: v.barcode || "",
-        costCents: costWithMargin(v.variantSellPrice), suggestedRetailCents: cents(v.variantSugSellPrice),
-        weightOz: gToOz(v.variantWeight), image: v.variantImage || images[0] || "", inventory: Number(v.inventoryNum) || 0,
-    }));
+    const variants = (p.variants || []).map((v) => {
+        // CJ "combo" variants (combineNum > 1) are multi-packs — the price covers the whole bundle, so
+        // label it so the cost never looks misleadingly high for "1 item".
+        const packN = Number(v.combineNum) || 0;
+        return {
+            cjVid: v.vid, sku: v.variantSku || v.vid,
+            name: (v.variantNameEn || "") + (packN > 1 ? ` (pack of ${packN})` : ""),
+            upc: v.barcode || "",
+            costCents: costWithMargin(v.variantSellPrice), suggestedRetailCents: cents(v.variantSugSellPrice),
+            weightOz: gToOz(v.variantWeight), image: v.variantImage || images[0] || "", inventory: Number(v.inventoryNum) || 0,
+        };
+    });
     return {
         pid, title: p.productNameEn || "", description: p.description || "", images,
         category: p.categoryName || "", suggestedRetailCents: cents(p.suggestSellPrice), variants,
