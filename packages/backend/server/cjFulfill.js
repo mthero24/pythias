@@ -80,6 +80,29 @@ export async function fulfillCjDropshipOrder(order, cjItems, org) {
     return { ...base, status: "ordered", ref: cjOrderId, logistic: opt.logisticName, billedCents };
 }
 
+// Convenience hook for order-ingestion paths that DON'T go through the routing dispatcher (marketplace
+// pulls: pullOrders, TikTok). Given a just-saved order doc + its saved item docs, dropship any CJ items
+// to the buyer if the seller opted in. Self-contained + never throws — safe to call inline after save.
+export async function maybeDropshipOrder(order, items, orgId) {
+    try {
+        const useOrg = orgId || order?.orgId;
+        if (!useOrg || !items?.length) return null;
+        const org = await Organization.findById(useOrg).select("wallet _id autoDropship").lean();
+        if (!org?.autoDropship?.enabled) return null;
+        const cjItems = await findCjDropshipItems(items);
+        if (!cjItems.length) return null;
+        const g = await fulfillCjDropshipOrder(order, cjItems, org);
+        if (g) {
+            order.fulfillmentGroups = [...(order.fulfillmentGroups || []), g];
+            await order.save();
+        }
+        return g;
+    } catch (e) {
+        console.error(`[dropship] order ${order?._id}: ${e.message}`);
+        return null;
+    }
+}
+
 // Retry sweep: re-attempt dropship orders that were left "needs_funding" (seller's wallet was short).
 // Runs on a cron; once the wallet is topped up, the order ships. Idempotent — fulfilled items carry a
 // supplierOrderId and are skipped. Skips orgs that have since turned dropship off.

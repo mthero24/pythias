@@ -1,6 +1,6 @@
 import { PlatformDesign as Design, PlatformItem as Item, PlatformBlank as Blank, PlatformOrder as Order, PlatformProduct as Products, PlatformInventory as Inventory, PlatformInventoryOrder as InventoryOrders, PlatformProductInventory as ProductInventory, Converters, ApiKeyIntegrations, TikTokAuth } from "@pythias/mongo";
 import { getOrders, generatePieceID, getOrdersFaire, getReleasedOrdersWalmart, getOpenReceiptsEtsy, getShipAdviceAcenda, getOrdersEbay } from "@pythias/integrations";
-import { logActivity, logError } from "@pythias/backend/server";
+import { logActivity, logError, maybeDropshipOrder } from "@pythias/backend/server";
 import { pullTikTokOrders } from "./tikTok";
 import { getOrgCreds } from "@/lib/getOrgCreds";
 
@@ -804,11 +804,13 @@ export async function pullOrders(){
             order.items = items
             order = await order.save()
             logActivity({ action: "order_received", entity: "order", entityId: order._id, entityName: order.poNumber || "", userName: "system", provider: "premierPrinting" });
-            items.map(async i => {
+            await Promise.all(items.map(async i => {
                 i.order = order._id
                 if (o._orgId) i.orgId = o._orgId
                 await i.save()
-            })
+            }))
+            // Marketplace dropship: if the seller opted in, purchase + ship CJ-sourced items to the buyer.
+            await maybeDropshipOrder(order, items, o._orgId);
         }else{
             order.status = o.orderStatus
             if(order.shippingAddress.name != o.shipTo.name || order.shippingAddress.address1 != o.shipTo.street1 || order.shippingAddress.address2 != o.shipTo.street2 || order.shippingAddress.city != o.shipTo.city || order.shippingAddress.zip != o.shipTo.postalCode || order.shippingAddress.state != o.shipTo.state || order.shippingAddress.country != o.shipTo.country){

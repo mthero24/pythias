@@ -13,6 +13,7 @@ import {
   getShippingProvidersTikTok,
   fulfillOrderTikTok,
 } from "@pythias/integrations";
+import { maybeDropshipOrder } from "@pythias/backend/server";
 const TOKEN_FIELDS = ["access_token", "access_token_expire_in", "refresh_token", "refresh_token_expire_in", "open_id", "granted_scopes", "seller_base_region", "user_type"];
 const refresh = async (creds, cipher) => {
     let credentials = await TikTokAuth.findOne({ _id: creds._id });
@@ -706,6 +707,8 @@ export const processOrders = async (orders)=>{
             await order.save();
             // Scope every item to the same org as the order (covers all SKU branches).
             if (o.orgId) await Item.updateMany({ _id: { $in: order.items } }, { $set: { orgId: o.orgId } });
+            // Marketplace dropship: if the seller opted in, purchase + ship CJ-sourced items to the buyer.
+            await maybeDropshipOrder(order, items, o.orgId);
             created++;
         } else {
             order.status = o.orderStatus;
