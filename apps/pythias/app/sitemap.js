@@ -9,6 +9,7 @@ const ROUTES = [
     { url: "/fulfillment-cloud",          priority: 0.95, changeFrequency: "monthly" },
     { url: "/commerce-cloud",            priority: 0.95, changeFrequency: "monthly" },
     { url: "/storefront-cloud",          priority: 0.95, changeFrequency: "monthly" },
+    { url: "/founding",                  priority: 0.9,  changeFrequency: "monthly" },
     { url: "/features",                  priority: 0.9,  changeFrequency: "monthly" },
     { url: "/how-it-works",              priority: 0.9,  changeFrequency: "monthly" },
     { url: "/integrations",              priority: 0.85, changeFrequency: "monthly" },

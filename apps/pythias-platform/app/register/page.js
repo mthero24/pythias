@@ -1,6 +1,7 @@
 "use client";
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Script from "next/script";
 import { Box, Card, CardContent, TextField, Button, Typography, Alert, Stack, Divider, Chip, IconButton, InputAdornment } from "@mui/material";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
@@ -44,6 +45,7 @@ function RegisterForm() {
     const typeParam    = searchParams.get("type");
     const isCommerce   = typeParam === "commerce";
     const isStorefront = typeParam === "storefront";
+    const isFounder    = searchParams.get("founder") === "1";
 
     // Per-product branding: accent color, cloud label, and the simple tier list (commerce + storefront
     // share the same card shape; fulfillment pulls from lib/tiers).
@@ -80,10 +82,12 @@ function RegisterForm() {
             const res = await fetch("/api/orgs", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...form, orgType: orgTypeValue }),
+                body: JSON.stringify({ ...form, orgType: orgTypeValue, founder: isFounder }),
             });
             const data = await res.json().catch(() => ({}));
             if (!res.ok) { setError(data.error || "Registration failed"); setLoading(false); return; }
+            // OpenAI ads conversion — fires on a completed signup for ALL clouds (fulfillment/commerce/storefront).
+            try { window.oaiq?.("measure", "registration_completed", { type: "customer_action" }); } catch {}
             router.push("/login?registered=1");
         } catch (err) {
             setError("Could not reach the server. Please try again.");
@@ -96,6 +100,13 @@ function RegisterForm() {
 
     return (
         <Box sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "background.default", py: 4 }}>
+            {/* OpenAI ads pixel — loads oaiq so the registration_completed conversion can fire on success */}
+            {process.env.NEXT_PUBLIC_OPENAI_PIXEL_ID && (
+                <Script id="openai-pixel" strategy="afterInteractive">{`
+                    !function(w,d,s,u){if(w.oaiq)return;var q=function(){q.q.push(arguments)};q.q=[];w.oaiq=q;var j=d.createElement(s);j.async=1;j.src=u;var f=d.getElementsByTagName(s)[0];f.parentNode.insertBefore(j,f)}(window,document,"script","https://bzrcdn.openai.com/sdk/oaiq.min.js");
+                    oaiq("init",{pixelId:"${process.env.NEXT_PUBLIC_OPENAI_PIXEL_ID}"});
+                `}</Script>
+            )}
             <Card sx={{ width: "100%", maxWidth: 540 }}>
                 <CardContent sx={{ p: 4 }}>
                     <Stack spacing={3}>
@@ -112,8 +123,18 @@ function RegisterForm() {
                                 }}
                             />
                             <Typography variant="h5" fontWeight={700}>
-                                {isStorefront ? "Launch your store" : isCommerce ? "Start selling" : "Start your free trial"}
+                                {isFounder ? "Claim your founding spot" : isStorefront ? "Launch your store" : isCommerce ? "Start selling" : "Start your free trial"}
                             </Typography>
+                            {isFounder && (
+                                <Box sx={{ mt: 1.5, mb: 0.5, p: 1.5, borderRadius: 2, bgcolor: "rgba(184,134,11,0.10)", border: "1px solid rgba(184,134,11,0.35)" }}>
+                                    <Typography variant="body2" fontWeight={700} sx={{ color: "#9a7209" }}>
+                                        🎉 Founding Member — 25% off for life + free white-glove onboarding
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary">
+                                        Pick your tier and sign up — we&apos;ll apply your founding discount and personally get you set up.
+                                    </Typography>
+                                </Box>
+                            )}
                             <Typography variant="body2" color="text.secondary">
                                 {isStorefront
                                     ? "Build your own branded online store — you sell, you fulfill. 14 days free."

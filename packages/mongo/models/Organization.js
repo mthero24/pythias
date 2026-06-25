@@ -8,6 +8,9 @@ const schema = new mongoose.Schema({
     // "commerce"    = Commerce Cloud (orders routed to fulfillment providers)
     // "storefront"  = Storefront Cloud (standalone storefront; seller self-fulfills / exports orders to their own systems)
     orgType: { type: String, enum: ["fulfillment", "commerce", "storefront"], default: "fulfillment" },
+    // Founding member (podcast/early-bird cohort) — flagged at signup so the coupon can be applied.
+    founder: { type: Boolean, default: false },
+    foundingSignupAt: { type: Date },
     tier: {
         type: String,
         // Fulfillment Cloud: starter, professional, business, scale, enterprise

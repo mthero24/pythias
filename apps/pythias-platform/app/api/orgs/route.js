@@ -25,7 +25,7 @@ const SF_LIMITS = {
 
 export async function POST(req) {
     try {
-        const { orgName, slug, billingEmail, tier, orgType, firstName, lastName, email, password } = await req.json();
+        const { orgName, slug, billingEmail, tier, orgType, firstName, lastName, email, password, founder } = await req.json();
 
         if (!orgName || !slug || !billingEmail || !email || !password) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -61,6 +61,7 @@ export async function POST(req) {
             status: 'trial',
             limits,
             trialEndsAt,
+            ...(founder ? { founder: true, foundingSignupAt: new Date() } : {}),
         });
 
         await PlatformUser.create({

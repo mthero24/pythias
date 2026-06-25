@@ -22,6 +22,7 @@ const PINTEREST_TAG_ID = process.env.NEXT_PUBLIC_PINTEREST_TAG_ID;
 const LINKEDIN_PARTNER_ID = process.env.NEXT_PUBLIC_LINKEDIN_PARTNER_ID;
 const TIKTOK_PIXEL_ID  = process.env.NEXT_PUBLIC_TIKTOK_PIXEL_ID;
 const MS_UET_TAG_ID    = process.env.NEXT_PUBLIC_MS_UET_TAG_ID;
+const OPENAI_PIXEL_ID  = process.env.NEXT_PUBLIC_OPENAI_PIXEL_ID;   // OpenAI / ChatGPT ads pixel
 
 export default function TrackingPixels() {
     const pathname = usePathname();
@@ -30,6 +31,14 @@ export default function TrackingPixels() {
 
     return (
         <>
+            {/* OpenAI ads pixel (ChatGPT ads) — set NEXT_PUBLIC_OPENAI_PIXEL_ID */}
+            {OPENAI_PIXEL_ID && (
+                <Script id="openai-pixel" strategy="afterInteractive">{`
+                    !function(w,d,s,u){if(w.oaiq)return;var q=function(){q.q.push(arguments)};q.q=[];w.oaiq=q;var j=d.createElement(s);j.async=1;j.src=u;var f=d.getElementsByTagName(s)[0];f.parentNode.insertBefore(j,f)}(window,document,"script","https://bzrcdn.openai.com/sdk/oaiq.min.js");
+                    oaiq("init",{pixelId:"${OPENAI_PIXEL_ID}"});
+                `}</Script>
+            )}
+
             {/* Meta Pixel — covers Facebook AND Instagram */}
             {META_PIXEL_ID && (
                 <>
