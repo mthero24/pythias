@@ -51,6 +51,7 @@ const SOLUTIONS_LINKS = [
 const COMPARE_LINKS = [
   { label: "Pythias vs ShipStation",        href: "/compare/pythias-vs-shipstation" },
   { label: "Pythias vs Shopify",            href: "/compare/pythias-vs-shopify" },
+  { label: "Storefront Cloud vs Shopify",   href: "/compare/storefront-cloud-vs-shopify" },
   { label: "Pythias vs Printify",           href: "/compare/pythias-vs-printify" },
   { label: "Pythias vs Sellbrite",          href: "/compare/pythias-vs-sellbrite" },
   { label: "Pythias vs Order Desk",         href: "/compare/pythias-vs-order-desk" },

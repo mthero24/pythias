@@ -70,6 +70,7 @@ const ROUTES = [
     { url: "/software-for-etsy-sellers",                          priority: 0.92, changeFrequency: "monthly" },
     { url: "/compare/pythias-vs-shipstation",                     priority: 0.9,  changeFrequency: "monthly" },
     { url: "/compare/pythias-vs-shopify",                         priority: 0.9,  changeFrequency: "monthly" },
+    { url: "/compare/storefront-cloud-vs-shopify",                priority: 0.9,  changeFrequency: "monthly" },
     { url: "/compare/pythias-vs-printify",                        priority: 0.9,  changeFrequency: "monthly" },
     { url: "/compare/pythias-vs-sellbrite",                       priority: 0.9,  changeFrequency: "monthly" },
     { url: "/compare/pythias-vs-order-desk",                      priority: 0.9,  changeFrequency: "monthly" },
