@@ -114,6 +114,7 @@ export { default as RewardLedger }            from "./models/RewardLedger";
 export { default as StorefrontCheckoutSession } from "./models/StorefrontCheckoutSession";
 export { default as StorefrontMessage }       from "./models/StorefrontMessage";
 export { default as StorefrontCampaign }      from "./models/StorefrontCampaign";
+export { default as StorefrontPushBroadcast }  from "./models/StorefrontPushBroadcast";
 export { default as StorefrontDiscount }      from "./models/StorefrontDiscount";
 export { default as StorefrontSession }       from "./models/StorefrontSession";
 export { default as StorefrontPathStat }      from "./models/StorefrontPathStat";

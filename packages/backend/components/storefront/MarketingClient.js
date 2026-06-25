@@ -14,11 +14,11 @@ export default function MarketingClient() {
             <h1 style={{ margin: "0 0 4px" }}>Marketing</h1>
             <p style={{ color: "#64748b", margin: "0 0 20px" }}>Email & SMS campaigns and your signup popup. Sends throttle automatically to protect your sender reputation.</p>
             <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
-                {[["campaigns", "Campaigns"], ["popup", "Signup popup"]].map(([k, label]) => (
+                {[["campaigns", "Campaigns"], ["push", "App push"], ["popup", "Signup popup"]].map(([k, label]) => (
                     <button key={k} onClick={() => setTab(k)} style={{ ...ghost, ...(tab === k ? { background: "#eef2ff", borderColor: "#635bff", color: "#635bff" } : {}) }}>{label}</button>
                 ))}
             </div>
-            {tab === "campaigns" ? <Campaigns /> : <PopupConfig />}
+            {tab === "campaigns" ? <Campaigns /> : tab === "push" ? <PushBroadcasts /> : <PopupConfig />}
         </div>
     );
 }
@@ -210,6 +210,78 @@ function PopupConfig() {
             <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                 <button onClick={save} disabled={busy} style={btn}>{busy ? "Saving…" : "Save"}</button>
                 {saved && <span style={{ color: "#16a34a", fontWeight: 600, fontSize: "0.88rem" }}>Saved ✓</span>}
+            </div>
+        </div>
+    );
+}
+
+// ── Mobile-app push broadcasts ───────────────────────────────────────────────
+// Send a one-off push notification to the seller's white-label mobile app users
+// (buyers who installed the app + granted push permission). Outward-facing → confirm before send.
+function PushBroadcasts() {
+    const [f, setF] = useState({ title: "", body: "", url: "" });
+    const [recipients, setRecipients] = useState(null);
+    const [history, setHistory] = useState(null);
+    const [busy, setBusy] = useState(false);
+    const [error, setError] = useState(null);
+    const [result, setResult] = useState(null);
+    const set = (k) => (e) => { setF((s) => ({ ...s, [k]: e.target.value })); setResult(null); };
+
+    const loadHistory = useCallback(async () => {
+        try { const d = await (await fetch("/api/storefront/push")).json(); setHistory(d.error ? [] : d.broadcasts); } catch { setHistory([]); }
+    }, []);
+    useEffect(() => {
+        fetch("/api/storefront/push/audience").then((r) => r.json()).then((d) => setRecipients(d.error ? 0 : d.recipients)).catch(() => setRecipients(0));
+        loadHistory();
+    }, [loadHistory]);
+
+    const send = async () => {
+        if (!f.title.trim()) { setError("Add a title."); return; }
+        if (!f.body.trim()) { setError("Add a message."); return; }
+        if (!confirm(`Send this push to your ${recipients ?? 0} app user${recipients === 1 ? "" : "s"} now? This goes to real buyers' phones.`)) return;
+        setBusy(true); setError(null); setResult(null);
+        try {
+            const d = await (await fetch("/api/storefront/push", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(f) })).json();
+            if (d.error) throw new Error(d.error);
+            setResult(d);
+            setF({ title: "", body: "", url: "" });
+            loadHistory();
+        } catch (e) { setError(e.message); }
+        finally { setBusy(false); }
+    };
+
+    return (
+        <div style={{ display: "grid", gap: 14 }}>
+            <div style={{ ...card, display: "grid", gap: 12, maxWidth: 620 }}>
+                <h3 style={{ margin: 0 }}>Send a push</h3>
+                <p style={{ color: "#64748b", margin: 0, fontSize: "0.86rem" }}>
+                    Broadcasts to everyone who installed your mobile app and turned on notifications.{" "}
+                    {recipients === null ? "Counting recipients…" : <b>{recipients} app user{recipients === 1 ? "" : "s"}</b>} will receive it.
+                </p>
+                <Field label="Title"><input style={input} placeholder="Weekend sale!" maxLength={80} value={f.title} onChange={set("title")} /></Field>
+                <Field label="Message"><textarea style={{ ...input, minHeight: 70 }} placeholder="20% off everything this weekend only — tap to shop." maxLength={300} value={f.body} onChange={set("body")} /></Field>
+                <Field label="Link / deep-link (optional)"><input style={input} placeholder="/collections/sale  or  https://…" value={f.url} onChange={set("url")} /></Field>
+                {error && <div style={{ color: "#dc2626", fontSize: "0.88rem" }}>{error}</div>}
+                {result && <div style={{ color: "#16a34a", fontSize: "0.9rem", fontWeight: 600 }}>Sent ✓ — {result.sent} notification{result.sent === 1 ? "" : "s"} to {result.recipients} app user{result.recipients === 1 ? "" : "s"}.</div>}
+                <div>
+                    <button onClick={send} disabled={busy || !recipients} style={{ ...btn, ...(!recipients ? { opacity: 0.5, cursor: "not-allowed" } : {}) }}>{busy ? "Sending…" : "Send now"}</button>
+                    {recipients === 0 && <span style={{ marginLeft: 10, color: "#94a3b8", fontSize: "0.82rem" }}>No app users with push enabled yet.</span>}
+                </div>
+            </div>
+
+            <div style={{ display: "grid", gap: 8 }}>
+                <b style={{ fontSize: "0.9rem" }}>Recent sends</b>
+                {history === null ? <div style={{ color: "#64748b" }}>Loading…</div>
+                    : history.length === 0 ? <div style={card}>No pushes sent yet.</div>
+                    : history.map((h) => (
+                        <div key={h._id} style={{ ...card, padding: 14 }}>
+                            <div style={{ fontWeight: 700 }}>{h.title}</div>
+                            <div style={{ color: "#475569", fontSize: "0.86rem" }}>{h.body}</div>
+                            <div style={{ color: "#94a3b8", fontSize: "0.78rem", marginTop: 4 }}>
+                                {new Date(h.createdAt).toLocaleString()} · {h.sentCount} sent / {h.recipients} user{h.recipients === 1 ? "" : "s"}{h.url ? ` · → ${h.url}` : ""}
+                            </div>
+                        </div>
+                    ))}
             </div>
         </div>
     );

@@ -10,6 +10,7 @@ import {
     StorefrontDiscount, StorefrontGiftCard, StorefrontSegment, StorefrontFlow, StorefrontReturn, StorefrontTranslation, StorefrontSubscription,
     StorefrontExperiment, StorefrontExperimentStat, StorefrontReview, StorefrontReviewSummary, StorefrontAutopilotRun,
     StorefrontInventory, StorefrontRestockTask, StorefrontDemandCache,
+    StorefrontCustomer, StorefrontPushBroadcast,
     PlatformOrder, PlatformItem, Organization, PlatformProduct,
     Inventory, Blank, InventoryOrders,
     NetworkFraudEntry, NetworkSuppression, reportNetworkFraud, StorefrontDispute,
@@ -309,6 +310,62 @@ export async function sendCampaign(orgId, id) {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw httpError(res.status, data.error || "Send failed");
     return data;
+}
+
+// ── Marketing: mobile-app push broadcasts ────────────────────────────────────
+// Send a one-off broadcast push to this org's white-label mobile-app users. We target
+// StorefrontCustomers of THIS org that have ≥1 registered Expo push token (an OS-level push
+// permission grant = consent). Tenant isolation: every query is { orgId } — we never trust a
+// client-supplied org. Sends synchronously via Expo (batched 100); records a history row.
+
+// Local Expo sender (mirror of apps/pythias-storefront/lib/push.js — the storefront app can't be
+// imported from the backend package). Fire-and-forget per batch; returns the # of valid tokens sent.
+async function sendExpoPushTokens(tokens, { title, body, data } = {}) {
+    const list = (Array.isArray(tokens) ? tokens : [tokens]).filter((t) => typeof t === "string" && t.startsWith("ExponentPushToken"));
+    if (!list.length) return 0;
+    const messages = list.map((to) => ({ to, title, body, sound: "default", ...(data ? { data } : {}) }));
+    for (let i = 0; i < messages.length; i += 100) {
+        try {
+            await fetch("https://exp.host/--/api/v2/push/send", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Accept: "application/json" },
+                body: JSON.stringify(messages.slice(i, i + 100)),
+            });
+        } catch (e) { console.error("[expoPush] send failed:", e?.message); }
+    }
+    return list.length;
+}
+
+// How many app users (customers with ≥1 push token) this org can reach — for the composer preview.
+export async function pushAudienceCount(orgId) {
+    const recipients = await StorefrontCustomer.countDocuments({ orgId, "pushTokens.0": { $exists: true } });
+    return { recipients };
+}
+
+export async function listPushBroadcasts(orgId) {
+    return StorefrontPushBroadcast.find({ orgId }).sort({ createdAt: -1 }).limit(50).lean();
+}
+
+export async function sendPushBroadcast(orgId, { title, body, url } = {}, createdBy) {
+    title = (title || "").trim();
+    body = (body || "").trim();
+    url = (url || "").trim() || undefined;
+    if (!title) throw httpError(400, "Title is required");
+    if (!body) throw httpError(400, "Message is required");
+
+    // Pull only this org's customers that have at least one push token. Flatten all tokens
+    // (a buyer may have the app on several devices); the Expo sender filters to valid ones.
+    const customers = await StorefrontCustomer.find(
+        { orgId, "pushTokens.0": { $exists: true } },
+        { pushTokens: 1 },
+    ).lean();
+    const tokens = [];
+    for (const c of customers) for (const t of c.pushTokens || []) if (t?.token) tokens.push(t.token);
+
+    const sent = await sendExpoPushTokens(tokens, { title, body, data: { type: "broadcast", ...(url ? { url } : {}) } });
+
+    await StorefrontPushBroadcast.create({ orgId, title, body, url, recipients: customers.length, sentCount: sent, createdBy });
+    return { sent, recipients: customers.length };
 }
 
 // ── Marketing: signup popup ──────────────────────────────────────────────────
