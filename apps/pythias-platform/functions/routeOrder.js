@@ -7,7 +7,7 @@ import {
     Organization,
     PlatformBlank,
 } from "@pythias/mongo";
-import { sendOrderToProvider } from "@/functions/sendToProvider";
+import { sendOrderToProvider, providerHasIngest } from "@/functions/sendToProvider";
 import { recordApiNotification } from "@/lib/recordApiNotification";
 import { ensureWalletFunds } from "@/lib/walletRecharge";
 
@@ -17,6 +17,7 @@ const UNROUTABLE_MSG = {
     no_providers_available:      "No fulfillment providers are currently available (all paused or at daily capacity).",
     no_catalog_coverage:         "No single provider carries every item in this order.",
     insufficient_wallet_balance: "Your wallet balance is too low to fulfill this order. Add funds to route it.",
+    no_sendable_provider:        "No connected fulfillment provider can receive this order yet.",
 };
 async function unroutable(org, order, reason) {
     const lowBalance = reason === "insufficient_wallet_balance";
@@ -187,8 +188,17 @@ export async function routeOrder(order, items, org, options = {}) {
         return unroutable(org, order, "no_catalog_coverage");
     }
 
+    // Gate — keep only providers that can actually RECEIVE the order (have an ingest config),
+    // so one is never "selected" while the handoff silently no-ops.
+    const candOrgs = await Organization.find({ _id: { $in: candidates.map(c => c.providerId) } }).select("slug").lean();
+    const slugById = Object.fromEntries(candOrgs.map(o => [o._id.toString(), o.slug]));
+    const sendable = candidates.filter(c => providerHasIngest(slugById[c.providerId]));
+    if (!sendable.length) {
+        return unroutable(org, order, "no_sendable_provider");
+    }
+
     // Step 4 — Pull location and score data in bulk
-    const providerIds = candidates.map(c => c.providerId);
+    const providerIds = sendable.map(c => c.providerId);
     const [locations, scores] = await Promise.all([
         ProviderLocation.find({ providerId: { $in: providerIds }, isPrimary: true }).lean(),
         ProviderScore.find({ providerId: { $in: providerIds } }).lean(),
@@ -197,11 +207,11 @@ export async function routeOrder(order, items, org, options = {}) {
     const scoreMap    = Object.fromEntries(scores.map(s => [s.providerId.toString(), s]));
 
     // Step 5 — Score each candidate
-    const costs = candidates.map(c => c.totalWholesale);
+    const costs = sendable.map(c => c.totalWholesale);
     const minCost = Math.min(...costs);
     const maxCost = Math.max(...costs);
 
-    const scored = candidates.map(c => {
+    const scored = sendable.map(c => {
         const geo         = calcGeoScore(locationMap[c.providerId], order.shippingAddress ?? {});
         const price       = calcPriceScore(c.totalWholesale, minCost, maxCost);
         const reliability = calcReliabilityScore(scoreMap[c.providerId], c.avgLeadTime);
