@@ -9,7 +9,10 @@ const schema = new mongoose.Schema({
     // "storefront"  = Storefront Cloud (standalone storefront; seller self-fulfills / exports orders to their own systems)
     orgType: { type: String, enum: ["fulfillment", "commerce", "storefront"], default: "fulfillment" },
     // Founding member (podcast/early-bird cohort) — flagged at signup so the coupon can be applied.
+    // Tier is decided by signup order: founder = first 10 (25% off for life + free onboarding),
+    // early_bird = slots 11-60 (20% off/yr + 50% off onboarding), early_year = slots 61-100 (10% off/yr).
     founder: { type: Boolean, default: false },
+    foundingTier: { type: String, enum: ["founder", "early_bird", "early_year"] },
     foundingSignupAt: { type: Date },
     tier: {
         type: String,

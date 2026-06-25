@@ -11,6 +11,13 @@ const ORG_TYPE_LABEL = {
     storefront: "Storefront Cloud",
 };
 
+// Founding offer tier → label + the coupon to apply.
+const FOUNDING_TIER = {
+    founder:    { label: "Founder · 25% off for life", color: "warning" },
+    early_bird: { label: "Early-Bird · 20% off/yr + 50% onboarding", color: "info" },
+    early_year: { label: "Early Adopter · 10% off/yr", color: "default" },
+};
+
 export default async function AdminFoundersPage() {
     const founders = await Organization.find({ founder: true }).sort({ foundingSignupAt: -1 }).lean();
 
@@ -30,7 +37,7 @@ export default async function AdminFoundersPage() {
                 </Stack>
 
                 <Alert severity="info" sx={{ mb: 3 }}>
-                    Attach the Founding Member coupon (25% off, forever) to each org&apos;s Stripe customer.
+                    Attach the matching coupon to each org&apos;s Stripe customer — Founder: 25% off forever · Early-Bird: 20% off 12mo + 50% off onboarding · Early Adopter: 10% off 12mo.
                 </Alert>
 
                 {founders.length === 0 ? (
@@ -47,7 +54,8 @@ export default async function AdminFoundersPage() {
                                     <TableCell>Organization</TableCell>
                                     <TableCell>Billing email</TableCell>
                                     <TableCell>Cloud</TableCell>
-                                    <TableCell>Tier</TableCell>
+                                    <TableCell>Founding offer</TableCell>
+                                    <TableCell>Plan</TableCell>
                                     <TableCell>Status</TableCell>
                                     <TableCell>Signed up</TableCell>
                                     <TableCell>Stripe customer</TableCell>
@@ -69,7 +77,12 @@ export default async function AdminFoundersPage() {
                                             <Chip label={ORG_TYPE_LABEL[org.orgType] ?? org.orgType} size="small" variant="outlined" />
                                         </TableCell>
                                         <TableCell>
-                                            <Chip label={TIERS[org.tier]?.label ?? org.tier} size="small" />
+                                            {org.foundingTier
+                                                ? <Chip label={FOUNDING_TIER[org.foundingTier]?.label ?? org.foundingTier} size="small" color={FOUNDING_TIER[org.foundingTier]?.color ?? "default"} />
+                                                : <Typography variant="caption" color="text.secondary">—</Typography>}
+                                        </TableCell>
+                                        <TableCell>
+                                            <Chip label={TIERS[org.tier]?.label ?? org.tier} size="small" variant="outlined" />
                                         </TableCell>
                                         <TableCell>
                                             <Chip

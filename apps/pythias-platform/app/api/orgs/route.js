@@ -52,6 +52,18 @@ export async function POST(req) {
         const trialEndsAt = isCommerce ? null : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
         const resolvedType = isStorefront ? "storefront" : isCommerce ? "commerce" : "fulfillment";
 
+        // Founding cohort by signup order: first 10 = founder (25% off for life + free onboarding),
+        // 11-60 = early_bird (20% off/yr + 50% off onboarding), 61-100 = early_year (10% off/yr).
+        // After 100, the offer is closed → standard signup (no founder flag).
+        let foundingFields = {};
+        if (founder) {
+            const fc = await Organization.countDocuments({ founder: true });
+            if (fc < 100) {
+                const ft = fc < 10 ? "founder" : fc < 60 ? "early_bird" : "early_year";
+                foundingFields = { founder: true, foundingTier: ft, foundingSignupAt: new Date() };
+            }
+        }
+
         const org = await Organization.create({
             name: orgName,
             slug: cleanSlug,
@@ -61,7 +73,7 @@ export async function POST(req) {
             status: 'trial',
             limits,
             trialEndsAt,
-            ...(founder ? { founder: true, foundingSignupAt: new Date() } : {}),
+            ...foundingFields,
         });
 
         await PlatformUser.create({

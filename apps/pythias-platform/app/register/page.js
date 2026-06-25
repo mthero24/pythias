@@ -46,6 +46,13 @@ function RegisterForm() {
     const isCommerce   = typeParam === "commerce";
     const isStorefront = typeParam === "storefront";
     const isFounder    = searchParams.get("founder") === "1";
+    // Founding-offer tier (from the /founding page CTA): founder | early | ten
+    const FOUNDER_OFFERS = {
+        founder: "🎉 Founding Member — 25% off for life + free remote onboarding",
+        early:   "🎉 Early-Bird Member — 20% off for a year + 50% off remote onboarding",
+        ten:     "🎉 Early Adopter — 10% off for a year",
+    };
+    const founderBanner = isFounder ? (FOUNDER_OFFERS[searchParams.get("offer")] || FOUNDER_OFFERS.founder) : null;
 
     // Per-product branding: accent color, cloud label, and the simple tier list (commerce + storefront
     // share the same card shape; fulfillment pulls from lib/tiers).
@@ -128,10 +135,10 @@ function RegisterForm() {
                             {isFounder && (
                                 <Box sx={{ mt: 1.5, mb: 0.5, p: 1.5, borderRadius: 2, bgcolor: "rgba(184,134,11,0.10)", border: "1px solid rgba(184,134,11,0.35)" }}>
                                     <Typography variant="body2" fontWeight={700} sx={{ color: "#9a7209" }}>
-                                        🎉 Founding Member — 25% off for life + free white-glove onboarding
+                                        {founderBanner}
                                     </Typography>
                                     <Typography variant="caption" color="text.secondary">
-                                        Pick your tier and sign up — we&apos;ll apply your founding discount and personally get you set up.
+                                        Pick your tier and sign up — we&apos;ll apply your discount automatically and personally get you set up.
                                     </Typography>
                                 </Box>
                             )}

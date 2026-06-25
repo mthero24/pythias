@@ -1,6 +1,7 @@
 import { Urbanist } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/componants/Navbar";
+import FoundingBar from "@/componants/FoundingBar";
 import Footer from "@/componants/Footer";
 import ThemeProvider from "@/componants/ThemeProvider";
 import AnalyticsTracker from "@/componants/AnalyticsTracker";
@@ -131,6 +132,7 @@ export default function RootLayout({ children }) {
           <PageTracker />
           <AnalyticsTracker />
           <GtagTracker />
+          <FoundingBar />
           <Navbar />
           {children}
           <Footer />
