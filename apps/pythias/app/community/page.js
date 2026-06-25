@@ -38,6 +38,7 @@ export default async function CommunityPage() {
 
     return (
         <main style={{ background: "#0f172a", minHeight: "100vh" }}>
+            <style dangerouslySetInnerHTML={{ __html: ".community-cat-card:hover{border-color:rgba(211,167,61,0.3) !important;}" }} />
             {/* Hero */}
             <section style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "72px 24px 56px" }}>
                 <div style={{ maxWidth: 800, margin: "0 auto", textAlign: "center" }}>
@@ -68,14 +69,12 @@ export default async function CommunityPage() {
                     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                         {CATEGORIES.map(cat => (
                             <Link key={cat.slug} href={`/community/${cat.slug}`} style={{ textDecoration: "none" }}>
-                                <div style={{
+                                <div className="community-cat-card" style={{
                                     background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)",
                                     borderRadius: 14, padding: "20px 24px",
                                     display: "grid", gridTemplateColumns: "auto 1fr auto", gap: "0 16px", alignItems: "center",
                                     transition: "border-color 0.15s",
                                 }}
-                                    onMouseEnter={e => e.currentTarget.style.borderColor = "rgba(211,167,61,0.3)"}
-                                    onMouseLeave={e => e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)"}
                                 >
                                     <div style={{ fontSize: "1.8rem", lineHeight: 1 }}>{cat.icon}</div>
                                     <div>
