@@ -30,6 +30,16 @@ const SECTIONS = [
             { slot: "cc-analytics",      title: "Channel Analytics",        desc: "Revenue, margin, and fulfillment rate by channel." },
         ],
     },
+    {
+        label: "Storefront Cloud",
+        color: "#0ea5e9",
+        page: "/storefront-cloud",
+        slots: [
+            { slot: "sf-ai-builder", title: "AI Site Builder",     desc: "Describe-your-store builder generating sections, copy, and product photos." },
+            { slot: "sf-storefront", title: "Your Live Storefront", desc: "Themes, collections, faceted search, and single-page checkout." },
+            { slot: "sf-analytics",  title: "Profit Analytics",     desc: "Live visitors, conversion funnel, and true profit (not just revenue)." },
+        ],
+    },
 ];
 
 function ScreenshotSlot({ slot, title, desc, objects, onUploaded, onDeleted }) {
