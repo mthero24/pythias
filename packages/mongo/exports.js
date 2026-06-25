@@ -97,6 +97,8 @@ export { default as SupportTicket } from "./models/SupportTicket";
 export { default as ApiNotification } from "./models/ApiNotification";
 export { default as ReturnScan } from "./models/ReturnScan";
 export { default as DemoBooking } from "./models/DemoBooking";
+export { default as OutreachProspect } from "./models/OutreachProspect";
+export { OUTREACH_SEQUENCE, OUTREACH_TOTAL_STEPS, OUTREACH_LINK, getStep, fillTokens, nextSendDate } from "./lib/outreachSequence";
 
 // ── Commerce Cloud ─────────────────────────────────────────────────────────────
 export { default as ProviderCatalog }   from "./models/ProviderCatalog";

@@ -22,6 +22,7 @@ import OndemandVideoIcon from "@mui/icons-material/OndemandVideo";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import SupportAgentIcon from "@mui/icons-material/SupportAgent";
 import ImageIcon from "@mui/icons-material/Image";
+import OutboxIcon from "@mui/icons-material/Outbox";
 import Link from "next/link";
 
 const DRAWER_WIDTH = 240;
@@ -31,6 +32,7 @@ const NAV_ITEMS = [
     { label: "Live Users",       href: "/admin/live",             icon: <FiberManualRecordIcon fontSize="small" sx={{ color: "#22c55e" }} /> },
     { label: "Analytics",        href: "/admin/analytics",        icon: <BarChartIcon fontSize="small" /> },
     { label: "Contact Messages", href: "/admin/contact-messages", icon: <MailOutlineIcon fontSize="small" /> },
+    { label: "Outreach",         href: "/admin/outreach",         icon: <OutboxIcon fontSize="small" /> },
     { label: "Articles",         href: "/admin/articles",         icon: <ArticleIcon fontSize="small" /> },
     { label: "Video Library",     href: "/admin/video-library",    icon: <PlayCircleIcon fontSize="small" /> },
     { label: "API Tokens",       href: "/admin/api-tokens",       icon: <KeyIcon fontSize="small" /> },

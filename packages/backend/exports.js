@@ -73,3 +73,4 @@ export { CreateNFProduct } from "./components/product/CreateNFProduct";
 export { CustomOrderBuilder }      from "./components/orders/CustomOrderBuilder";
 export { CustomOrdersList }        from "./components/orders/CustomOrdersList";
 export { EmbroideryDesignPicker }  from "./components/orders/EmbroideryDesignPicker";
+export { default as OutreachClient } from "./components/OutreachClient";
