@@ -112,7 +112,7 @@ export default function CloudsSection() {
                     <div className={`${s.cloudCard} ${s.cloudCardCC}`}>
                         <div className={s.cloudCardInner}>
                             <img
-                                src="/commerce-cloud-logo.png"
+                                src="/storefront-logo.png"
                                 alt="Pythias Storefront Cloud"
                                 className={s.cloudLogo}
                             />

@@ -326,6 +326,14 @@ export default function PricingContent() {
                             className={`${s.heroLogo} ${isCC ? s.heroLogoActive : s.heroLogoDim}`}
                             onClick={() => setProduct("cc")}
                         />
+                        <Image
+                            src="/storefront-logo.png"
+                            alt="Pythias Storefront Cloud"
+                            width={260} height={130}
+                            quality={75}
+                            className={`${s.heroLogo} ${isSF ? s.heroLogoActive : s.heroLogoDim}`}
+                            onClick={() => setProduct("sf")}
+                        />
                     </div>
 
                     <h1 className={s.h1}>

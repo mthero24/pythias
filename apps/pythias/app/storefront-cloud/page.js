@@ -191,7 +191,11 @@ export default async function StorefrontCloudPage() {
                 <div className={`${s.glow} ${s.glow2}`} />
                 <div className={`${s.glow} ${s.glow3}`} />
                 <div className={s.wrap}>
-                    <p className={s.heroTag}>Pythias Storefront Cloud</p>
+                    <img
+                        src="/storefront-logo.png"
+                        alt="Pythias Storefront Cloud"
+                        className={s.heroLogo}
+                    />
                     <h1 className={s.h1}>
                         Describe your store.{" "}
                         <span className={s.accent}>AI builds it.</span>
