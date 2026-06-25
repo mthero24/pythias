@@ -97,7 +97,7 @@
   background: rgba(211,167,61,0.15);
   border: 1px solid rgba(211,167,61,0.3);
   color: #D3A73D;
-  font-size: 0.72rem;
+  font-size: 0.85rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -142,8 +142,8 @@
 @media (min-width: 900px) { .heroBtns { justify-content: flex-start; } }
 
 .heroCta {
-  font-size: 0.8rem;
-  color: rgba(255,255,255,0.58);
+  font-size: 0.92rem;
+  color: rgba(255,255,255,0.7);
   margin-top: 14px;
   text-align: center;
 }
