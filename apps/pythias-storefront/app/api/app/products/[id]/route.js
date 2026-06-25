@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 import mongoose from "mongoose";
 import { NextResponse } from "next/server";
 import { PlatformProduct, resolveVariantSize } from "@pythias/mongo";
+import { productCardData, dedupeByDesign } from "@pythias/storefront";
 import { resolveOrg } from "@/lib/resolveOrg";
 
 // GET /api/app/products/:id — full product detail for the native app's product page.
@@ -17,7 +18,7 @@ export async function GET(req, { params }) {
     const base = { orgId: ctx.orgId, active: { $ne: false } };
     const pop = (qy) => qy
         .populate("variantsArray.color", "name hexcode")
-        .populate("variantsArray.blank", "sizes")
+        .populate("variantsArray.blank", "sizes bulletPoints sizeGuide")
         .select("title description brand slug sku productImages variantsArray salePercent category department tags isCatalogProduct continueSellingOOS trackInventory aggregateRating");
     let product = null;
     try {
@@ -50,6 +51,36 @@ export async function GET(req, { params }) {
     ])];
     const prices = variants.map((v) => v.priceCents).filter((c) => c > 0);
 
+    // Feature bullets + size guide come from the product's blank(s) (set in Fulfillment Cloud).
+    const blanks = [];
+    const seenBlank = new Set();
+    for (const v of (product.variantsArray || [])) {
+        const b = v.blank;
+        if (b && b._id && !seenBlank.has(String(b._id))) { seenBlank.add(String(b._id)); blanks.push(b); }
+    }
+    const bulletPoints = [];
+    const seenBp = new Set();
+    for (const b of blanks) for (const bp of (b.bulletPoints || [])) {
+        const title = (bp?.title || "").trim(); const description = (bp?.description || "").trim();
+        const key = `${title}|${description}`.toLowerCase();
+        if ((!title && !description) || seenBp.has(key)) continue;
+        seenBp.add(key); bulletPoints.push({ title, description });
+    }
+    const sizeGuide = blanks.map((b) => b.sizeGuide).find((g) => g?.enabled) || null;
+
+    // "You may also like" — other products in the same category/department (different designs).
+    let related = [];
+    try {
+        const cats = [...new Set([...(product.category || []), ...(product.department || [])].filter(Boolean))];
+        const rq = { ...base, _id: { $ne: product._id } };
+        if (cats.length) rq.$or = [{ category: { $in: cats } }, { department: { $in: cats } }];
+        const rdocs = await PlatformProduct.find(rq)
+            .populate([{ path: "variantsArray.color", select: "name hexcode" }, { path: "variantsArray.blank", select: "sizes" }])
+            .select("title slug sku brand productImages variantsArray category department design designTemplateId createdAt salePercent")
+            .sort({ _id: -1 }).limit(18).lean();
+        related = dedupeByDesign(rdocs.map(productCardData)).slice(0, 8);
+    } catch { related = []; }
+
     return NextResponse.json({
         error: false,
         product: {
@@ -71,6 +102,9 @@ export async function GET(req, { params }) {
             priceFromCents: prices.length ? Math.min(...prices) : 0,
             priceToCents: prices.length ? Math.max(...prices) : 0,
             salePercent: salePct,
+            bulletPoints,
+            sizeGuide,
+            related,
             rating: product.aggregateRating || null,
             isCatalogProduct: !!product.isCatalogProduct,
             continueSellingOOS: !!product.continueSellingOOS,

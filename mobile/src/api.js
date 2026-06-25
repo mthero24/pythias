@@ -30,6 +30,8 @@ export const signup = (payload) => req("/api/account/signup", { method: "POST", 
 export const getMe = () => req("/api/account/me");
 export const getOrders = () => req("/api/account/orders");
 export const getFavorites = () => req("/api/account/favorites");
+// Wishlist is replace-the-whole-array (mirrors the web FavoritesProvider): PUT { favorites }.
+export const putFavorites = (favorites) => req("/api/account/favorites", { method: "PUT", body: JSON.stringify({ favorites }) });
 
 // Checkout confirmation (polled after payment — order is placed async by the webhook).
 export const getConfirmation = (pi) => req(`/api/checkout/confirmation?pi=${encodeURIComponent(pi)}`);

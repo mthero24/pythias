@@ -11,6 +11,7 @@ import { getConfig } from "./src/api";
 import { StoreContext } from "./src/theme";
 import { CartProvider, useCart } from "./src/cart";
 import { AuthProvider } from "./src/auth";
+import { FavoritesProvider } from "./src/favorites";
 import HomeScreen from "./src/screens/HomeScreen";
 import ProductScreen from "./src/screens/ProductScreen";
 import CartScreen from "./src/screens/CartScreen";
@@ -65,6 +66,7 @@ export default function App() {
         <StripeProvider publishableKey={cfg.stripePublishableKey || ""} merchantIdentifier="merchant.com.pythias">
             <StoreContext.Provider value={cfg}>
                 <AuthProvider>
+                    <FavoritesProvider>
                     <CartProvider>
                         <NavigationContainer
                             ref={navRef}
@@ -91,6 +93,7 @@ export default function App() {
                             </Stack.Navigator>
                         </NavigationContainer>
                     </CartProvider>
+                    </FavoritesProvider>
                 </AuthProvider>
             </StoreContext.Provider>
         </StripeProvider>
