@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Organization } from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
 import { getStripe } from "@/lib/stripe";
+import { foundingDiscounts } from "@/lib/foundingCoupon";
 
 export async function POST(req) {
     const stripe = getStripe();
@@ -34,10 +35,12 @@ export async function POST(req) {
     const priceId = priceIds[tier];
     if (!priceId) return NextResponse.json({ error: "Invalid tier" }, { status: 400 });
 
+    const discounts = foundingDiscounts(org);   // founder/early-bird/early-adopter coupon, auto-applied
     const session = await stripe.checkout.sessions.create({
         mode: "subscription",
         payment_method_types: ["card"],
         line_items: [{ price: priceId, quantity: 1 }],
+        ...(discounts.length ? { discounts } : {}),
         ...(org.ownerEmail ? { customer_email: org.ownerEmail } : {}),
         metadata: { orgId: String(token.orgId), tier },
         success_url: `${returnUrl}?upgraded=1`,

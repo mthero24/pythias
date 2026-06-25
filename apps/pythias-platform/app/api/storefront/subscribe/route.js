@@ -3,6 +3,7 @@ import { Organization } from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
 import { getStripe } from "@/lib/stripe";
 import { STOREFRONT_PLANS } from "@/lib/storefrontPlans";
+import { foundingDiscounts } from "@/lib/foundingCoupon";
 
 // POST /api/storefront/subscribe { plan } — start a Stripe subscription Checkout for the storefront
 // add-on. On payment, the billing webhook sets StorefrontSite.plan, which unlocks the menu.
@@ -24,10 +25,12 @@ export async function POST(req) {
         ? { price: priceId, quantity: 1 }
         : { quantity: 1, price_data: { currency: "usd", recurring: { interval: "month" }, product_data: { name: `Pythias Storefront — ${cfg.name}` }, unit_amount: cfg.monthlyCents } };
 
+    const discounts = foundingDiscounts(org);   // founder/early-bird/early-adopter coupon, auto-applied
     const session = await stripe.checkout.sessions.create({
         mode: "subscription",
         payment_method_types: ["card"],
         line_items: [lineItem],
+        ...(discounts.length ? { discounts } : {}),
         ...(org.stripeCustomerId ? { customer: org.stripeCustomerId } : { customer_creation: "always" }),
         metadata: { orgId: String(token.orgId), kind: "storefront_subscription", plan },
         subscription_data: { metadata: { orgId: String(token.orgId), kind: "storefront_subscription", plan } },
