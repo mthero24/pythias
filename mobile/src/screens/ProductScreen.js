@@ -168,9 +168,21 @@ export default function ProductScreen({ route, navigation }) {
             </ScrollView>
 
             <View style={styles.bar}>
-                <TouchableOpacity style={[styles.addBtn, { backgroundColor: accent }, !sel && { opacity: 0.5 }]} onPress={addToCart} disabled={!sel}>
-                    <Text style={styles.addText}>Add to cart</Text>
-                </TouchableOpacity>
+                {p.customizable ? (
+                    <View style={styles.barRow}>
+                        <TouchableOpacity style={[styles.customizeBtn, { borderColor: accent }]}
+                            onPress={() => navigation.navigate("DesignStudio", { productId: p.id })}>
+                            <Text style={[styles.customizeText, { color: accent }]}>Customize</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={[styles.addBtn, styles.addBtnFlex, { backgroundColor: accent }, !sel && { opacity: 0.5 }]} onPress={addToCart} disabled={!sel}>
+                            <Text style={styles.addText}>Add to cart</Text>
+                        </TouchableOpacity>
+                    </View>
+                ) : (
+                    <TouchableOpacity style={[styles.addBtn, { backgroundColor: accent }, !sel && { opacity: 0.5 }]} onPress={addToCart} disabled={!sel}>
+                        <Text style={styles.addText}>Add to cart</Text>
+                    </TouchableOpacity>
+                )}
             </View>
         </View>
     );
@@ -209,6 +221,10 @@ const styles = StyleSheet.create({
     relName: { fontSize: 13, color: "#111", marginTop: 7 },
     relPrice: { fontSize: 14, fontWeight: "700", marginTop: 3 },
     bar: { position: "absolute", left: 0, right: 0, bottom: 0, padding: 14, borderTopWidth: 1, borderTopColor: "#eee", backgroundColor: "#fff" },
+    barRow: { flexDirection: "row", gap: 10 },
     addBtn: { borderRadius: 10, paddingVertical: 15, alignItems: "center" },
+    addBtnFlex: { flex: 1 },
     addText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+    customizeBtn: { borderRadius: 10, paddingVertical: 15, paddingHorizontal: 22, alignItems: "center", borderWidth: 2 },
+    customizeText: { fontSize: 16, fontWeight: "700" },
 });

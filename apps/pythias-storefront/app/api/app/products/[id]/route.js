@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import mongoose from "mongoose";
 import { NextResponse } from "next/server";
-import { PlatformProduct, resolveVariantSize } from "@pythias/mongo";
+import { PlatformProduct, PlatformDesign, resolveVariantSize } from "@pythias/mongo";
 import { productCardData, dedupeByDesign } from "@pythias/storefront";
 import { resolveOrg } from "@/lib/resolveOrg";
 
@@ -19,7 +19,7 @@ export async function GET(req, { params }) {
     const pop = (qy) => qy
         .populate("variantsArray.color", "name hexcode")
         .populate("variantsArray.blank", "sizes bulletPoints sizeGuide")
-        .select("title description brand slug sku productImages variantsArray salePercent category department tags isCatalogProduct continueSellingOOS trackInventory aggregateRating");
+        .select("title description brand slug sku productImages variantsArray salePercent category department tags isCatalogProduct continueSellingOOS trackInventory aggregateRating design designTemplateId");
     let product = null;
     try {
         if (mongoose.Types.ObjectId.isValid(id)) product = await pop(PlatformProduct.findOne({ ...base, _id: id })).lean();
@@ -81,6 +81,20 @@ export async function GET(req, { params }) {
         related = dedupeByDesign(rdocs.map(productCardData)).slice(0, 8);
     } catch { related = []; }
 
+    // Customize gating — same rules as the web product page: never for catalog products; always for
+    // design-template (personalization) products; otherwise only for single-image designs.
+    let customizable = false;
+    if (!product.isCatalogProduct) {
+        if (product.designTemplateId) customizable = true;
+        else if (product.design) {
+            try {
+                const designDoc = await PlatformDesign.findOne({ _id: product.design }).select("images").lean();
+                const imgs = designDoc?.images || {};
+                customizable = Object.keys(imgs).filter((k) => imgs[k]).length === 1;
+            } catch { customizable = false; }
+        }
+    }
+
     return NextResponse.json({
         error: false,
         product: {
@@ -105,6 +119,7 @@ export async function GET(req, { params }) {
             bulletPoints,
             sizeGuide,
             related,
+            customizable,
             rating: product.aggregateRating || null,
             isCatalogProduct: !!product.isCatalogProduct,
             continueSellingOOS: !!product.continueSellingOOS,
