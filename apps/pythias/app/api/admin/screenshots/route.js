@@ -22,6 +22,9 @@ const ALLOWED_SLOTS = [
     "cc-order-routing",
     "cc-product-studio",
     "cc-analytics",
+    "sf-ai-builder",
+    "sf-storefront",
+    "sf-analytics",
 ];
 
 const CONTENT_TYPES = {
