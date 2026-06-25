@@ -20,7 +20,7 @@ export async function GET(req) {
     if (!orgId) orgId = session?.user?.orgId ?? null;
 
     const orgSlug = session?.user?.orgSlug ?? null;
-    const base = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "";
+    const base = process.env.ETSY_REDIRECT_BASE || process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "";
     const redirectUri = `${base}/api/admin/integrations/etsy/oauth/redirect`;
 
     try {
