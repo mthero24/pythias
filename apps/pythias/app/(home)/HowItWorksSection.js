@@ -63,6 +63,34 @@ const SERVICES = {
             },
         ],
     },
+    storefront: {
+        label: "Storefront Cloud",
+        color: "#0e9f6e",
+        tagline: "Launch your own AI-built online store — production, marketing, and analytics built in, with checkout flowing straight into fulfillment.",
+        audience: "Right for you if: you want your own branded store and direct customer relationships, not just marketplace listings.",
+        steps: [
+            {
+                icon: <AutorenewRounded sx={{ fontSize: 28 }} />,
+                title: "Describe Your Store",
+                description: "Tell the AI what you sell and it builds your store — sections, pages, copy, and real product photos. Pick a theme, then edit anything with a sentence.",
+            },
+            {
+                icon: <InventoryRounded sx={{ fontSize: 28 }} />,
+                title: "Add Products & Collections",
+                description: "Import your catalog, organize collections with fast faceted search, and set your retail prices. Reviews, SEO, and a universal product feed are built in.",
+            },
+            {
+                icon: <LocalShippingRounded sx={{ fontSize: 28 }} />,
+                title: "Customers Check Out",
+                description: "A modern single-page checkout with wallets and tax converts the sale — and the order flows straight into Pythias fulfillment, no integration glue.",
+            },
+            {
+                icon: <BarChartRounded sx={{ fontSize: 28 }} />,
+                title: "Grow On Autopilot",
+                description: "Built-in email & SMS marketing, abandoned-cart and post-purchase automations, A/B testing, and true profit analytics — plus an optional white-label mobile app.",
+            },
+        ],
+    },
 };
 
 export default function HowItWorksSection() {
@@ -93,10 +121,10 @@ export default function HowItWorksSection() {
                         variant="h2"
                         sx={{ fontSize: { xs: "2rem", md: "2.5rem", lg: "2.875rem" }, fontWeight: 800, color: "#fff", letterSpacing: "-0.02em", mb: 2 }}
                     >
-                        Two products. One platform.
+                        Three products. One platform.
                     </Typography>
                     <Typography sx={{ color: "rgba(255,255,255,0.5)", maxWidth: 560, mx: "auto", lineHeight: 1.7, fontSize: "1.0625rem" }}>
-                        Choose the path that fits your business — or run both together.
+                        Choose the path that fits your business — or run all three together.
                     </Typography>
                 </Box>
 
