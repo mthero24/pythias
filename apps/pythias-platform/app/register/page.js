@@ -95,6 +95,8 @@ function RegisterForm() {
             if (!res.ok) { setError(data.error || "Registration failed"); setLoading(false); return; }
             // OpenAI ads conversion — fires on a completed signup for ALL clouds (fulfillment/commerce/storefront).
             try { window.oaiq?.("measure", "registration_completed", { type: "customer_action" }); } catch {}
+            // Google Ads "Sign-up" conversion — same completed-signup event.
+            try { window.gtag?.("event", "conversion", { send_to: "AW-18171939038/_VNDCKOcnMUcEN6Rh9lD" }); } catch {}
             router.push("/login?registered=1");
         } catch (err) {
             setError("Could not reach the server. Please try again.");
@@ -114,6 +116,15 @@ function RegisterForm() {
                     oaiq("init",{pixelId:"${process.env.NEXT_PUBLIC_OPENAI_PIXEL_ID}"});
                 `}</Script>
             )}
+            {/* Google Ads tag — so the Sign-up conversion can fire on register-success.
+                _gcl cookie is shared at the root domain, so an ad click on pythiastechnologies.com attributes here. */}
+            <Script id="gads-js" strategy="afterInteractive" src="https://www.googletagmanager.com/gtag/js?id=AW-18171939038" />
+            <Script id="gads-init" strategy="afterInteractive">{`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', 'AW-18171939038');
+            `}</Script>
             <Card sx={{ width: "100%", maxWidth: 540 }}>
                 <CardContent sx={{ p: 4 }}>
                     <Stack spacing={3}>
