@@ -57,6 +57,8 @@ function ProductCard({ product, onPress, onToast }) {
             productId,
             title: product.title,
             variantLabel,
+            color: product.defaultColor || "",
+            size: product.defaultSize || "",
             image: imageOf(product),
             priceCents: product.defaultPriceCents ?? baseCents,
         });

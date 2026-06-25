@@ -68,7 +68,7 @@ export default function ProductScreen({ route, navigation }) {
 
     const addToCart = () => {
         if (!sel) return;
-        add({ sku: sel.sku, productId: p.id, title: p.title, variantLabel: variantLabel(sel), image: heroImg, priceCents });
+        add({ sku: sel.sku, productId: p.id, title: p.title, variantLabel: variantLabel(sel), color: sel?.color || "", size: sel?.size || "", image: heroImg, priceCents });
         trackEvent("add_to_cart", { productId: p.id });
         navigation.navigate("Main", { screen: "Cart" });
     };
