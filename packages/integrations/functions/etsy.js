@@ -96,7 +96,10 @@ export const generateRedirectURI = (baseURL) => {
 
     
     const clientId = process.env.etsyApiKey?.split(":")[0];
-    return `https://www.etsy.com/oauth/connect?response_type=code&redirect_uri=http://localhost:3006/api/admin/integrations/etsy/oauth/redirect&scope=email_r%20address_r%20transactions_r%20transactions_w%20listings_r%20listings_w%20listings_d%20shops_r%20shops_w&client_id=${clientId}&state=${state}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
+    // redirect_uri MUST match the one the callback route sends at token exchange + the URL registered
+    // in the Etsy app. Driven by ETSY_REDIRECT_URI (prod) with a localhost dev fallback.
+    const redirectUri = process.env.ETSY_REDIRECT_URI || "http://localhost:3006/api/admin/integrations/etsy/oauth/redirect";
+    return `https://www.etsy.com/oauth/connect?response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&scope=email_r%20address_r%20transactions_r%20transactions_w%20listings_r%20listings_w%20listings_d%20shops_r%20shops_w&client_id=${clientId}&state=${state}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
     //transactions_r%20email_r%20transactions_w%20listings_r%20listings_w%20listings_d%20shops_r%20shops_w
 };
 const base64URLEncode = (str) =>
