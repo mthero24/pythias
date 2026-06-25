@@ -20,7 +20,7 @@ const STEPS = [
         num: "1",
         icon: "🔗",
         title: "Connect your stores",
-        desc: "Link TikTok Shop, Shopify, Etsy, Amazon, Walmart Marketplace, and 15+ more in minutes. Orders from every channel flow into one dashboard.",
+        desc: "Connect 20+ marketplaces directly — TikTok Shop, Shopify, Etsy, Amazon, Walmart Marketplace, and more — plus 200+ additional channels through Acenda and Mirakl. Orders from every channel flow into one dashboard.",
     },
     {
         num: "2",
@@ -53,7 +53,7 @@ const YOU_GET = [
 ];
 
 const FEATURES = [
-    { icon: "🛒", title: "18+ Marketplace Integrations", desc: "TikTok Shop, Shopify, Etsy, Amazon, Walmart Marketplace, eBay, Faire, and more — connect every channel you sell on." },
+    { icon: "🛒", title: "20+ Direct Integrations · 200+ Channels", desc: "Connect 20+ marketplaces directly — TikTok Shop, Shopify, Etsy, Amazon, Walmart Marketplace, eBay, Faire, and more — plus 200+ additional channels through Acenda and Mirakl." },
     { icon: "🎨", title: "Design & Product Studio", desc: "Create products, attach designs, manage variants, and sync listings across every connected storefront automatically." },
     { icon: "🗺️", title: "Intelligent Order Routing", desc: "Every order is scored by geography, price, and provider reliability — then routed to the best available fulfillment partner." },
     { icon: "💳", title: "Pre-Funded Wallet", desc: "Fund your wallet, set auto-recharge thresholds. Wholesale costs are deducted automatically at order placement — no invoice chasing." },
@@ -261,8 +261,8 @@ export default async function CommerceCloudPage() {
                     </p>
                     <div className={s.heroStats}>
                         <div className={s.stat}>
-                            <div className={s.statNum}>18+</div>
-                            <div className={s.statLabel}>Marketplaces</div>
+                            <div className={s.statNum}>200+</div>
+                            <div className={s.statLabel}>Sales Channels</div>
                         </div>
                         <div className={s.stat}>
                             <div className={s.statNum}>2 hrs</div>
