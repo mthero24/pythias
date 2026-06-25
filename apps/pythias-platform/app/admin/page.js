@@ -38,6 +38,7 @@ export default async function AdminPage() {
                     <Stack direction="row" spacing={1.5} alignItems="center">
                         <Typography variant="h6" fontWeight={700}>Platform Admin</Typography>
                         <Button size="small" variant="outlined" href="/admin/analytics">Company Analytics</Button>
+                        <Button size="small" variant="outlined" href="/admin/founders">Founding Members</Button>
                         <RecordPaymentButton orgs={orgs.map(o => ({ id: String(o._id), name: o.name || o.slug }))} />
                     </Stack>
                     <Stack direction="row" spacing={3}>
