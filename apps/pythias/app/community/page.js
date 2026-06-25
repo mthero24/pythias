@@ -61,6 +61,21 @@ export default async function CommunityPage() {
                 </div>
             </section>
 
+            {/* A note from the founder */}
+            <section style={{ padding: "8px 24px 0" }}>
+                <div style={{ maxWidth: 1100, margin: "0 auto", background: "rgba(211,167,61,0.06)", border: "1px solid rgba(211,167,61,0.18)", borderRadius: 16, padding: "28px 32px" }}>
+                    <p style={{ fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "#D3A73D", margin: "0 0 12px" }}>A note from our founder</p>
+                    <p style={{ color: "rgba(255,255,255,0.72)", fontSize: "1rem", lineHeight: 1.8, margin: "0 0 14px" }}>
+                        I&apos;ve spent my career building the software behind print shops — and I&apos;ve seen up close how hard this business really is. Thin margins, marketplaces that move the goalposts, a machine that goes down on your biggest day, and platforms that can pull the rug out overnight.
+                    </p>
+                    <p style={{ color: "rgba(255,255,255,0.72)", fontSize: "1rem", lineHeight: 1.8, margin: "0 0 18px" }}>
+                        This is the room I wish I&apos;d had back then — operators helping operators, no gatekeeping. Ask the question you think is dumb. Share the win. Vent the frustration. And when you finally crack a problem that cost you three days, post it so it costs the next person three minutes. We&apos;re all building something that lasts here, one shop at a time. Glad you&apos;re in it.
+                    </p>
+                    <p style={{ color: "#fff", fontWeight: 700, fontSize: "0.95rem", margin: 0 }}>— Michael</p>
+                    <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.8rem", margin: "2px 0 0" }}>Founder, Pythias Technologies</p>
+                </div>
+            </section>
+
             <div style={{ maxWidth: 1100, margin: "0 auto", padding: "48px 24px", display: "grid", gridTemplateColumns: "1fr 340px", gap: 40, alignItems: "start" }}>
 
                 {/* Categories */}
