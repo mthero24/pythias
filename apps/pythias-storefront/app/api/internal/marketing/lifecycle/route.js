@@ -4,11 +4,20 @@ import { StorefrontCustomer, StorefrontSite } from "@pythias/mongo";
 import { assertInternal } from "@/lib/internal";
 import { enqueueAbandonedCart, enqueueAbandonedSession } from "@/lib/emailFlows";
 import { enrollFlows } from "@/lib/flows";
+import { sendExpoPush } from "@/lib/push";
 
 // POST /api/internal/marketing/lifecycle (run hourly by PM2) — enqueues abandoned-cart and
 // abandoned-session nudges. Marketing category, so only opted-in + non-suppressed contacts get
 // them (enforced at enqueue + send). Idempotency comes from the message dedupeKey.
 const HOUR = 3600 * 1000, DAY = 24 * HOUR;
+
+// Avoid middle-of-the-night pushes — gate to ~8am–9pm ET (most buyers are US). Email is unaffected.
+function withinPushHours() {
+    try {
+        const h = Number(new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", hour12: false }).format(new Date()));
+        return h >= 8 && h < 21;
+    } catch { return true; }
+}
 
 // Load each org's site once.
 async function siteMap(orgIds) {
@@ -21,7 +30,7 @@ export async function POST(req) {
     if (!gate.ok) return NextResponse.json({ error: gate.error }, { status: gate.status });
 
     const now = Date.now();
-    let cart = 0, session = 0;
+    let cart = 0, session = 0, push = 0;
 
     // ── Abandoned cart: non-empty cart, idle 1h–72h, email-consented. ──
     const cartCandidates = await StorefrontCustomer.find({
@@ -37,7 +46,20 @@ export async function POST(req) {
             const site = sites[String(c.orgId)];
             if (!site) continue;
             const msg = await enqueueAbandonedCart(site, c).catch(() => null);
-            if (msg) { cart++; await StorefrontCustomer.updateOne({ _id: c._id }, { $set: { abandonedCartSentAt: new Date() } }); }
+            if (msg) {
+                cart++;
+                await StorefrontCustomer.updateOne({ _id: c._id }, { $set: { abandonedCartSentAt: new Date() } });
+                // App push nudge to the buyer's devices (best-effort; quiet-hours guarded). Email still goes regardless.
+                const tokens = (c.pushTokens || []).map((t) => t.token).filter(Boolean);
+                if (tokens.length && withinPushHours()) {
+                    await sendExpoPush(tokens, {
+                        title: "Still in your cart 🛒",
+                        body: "You left something behind — tap to finish checking out.",
+                        data: { type: "abandoned_cart" },
+                    }).catch(() => {});
+                    push++;
+                }
+            }
             // Also enroll any abandoned-cart automation flows (token = cart snapshot time).
             await enrollFlows({ orgId: c.orgId, site, customer: c, trigger: "abandoned_cart", token: c.cartUpdatedAt ? new Date(c.cartUpdatedAt).getTime().toString() : "x" }).catch(() => {});
         }
@@ -81,5 +103,5 @@ export async function POST(req) {
         }
     }
 
-    return NextResponse.json({ abandonedCart: cart, abandonedSession: session, winBack });
+    return NextResponse.json({ abandonedCart: cart, abandonedCartPush: push, abandonedSession: session, winBack });
 }
