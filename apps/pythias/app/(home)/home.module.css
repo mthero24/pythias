@@ -389,7 +389,7 @@
 
 .cloudCardInner { padding: 36px 32px; display: flex; flex-direction: column; height: 100%; }
 
-.cloudLogo { width: min(320px, 85%); height: auto; margin-bottom: 20px; }
+.cloudLogo { width: min(320px, 85%); aspect-ratio: 3 / 2; height: auto; margin-bottom: 20px; }
 
 .cloudChip {
   display: inline-block;
