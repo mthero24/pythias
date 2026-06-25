@@ -499,7 +499,7 @@ function stageColor(status) {
 function fmtDays(val)     { return val != null ? val.toFixed(1) + "d" : "—"; }
 function fmtModeDays(val) { return val != null ? `${val}d`             : "—"; }
 
-function ProductionTab({ productionSummary, itemsData, itemsByDay, onPageChange, onPageSizeChange, onSortChange, sortField, sortDir, urgentItems = [], urgentLoading }) {
+function ProductionTab({ productionSummary, itemsData, itemsByDay, onPageChange, onPageSizeChange, onSortChange, sortField, sortDir, urgentItems = [], urgentLoading, shipTally = [], shipTallyLoading }) {
     const ps = productionSummary ?? EMPTY_PROD;
     const { items, total, page, pageSize, loading } = itemsData;
 
@@ -607,6 +607,22 @@ function ProductionTab({ productionSummary, itemsData, itemsByDay, onPageChange,
                                 series={[{ data: rePullReasonsData, innerRadius: 40, outerRadius: 75, paddingAngle: 2, cornerRadius: 3 }]}
                                 height={200}
                                 slotProps={{ legend: { direction: "row", position: { vertical: "bottom", horizontal: "middle" } } }}
+                            />
+                        ) : <NoData />}
+                    </ChartCard>
+                </Grid2>
+                <Grid2 size={{ xs: 12 }}>
+                    <ChartCard title="Items Due to Ship — Next 5 Days" loading={shipTallyLoading} minH={230}>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+                            Plan staffing to hit on-time ship dates.
+                        </Typography>
+                        {shipTally.length > 0 ? (
+                            <BarChart
+                                dataset={shipTally}
+                                xAxis={[{ dataKey: "label", scaleType: "band", tickLabelStyle: { fontSize: 10 } }]}
+                                series={[{ dataKey: "count", label: "Items to ship", color: "#ff7043" }]}
+                                height={200}
+                                margin={{ left: 48, right: 16, top: 10, bottom: 40 }}
                             />
                         ) : <NoData />}
                     </ChartCard>
@@ -1663,6 +1679,8 @@ export default function Admin() {
     const [productionSummary, setProductionSummary] = useState(null);
     const [urgentItems,       setUrgentItems]       = useState([]);
     const [urgentLoading,     setUrgentLoading]     = useState(false);
+    const [shipTally,         setShipTally]         = useState([]);
+    const [shipTallyLoading,  setShipTallyLoading]  = useState(false);
 
     // Cost items state (CostsTab → Items Detail)
     const [costDetailView,     setCostDetailView]     = useState("orders");
@@ -1696,6 +1714,7 @@ export default function Admin() {
     const blankForecastAbortRef  = useRef(null);
     const blankForecastLoadedRef = useRef(false);
     const urgentAbortRef         = useRef(null);
+    const shipTallyAbortRef      = useRef(null);
 
     const load = useCallback(async (f, t) => {
         if (abortRef.current) abortRef.current.abort();
@@ -1833,6 +1852,23 @@ export default function Admin() {
         }
     }, []);
 
+    const loadShipTally = useCallback(async () => {
+        if (shipTallyAbortRef.current) shipTallyAbortRef.current.abort();
+        const controller = new AbortController();
+        shipTallyAbortRef.current = controller;
+        setShipTallyLoading(true);
+        try {
+            const res  = await fetch("/api/admin/dashboard/ship-tally", { signal: controller.signal });
+            const json = await res.json();
+            if (!res.ok || json.error) throw new Error(json.msg);
+            setShipTally(json.rows);
+        } catch (e) {
+            if (e.name !== "AbortError") console.error("[ship-tally]", e.message);
+        } finally {
+            if (shipTallyAbortRef.current === controller) setShipTallyLoading(false);
+        }
+    }, []);
+
     const loadBlankForecast = useCallback(async (force = false) => {
         if (blankForecastAbortRef.current) blankForecastAbortRef.current.abort();
         const controller = new AbortController();
@@ -1869,6 +1905,7 @@ export default function Admin() {
     useEffect(() => { loadOrders(from, to, marketplace, ordersPage, ordersSize, ordersSortField, ordersSortDir); }, [from, to, marketplace, ordersPage, ordersSize, ordersSortField, ordersSortDir, loadOrders]);
     useEffect(() => { loadItems(from, to, marketplace, itemsPage, itemsSize, itemsSortField, itemsSortDir); }, [from, to, marketplace, itemsPage, itemsSize, itemsSortField, itemsSortDir, loadItems]);
     useEffect(() => { loadUrgentItems(); }, [loadUrgentItems]);
+    useEffect(() => { loadShipTally(); }, [loadShipTally]);
     useEffect(() => { loadCostItems(from, to, costItemsPage, costItemsSize, costItemsSortField, costItemsSortDir); }, [from, to, costItemsPage, costItemsSize, costItemsSortField, costItemsSortDir, loadCostItems]);
     useEffect(() => { loadBlanks(from, to, marketplace); }, [from, to, marketplace, loadBlanks]);
     useEffect(() => { loadForecast(marketplace, horizon); }, [marketplace, horizon, loadForecast]);
@@ -2046,6 +2083,7 @@ export default function Admin() {
                                 sortField={itemsSortField} sortDir={itemsSortDir}
                                 onPageChange={setItemsPage} onPageSizeChange={handleItemsPageSizeChange} onSortChange={handleItemsSort}
                                 urgentItems={urgentItems} urgentLoading={urgentLoading}
+                                shipTally={shipTally} shipTallyLoading={shipTallyLoading}
                             />
                         )}
                         {tab === 3 && (

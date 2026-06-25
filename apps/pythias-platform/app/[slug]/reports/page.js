@@ -398,7 +398,7 @@ function stageColor(status) {
 function fmtDays(val)     { return val != null ? val.toFixed(1) + "d" : "—"; }
 function fmtModeDays(val) { return val != null ? `${val}d`             : "—"; }
 
-function ProductionTab({ productionSummary, itemsData, itemsByDay, onPageChange, onPageSizeChange, onSortChange, sortField, sortDir }) {
+function ProductionTab({ productionSummary, itemsData, itemsByDay, dueToShip, onPageChange, onPageSizeChange, onSortChange, sortField, sortDir }) {
     const ps = productionSummary ?? EMPTY_PROD;
     const { items, total, page, pageSize, loading } = itemsData;
 
@@ -463,6 +463,24 @@ function ProductionTab({ productionSummary, itemsData, itemsByDay, onPageChange,
                                 series={[{ data: stageData, innerRadius: 40, outerRadius: 75, paddingAngle: 2, cornerRadius: 3 }]}
                                 height={200}
                                 slotProps={{ legend: { direction: "row", position: { vertical: "bottom", horizontal: "middle" } } }}
+                            />
+                        ) : <NoData />}
+                    </ChartCard>
+                </Grid2>
+            </Grid2>
+            <Grid2 container spacing={2} sx={{ mb: 3 }}>
+                <Grid2 size={{ xs: 12 }}>
+                    <ChartCard title="Items Due to Ship — Next 5 Days" loading={dueToShip?.loading} minH={240}>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+                            Plan staffing to hit on-time ship dates.
+                        </Typography>
+                        {(dueToShip?.buckets?.length ?? 0) > 0 ? (
+                            <BarChart
+                                dataset={dueToShip.buckets}
+                                xAxis={[{ dataKey: "label", scaleType: "band", tickLabelStyle: { fontSize: 10 } }]}
+                                series={[{ dataKey: "count", label: "Items Due", color: "#3f51b5" }]}
+                                height={220}
+                                margin={{ left: 48, right: 16, top: 16, bottom: 40 }}
                             />
                         ) : <NoData />}
                     </ChartCard>
@@ -1044,6 +1062,10 @@ export default function ReportsPage() {
     const [itemsLoading,      setItemsLoading]      = useState(false);
     const [productionSummary, setProductionSummary] = useState(null);
 
+    const [dueToShipBuckets, setDueToShipBuckets] = useState([]);
+    const [dueToShipLoading, setDueToShipLoading] = useState(false);
+    const dueToShipAbortRef = useRef(null);
+
     const [costDetailView,     setCostDetailView]     = useState("orders");
     const [costItemsRows,      setCostItemsRows]      = useState([]);
     const [costItemsTotal,     setCostItemsTotal]     = useState(0);
@@ -1140,6 +1162,23 @@ export default function ReportsPage() {
         }
     }, []);
 
+    const loadDueToShip = useCallback(async () => {
+        if (dueToShipAbortRef.current) dueToShipAbortRef.current.abort();
+        const controller = new AbortController();
+        dueToShipAbortRef.current = controller;
+        setDueToShipLoading(true);
+        try {
+            const res  = await fetch(`/api/reports/dashboard/due-to-ship`, { signal: controller.signal });
+            const json = await res.json();
+            if (!res.ok || json.error) throw new Error(json.msg);
+            setDueToShipBuckets(json.buckets ?? []);
+        } catch (e) {
+            if (e.name !== "AbortError") console.error("[due-to-ship]", e.message);
+        } finally {
+            if (dueToShipAbortRef.current === controller) setDueToShipLoading(false);
+        }
+    }, []);
+
     const loadBlanks = useCallback(async (f, t, mp) => {
         if (blanksAbortRef.current) blanksAbortRef.current.abort();
         const controller = new AbortController();
@@ -1164,6 +1203,7 @@ export default function ReportsPage() {
     useEffect(() => { loadItems(from, to, marketplace, itemsPage, itemsSize, itemsSortField, itemsSortDir); }, [from, to, marketplace, itemsPage, itemsSize, itemsSortField, itemsSortDir, loadItems]);
     useEffect(() => { loadCostItems(from, to, costItemsPage, costItemsSize, costItemsSortField, costItemsSortDir); }, [from, to, costItemsPage, costItemsSize, costItemsSortField, costItemsSortDir, loadCostItems]);
     useEffect(() => { loadBlanks(from, to, marketplace); }, [from, to, marketplace, loadBlanks]);
+    useEffect(() => { loadDueToShip(); }, [loadDueToShip]);
 
     const handlePreset = (label) => {
         setPreset(label);
@@ -1307,6 +1347,7 @@ export default function ReportsPage() {
                         {tab === 2 && (
                             <ProductionTab
                                 productionSummary={productionSummary} itemsData={itemsData} itemsByDay={itemsByDay}
+                                dueToShip={{ buckets: dueToShipBuckets, loading: dueToShipLoading }}
                                 sortField={itemsSortField} sortDir={itemsSortDir}
                                 onPageChange={setItemsPage} onPageSizeChange={handleItemsPageSizeChange} onSortChange={handleItemsSort}
                             />
