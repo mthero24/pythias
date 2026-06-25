@@ -612,7 +612,7 @@ function ProductionTab({ productionSummary, itemsData, itemsByDay, onPageChange,
                     </ChartCard>
                 </Grid2>
                 <Grid2 size={{ xs: 12 }}>
-                    <ChartCard title="Items Due to Ship — Next 5 Days" loading={shipTallyLoading} minH={230}>
+                    <ChartCard title="Items Due to Ship — Next 7 Days" loading={shipTallyLoading} minH={230}>
                         <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
                             Plan staffing to hit on-time ship dates.
                         </Typography>

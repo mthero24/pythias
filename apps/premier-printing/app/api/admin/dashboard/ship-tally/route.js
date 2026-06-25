@@ -4,7 +4,7 @@ import { authOptions } from "@/auth";
 import { Items } from "@pythias/mongo";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const DAYS   = 5;
+const DAYS   = 7;
 
 function startOfDay(d) {
     const x = new Date(d);

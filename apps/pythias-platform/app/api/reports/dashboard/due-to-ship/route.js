@@ -14,7 +14,7 @@ export async function GET() {
 
         const startOfToday = new Date();
         startOfToday.setHours(0, 0, 0, 0);
-        const horizonDays = 5;
+        const horizonDays = 7;
         const end = new Date(startOfToday);
         end.setDate(end.getDate() + horizonDays);
 

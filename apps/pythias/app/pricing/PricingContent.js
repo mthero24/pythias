@@ -137,6 +137,50 @@ const CC_FAQS = [
     { q: "What marketplaces are supported?", a: "TikTok Shop, Shopify, Etsy, Amazon, Walmart Marketplace, eBay, Faire, and more. Free plan includes 1 integration; Launch includes 3; Growth and above get all integrations." },
 ];
 
+// ── Storefront Cloud data ─────────────────────────────────────────────────
+const SF_TIERS = [
+    {
+        name: "Starter", price: 49, popular: false,
+        desc: "Launch your own branded store and start selling — production handled for you.",
+        href: "https://platform.pythiastechnologies.com/register?plan=starter&type=storefront",
+        cta: "Get Started", ctaStyle: "outline",
+        features: [
+            { label: "1 storefront" }, { label: "Unlimited products & collections" },
+            { label: "Email & SMS marketing" }, { label: "Single-page checkout" },
+            { label: "Reviews, SEO & analytics built in" },
+        ],
+    },
+    {
+        name: "Pro", price: 149, popular: true,
+        desc: "For growing brands that want automation, testing, and deeper insight.",
+        href: "https://platform.pythiastechnologies.com/register?plan=pro&type=storefront",
+        cta: "Start Free Trial", ctaStyle: "green",
+        features: [
+            { label: "3 storefronts" }, { label: "AI store autopilot", gold: true },
+            { label: "Marketing automations & A/B testing" }, { label: "Advanced analytics" },
+            { label: "Everything in Starter" },
+        ],
+    },
+    {
+        name: "Enterprise", price: 399, popular: false,
+        desc: "Full merchant-of-record coverage, custom domains, SSO, and priority support.",
+        href: "https://platform.pythiastechnologies.com/register?plan=enterprise&type=storefront",
+        cta: "Start Free Trial", ctaStyle: "outline",
+        features: [
+            { label: "5 storefronts" }, { label: "Merchant of record", gold: true },
+            { label: "Priority support", gold: true }, { label: "Custom domain & SSO", gold: true },
+            { label: "Everything in Pro" },
+        ],
+    },
+];
+
+const SF_FAQS = [
+    { q: "Do I need my own production?", a: "No. Storefront Cloud checkout flows straight into Pythias fulfillment — vetted partners print, pack, and ship every order for you. You design the products and run the brand; production is handled end to end." },
+    { q: "Can I use my own domain?", a: "Yes. Connect a custom domain on any plan; Enterprise adds SSO and full merchant-of-record coverage so taxes and compliance are handled for you." },
+    { q: "Can I switch plans any time?", a: "Yes — upgrades take effect immediately. Downgrades apply at the start of your next billing cycle. Every plan is a flat monthly rate with no per-order fees." },
+    { q: "What's built into the store?", a: "An AI site builder, single-page checkout into fulfillment, product reviews, SEO and schema, profit analytics, and email & SMS marketing — all native, no app store required. A white-label mobile app is available as an add-on." },
+];
+
 // ── Card components ───────────────────────────────────────────────────────
 function FCCard({ tier }) {
     const btnClass = tier.ctaStyle === "gold" ? s.btnGold
@@ -214,10 +258,48 @@ function CCCard({ tier }) {
     );
 }
 
+function SFCard({ tier }) {
+    const btnClass = tier.ctaStyle === "green" ? s.btnGreen
+        : tier.ctaStyle === "dark"  ? s.btnDark
+        : s.btnOutline;
+
+    return (
+        <div className={`${s.card} ${tier.popular ? s.cardPopularSF : ""}`}>
+            {tier.popular && <span className={s.popularBadgeSF}>Most Popular</span>}
+            <p className={s.tierNameSF}>{tier.name}</p>
+            {tier.price !== null ? (
+                <>
+                    <p className={s.price}><span className={s.priceSup}>$</span>{tier.price.toLocaleString()}</p>
+                    <span className={s.pricePer}>per month</span>
+                </>
+            ) : (
+                <>
+                    <p className={s.price}>{tier.priceLabel}</p>
+                    <span className={s.pricePer}>&nbsp;</span>
+                </>
+            )}
+            <p className={s.tierDesc}>{tier.desc}</p>
+            <ul className={s.limits}>
+                {tier.features.map((f) => (
+                    <li key={f.label} className={s.limit}>
+                        <span className={f.gold ? s.checkGold : s.check}>✓</span>
+                        {f.label}
+                    </li>
+                ))}
+            </ul>
+            <div className={s.cardFooter}>
+                <a href={tier.href} className={btnClass}>{tier.cta}</a>
+            </div>
+        </div>
+    );
+}
+
 // ── Content (client component — imported by server page.js) ──────────────
 export default function PricingContent() {
     const [product, setProduct] = useState("fc");
     const isFC = product === "fc";
+    const isCC = product === "cc";
+    const isSF = product === "sf";
 
     return (
         <div className={s.bg}>
@@ -241,7 +323,7 @@ export default function PricingContent() {
                             alt="Pythias Commerce Cloud"
                             width={260} height={130}
                             quality={75}
-                            className={`${s.heroLogo} ${!isFC ? s.heroLogoActive : s.heroLogoDim}`}
+                            className={`${s.heroLogo} ${isCC ? s.heroLogoActive : s.heroLogoDim}`}
                             onClick={() => setProduct("cc")}
                         />
                     </div>
@@ -263,10 +345,16 @@ export default function PricingContent() {
                             Fulfillment Cloud
                         </button>
                         <button
-                            className={`${s.toggleBtn} ${!isFC ? s.toggleBtnActiveCC : ""}`}
+                            className={`${s.toggleBtn} ${isCC ? s.toggleBtnActiveCC : ""}`}
                             onClick={() => setProduct("cc")}
                         >
                             Commerce Cloud
+                        </button>
+                        <button
+                            className={`${s.toggleBtn} ${isSF ? s.toggleBtnActiveSF : ""}`}
+                            onClick={() => setProduct("sf")}
+                        >
+                            Storefront Cloud
                         </button>
                     </div>
 
@@ -286,7 +374,7 @@ export default function PricingContent() {
                                 <li><span className={s.explainerBulletDot} style={{ background: "#D3A73D" }} />Real-time inventory, analytics &amp; team management</li>
                             </ul>
                         </div>
-                    ) : (
+                    ) : isCC ? (
                         <div className={s.explainerHero}>
                             <p className={s.explainerHeroTitle}>For sellers &amp; brand owners</p>
                             <p className={s.explainerHeroDesc}>
@@ -299,6 +387,21 @@ export default function PricingContent() {
                                 <li><span className={s.explainerBulletDot} style={{ background: "#6366f1" }} />Orders automatically route to the best fulfillment partner</li>
                                 <li><span className={s.explainerBulletDot} style={{ background: "#6366f1" }} />Pre-funded wallet — charged only when orders are placed</li>
                                 <li><span className={s.explainerBulletDot} style={{ background: "#6366f1" }} />Fee on your margin, not your revenue</li>
+                            </ul>
+                        </div>
+                    ) : (
+                        <div className={s.explainerHero}>
+                            <p className={s.explainerHeroTitle}>For sellers who want their own branded store</p>
+                            <p className={s.explainerHeroDesc}>
+                                Describe your brand and AI builds your store — production, profit analytics, marketing,
+                                reviews &amp; SEO are built in. Checkout flows straight into Pythias fulfillment, so every
+                                sale is printed, packed, and shipped for you. No equipment, no app store, no per-order fees.
+                            </p>
+                            <ul className={s.explainerHeroBullets}>
+                                <li><span className={s.explainerBulletDot} style={{ background: "#0e9f6e" }} />AI site builder — describe your store and it&apos;s built</li>
+                                <li><span className={s.explainerBulletDot} style={{ background: "#0e9f6e" }} />Single-page checkout flows straight into fulfillment</li>
+                                <li><span className={s.explainerBulletDot} style={{ background: "#0e9f6e" }} />Reviews, SEO, profit analytics &amp; marketing built in</li>
+                                <li><span className={s.explainerBulletDot} style={{ background: "#0e9f6e" }} />White-label mobile app available as an add-on</li>
                             </ul>
                         </div>
                     )}
@@ -352,7 +455,7 @@ export default function PricingContent() {
                                 </div>
                             </div>
                         </>
-                    ) : (
+                    ) : isCC ? (
                         <>
                             <div className={s.head}>
                                 <p className={s.sectionTag} style={{ color: "#6366f1" }}>Commerce Cloud</p>
@@ -387,6 +490,20 @@ export default function PricingContent() {
                                 </div>
                             </div>
                         </>
+                    ) : (
+                        <>
+                            <div className={s.head}>
+                                <p className={s.sectionTag} style={{ color: "#0e9f6e" }}>Storefront Cloud</p>
+                                <h2 className={s.h2}>For sellers who want their own branded store</h2>
+                                <p className={s.sectionSub}>Flat monthly rate. AI builds your store; Pythias handles fulfillment.</p>
+                            </div>
+                            <div className={`${s.pricingGrid} ${s.pricingGridSF}`}>
+                                {SF_TIERS.map((t) => <SFCard key={t.name} tier={t} />)}
+                            </div>
+                            <p className={s.extraUsers} style={{ marginTop: 20 }}>
+                                Every plan is a flat monthly rate · No per-order fees · Production &amp; shipping handled by Pythias fulfillment · Cancel any time
+                            </p>
+                        </>
                     )}
                 </div>
             </section>
@@ -398,7 +515,7 @@ export default function PricingContent() {
                         <h2 className={s.h2}>Frequently asked questions</h2>
                     </div>
                     <div className={s.faqList}>
-                        {(isFC ? FC_FAQS : CC_FAQS).map((f) => (
+                        {(isFC ? FC_FAQS : isCC ? CC_FAQS : SF_FAQS).map((f) => (
                             <div key={f.q} className={s.faqItem}>
                                 <p className={s.faqQ}>{f.q}</p>
                                 <p className={s.faqA}>{f.a}</p>
@@ -417,8 +534,8 @@ export default function PricingContent() {
                     </p>
                     <div className={s.btns}>
                         <Link href="/#calendar-booking-section" className={s.ctaBtnGold}>Book a Free Demo</Link>
-                        <Link href={isFC ? "/fulfillment-cloud" : "/commerce-cloud"} className={s.ctaBtnGray} style={{ borderColor: "rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.7)" }}>
-                            {isFC ? "Learn about Fulfillment Cloud →" : "Learn about Commerce Cloud →"}
+                        <Link href={isFC ? "/fulfillment-cloud" : isCC ? "/commerce-cloud" : "/storefront-cloud"} className={s.ctaBtnGray} style={{ borderColor: "rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.7)" }}>
+                            {isFC ? "Learn about Fulfillment Cloud →" : isCC ? "Learn about Commerce Cloud →" : "Learn about Storefront Cloud →"}
                         </Link>
                     </div>
                 </div>

@@ -179,6 +179,7 @@
 }
 .toggleBtnActiveFC { background: #D3A73D; color: #111; }
 .toggleBtnActiveCC { background: #6366f1; color: #fff; }
+.toggleBtnActiveSF { background: #0e9f6e; color: #fff; }
 
 /* ── Commerce Cloud card variants ────────────────────────────────────────── */
 .tierNameCC { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #6366f1; margin-bottom: 8px; }
@@ -187,6 +188,17 @@
 .popularBadgeCC { position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: #6366f1; color: #fff; font-size: 0.67rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 14px; border-radius: 20px; white-space: nowrap; }
 .btnIndigo { display: block; text-align: center; background: #6366f1; color: #fff; font-weight: 700; padding: 12px 20px; border-radius: 10px; font-size: 0.9rem; text-decoration: none; transition: background 0.2s; }
 .btnIndigo:hover { background: #4f46e5; }
+
+/* ── Storefront Cloud card variants ──────────────────────────────────────── */
+.tierNameSF { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #0e9f6e; margin-bottom: 8px; }
+.cardPopularSF { border-color: #0e9f6e; box-shadow: 0 0 0 2px rgba(14,159,110,0.2), 0 8px 32px rgba(14,159,110,0.1); transform: scale(1.03); }
+.cardPopularSF:hover { transform: scale(1.03) translateY(-3px); }
+.popularBadgeSF { position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: #0e9f6e; color: #fff; font-size: 0.67rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 14px; border-radius: 20px; white-space: nowrap; }
+.btnGreen { display: block; text-align: center; background: #0e9f6e; color: #fff; font-weight: 700; padding: 12px 20px; border-radius: 10px; font-size: 0.9rem; text-decoration: none; transition: background 0.2s; }
+.btnGreen:hover { background: #0b7d56; }
+
+/* Storefront has 3 tiers — center them in a tighter grid */
+.pricingGridSF { grid-template-columns: repeat(3, 1fr); max-width: 840px; margin-left: auto; margin-right: auto; }
 
 /* ── Margin fee badge (CC) ───────────────────────────────────────────────── */
 .marginBadge { display: inline-flex; align-items: center; gap: 5px; background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); border-radius: 8px; padding: 4px 9px; margin-bottom: 10px; }
@@ -209,6 +221,6 @@
 .mathTotalVal   { font-weight: 800; color: #111827; font-size: 1.05rem; }
 
 @media (min-width: 768px) { .hero { padding: 10px 0 10px; } .section { padding: 96px 0; } .sectionDark { padding: 80px 0; } .cta { padding: 96px 0; } .head { margin-bottom: 64px; } }
-@media (max-width: 1100px) { .pricingGrid { grid-template-columns: 1fr 1fr 1fr; } .cardPopular { transform: none; } .cardPopular:hover { transform: translateY(-3px); } .cardPopularCC { transform: none; } .cardPopularCC:hover { transform: translateY(-3px); } .explainer { grid-template-columns: 1fr; } }
+@media (max-width: 1100px) { .pricingGrid { grid-template-columns: 1fr 1fr 1fr; } .pricingGridSF { max-width: none; } .cardPopular { transform: none; } .cardPopular:hover { transform: translateY(-3px); } .cardPopularCC { transform: none; } .cardPopularCC:hover { transform: translateY(-3px); } .cardPopularSF { transform: none; } .cardPopularSF:hover { transform: translateY(-3px); } .explainer { grid-template-columns: 1fr; } }
 @media (max-width: 720px) { .pricingGrid { grid-template-columns: 1fr 1fr; } .onboardGrid { grid-template-columns: 1fr; } }
 @media (max-width: 480px) { .pricingGrid { grid-template-columns: 1fr; } .btns { flex-direction: column; align-items: center; } }
