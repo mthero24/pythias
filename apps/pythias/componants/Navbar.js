@@ -14,6 +14,7 @@ import Logo from "../public/logo_vertical.png";
 const NAV_LINKS = [
   { label: "Fulfillment Cloud", href: "/fulfillment-cloud" },
   { label: "Commerce Cloud",    href: "/commerce-cloud" },
+  { label: "Storefront Cloud",  href: "/storefront-cloud" },
   { label: "Community",         href: "/community" },
   { label: "Integrations",      href: "/integrations" },
   { label: "Contact Us",        href: "/contact" },
