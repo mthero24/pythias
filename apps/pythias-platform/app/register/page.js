@@ -95,8 +95,14 @@ function RegisterForm() {
             if (!res.ok) { setError(data.error || "Registration failed"); setLoading(false); return; }
             // OpenAI ads conversion — fires on a completed signup for ALL clouds (fulfillment/commerce/storefront).
             try { window.oaiq?.("measure", "registration_completed", { type: "customer_action" }); } catch {}
-            // Google Ads "Sign-up" conversion — same completed-signup event.
-            try { window.gtag?.("event", "conversion", { send_to: "AW-18171939038/_VNDCKOcnMUcEN6Rh9lD" }); } catch {}
+            // Google Ads "Sign-up" conversion WITH enhanced conversions — pass first-party data so the
+            // gtag hashes it (SHA-256) client-side and improves match rate / attribution.
+            try {
+                window.gtag?.("set", "user_data", { email: form.email, address: { first_name: form.firstName, last_name: form.lastName } });
+                window.gtag?.("event", "conversion", { send_to: "AW-18171939038/_VNDCKOcnMUcEN6Rh9lD" });
+            } catch {}
+            // Microsoft Advertising (Bing) — custom event a UET conversion goal can target.
+            try { window.uetq = window.uetq || []; window.uetq.push("event", "signup", { event_category: "registration", event_label: orgTypeValue }); } catch {}
             router.push("/login?registered=1");
         } catch (err) {
             setError("Could not reach the server. Please try again.");
@@ -123,7 +129,11 @@ function RegisterForm() {
                 window.dataLayer = window.dataLayer || [];
                 function gtag(){dataLayer.push(arguments);}
                 gtag('js', new Date());
-                gtag('config', 'AW-18171939038');
+                gtag('config', 'AW-18171939038', { 'allow_enhanced_conversions': true });
+            `}</Script>
+            {/* Microsoft Advertising (Bing) UET tag — loads uetq so the signup conversion can fire on success. */}
+            <Script id="ms-uet" strategy="afterInteractive">{`
+                (function(w,d,t,r,u){var f,n,i;w[u]=w[u]||[],f=function(){var o={ti:"343257119", enableAutoSpaTracking:true};o.q=w[u],w[u]=new UET(o),w[u].push("pageLoad")},n=d.createElement(t),n.src=r,n.async=1,n.onload=n.onreadystatechange=function(){var s=this.readyState;s&&s!=="loaded"&&s!=="complete"||(f(),n.onload=n.onreadystatechange=null)},i=d.getElementsByTagName(t)[0],i.parentNode.insertBefore(n,i)})(window,document,"script","//bat.bing.com/bat.js","uetq");
             `}</Script>
             <Card sx={{ width: "100%", maxWidth: 540 }}>
                 <CardContent sx={{ p: 4 }}>
