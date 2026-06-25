@@ -16,9 +16,19 @@ const schema = new mongoose.Schema({
     recipients: { type: Number, default: 0 },   // distinct app users we targeted (had ≥1 token)
     sentCount:  { type: Number, default: 0 },    // Expo push messages dispatched (one per token)
 
+    // Audience segment (see @pythias/mongo pushSegmentFilter) — which app users this targets.
+    segment: { type: String, default: "all" },
+
+    // Scheduling: when set + status "scheduled", the hourly storefront cron dispatches it at/after
+    // this time (re-resolving the segment audience fresh). Immediate "Send now" leaves this unset.
+    scheduledAt: { type: Date },
+    status: { type: String, enum: ["sent", "scheduled", "canceled"], default: "sent" },
+
     createdBy: { type: String },   // platform user email
 }, { timestamps: true });
 
 schema.index({ orgId: 1, createdAt: -1 });
+// Cron pickup: due scheduled broadcasts (any org).
+schema.index({ status: 1, scheduledAt: 1 });
 
 export default PlatformDB.model("StorefrontPushBroadcast", schema);

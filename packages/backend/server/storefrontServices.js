@@ -16,6 +16,7 @@ import {
     NetworkFraudEntry, NetworkSuppression, reportNetworkFraud, StorefrontDispute,
     ProviderCapacity, ProviderLocation, ProviderCatalog, ProviderScore, RoutingLog,
     StorefrontChannelConnection, StorefrontChannelListing, StorefrontAdSpend,
+    pushSegmentFilter, PUSH_SEGMENTS,
 } from "@pythias/mongo";
 import { generateArticle, generateArticleIdeas } from "../functions/contentGenerator.js";
 import { generateSceneImage, generateImage, generateImageDataUrl, sceneGenAvailable } from "../functions/sceneImage.js";
@@ -336,9 +337,21 @@ async function sendExpoPushTokens(tokens, { title, body, data } = {}) {
     return list.length;
 }
 
-// How many app users (customers with ≥1 push token) this org can reach — for the composer preview.
-export async function pushAudienceCount(orgId) {
-    const recipients = await StorefrontCustomer.countDocuments({ orgId, "pushTokens.0": { $exists: true } });
+// Flatten the distinct Expo push tokens for a segment's customers (a buyer may have several devices).
+async function pushTokensForSegment(orgId, segment) {
+    const customers = await StorefrontCustomer.find(
+        pushSegmentFilter(orgId, segment),
+        { pushTokens: 1 },
+    ).lean();
+    const tokens = [];
+    for (const c of customers) for (const t of c.pushTokens || []) if (t?.token) tokens.push(t.token);
+    return { recipients: customers.length, tokens };
+}
+
+// How many app users (customers with ≥1 push token, matching the segment) this org can reach — for
+// the composer preview. Unknown/missing segment → "all" (handled by pushSegmentFilter).
+export async function pushAudienceCount(orgId, segment) {
+    const recipients = await StorefrontCustomer.countDocuments(pushSegmentFilter(orgId, segment));
     return { recipients };
 }
 
@@ -346,26 +359,70 @@ export async function listPushBroadcasts(orgId) {
     return StorefrontPushBroadcast.find({ orgId }).sort({ createdAt: -1 }).limit(50).lean();
 }
 
-export async function sendPushBroadcast(orgId, { title, body, url } = {}, createdBy) {
+export async function sendPushBroadcast(orgId, { title, body, url, segment, scheduledAt } = {}, createdBy) {
     title = (title || "").trim();
     body = (body || "").trim();
     url = (url || "").trim() || undefined;
     if (!title) throw httpError(400, "Title is required");
     if (!body) throw httpError(400, "Message is required");
+    segment = PUSH_SEGMENTS.includes(segment) ? segment : "all";
 
-    // Pull only this org's customers that have at least one push token. Flatten all tokens
-    // (a buyer may have the app on several devices); the Expo sender filters to valid ones.
-    const customers = await StorefrontCustomer.find(
-        { orgId, "pushTokens.0": { $exists: true } },
-        { pushTokens: 1 },
-    ).lean();
-    const tokens = [];
-    for (const c of customers) for (const t of c.pushTokens || []) if (t?.token) tokens.push(t.token);
+    // Scheduling: a valid FUTURE date → record as "scheduled" and let the storefront cron dispatch it
+    // later (re-resolving the audience at send time). We still record a recipient estimate for display.
+    const when = scheduledAt ? new Date(scheduledAt) : null;
+    if (when && !isNaN(when.getTime()) && when.getTime() > Date.now()) {
+        const recipients = await StorefrontCustomer.countDocuments(pushSegmentFilter(orgId, segment));
+        await StorefrontPushBroadcast.create({
+            orgId, title, body, url, segment, recipients,
+            scheduledAt: when, status: "scheduled", createdBy,
+        });
+        return { scheduled: true, scheduledAt: when, recipients };
+    }
 
+    // Immediate send (unchanged behavior): fan out now, record a "sent" row.
+    const { recipients, tokens } = await pushTokensForSegment(orgId, segment);
     const sent = await sendExpoPushTokens(tokens, { title, body, data: { type: "broadcast", ...(url ? { url } : {}) } });
 
-    await StorefrontPushBroadcast.create({ orgId, title, body, url, recipients: customers.length, sentCount: sent, createdBy });
-    return { sent, recipients: customers.length };
+    await StorefrontPushBroadcast.create({ orgId, title, body, url, segment, recipients, sentCount: sent, status: "sent", createdBy });
+    return { sent, recipients };
+}
+
+// Dispatch due scheduled broadcasts (called by the storefront hourly cron; also safe to call from
+// the platform). Idempotent: only picks up status "scheduled" + scheduledAt due, and flips each to
+// "sent" before/after sending so a re-run won't double-send. Audience is re-resolved fresh per row.
+export async function dispatchScheduledPush() {
+    const due = await StorefrontPushBroadcast.find({
+        status: "scheduled",
+        scheduledAt: { $lte: new Date() },
+    }).limit(200).lean();
+
+    let dispatched = 0;
+    for (const b of due) {
+        // Claim atomically so concurrent runs don't double-send.
+        const claimed = await StorefrontPushBroadcast.updateOne(
+            { _id: b._id, status: "scheduled" },
+            { $set: { status: "sent" } },
+        );
+        if (!claimed.modifiedCount) continue;
+
+        const { recipients, tokens } = await pushTokensForSegment(b.orgId, b.segment);
+        const sent = await sendExpoPushTokens(tokens, { title: b.title, body: b.body, data: { type: "broadcast", ...(b.url ? { url: b.url } : {}) } });
+        await StorefrontPushBroadcast.updateOne({ _id: b._id }, { $set: { sentCount: sent, recipients } });
+        dispatched++;
+    }
+    return dispatched;
+}
+
+// Cancel a still-scheduled broadcast. Tenant-scoped (orgId must match) and only if status is
+// currently "scheduled" — already-sent/canceled rows are untouched.
+export async function cancelPushBroadcast(orgId, id) {
+    if (!id) throw httpError(400, "id is required");
+    const res = await StorefrontPushBroadcast.updateOne(
+        { _id: id, orgId, status: "scheduled" },
+        { $set: { status: "canceled" } },
+    );
+    if (!res.matchedCount) throw httpError(404, "No scheduled broadcast to cancel");
+    return { canceled: true };
 }
 
 // ── Marketing: signup popup ──────────────────────────────────────────────────

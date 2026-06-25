@@ -218,36 +218,70 @@ function PopupConfig() {
 // ── Mobile-app push broadcasts ───────────────────────────────────────────────
 // Send a one-off push notification to the seller's white-label mobile app users
 // (buyers who installed the app + granted push permission). Outward-facing → confirm before send.
+const PUSH_SEGMENT_OPTIONS = [
+    ["all", "All app users"],
+    ["customers", "Customers"],
+    ["prospects", "Prospects"],
+    ["abandoned_cart", "Abandoned cart"],
+    ["active_30", "Active last 30 days"],
+];
+const PUSH_SEGMENT_LABEL = Object.fromEntries(PUSH_SEGMENT_OPTIONS);
+
 function PushBroadcasts() {
-    const [f, setF] = useState({ title: "", body: "", url: "" });
+    const [f, setF] = useState({ title: "", body: "", url: "", segment: "all" });
     const [recipients, setRecipients] = useState(null);
     const [history, setHistory] = useState(null);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState(null);
     const [result, setResult] = useState(null);
+    const [scheduleOn, setScheduleOn] = useState(false);
+    const [scheduledAt, setScheduledAt] = useState("");
     const set = (k) => (e) => { setF((s) => ({ ...s, [k]: e.target.value })); setResult(null); };
 
     const loadHistory = useCallback(async () => {
         try { const d = await (await fetch("/api/storefront/push")).json(); setHistory(d.error ? [] : d.broadcasts); } catch { setHistory([]); }
     }, []);
+    // Re-count recipients whenever the chosen segment changes.
     useEffect(() => {
-        fetch("/api/storefront/push/audience").then((r) => r.json()).then((d) => setRecipients(d.error ? 0 : d.recipients)).catch(() => setRecipients(0));
-        loadHistory();
-    }, [loadHistory]);
+        setRecipients(null);
+        fetch(`/api/storefront/push/audience?segment=${encodeURIComponent(f.segment)}`).then((r) => r.json()).then((d) => setRecipients(d.error ? 0 : d.recipients)).catch(() => setRecipients(0));
+    }, [f.segment]);
+    useEffect(() => { loadHistory(); }, [loadHistory]);
 
     const send = async () => {
         if (!f.title.trim()) { setError("Add a title."); return; }
         if (!f.body.trim()) { setError("Add a message."); return; }
-        if (!confirm(`Send this push to your ${recipients ?? 0} app user${recipients === 1 ? "" : "s"} now? This goes to real buyers' phones.`)) return;
+        let when;
+        if (scheduleOn) {
+            if (!scheduledAt) { setError("Pick a date & time to schedule."); return; }
+            when = new Date(scheduledAt);
+            if (isNaN(when.getTime()) || when.getTime() <= Date.now()) { setError("Schedule time must be in the future."); return; }
+        }
+        const segLabel = PUSH_SEGMENT_LABEL[f.segment] || "app users";
+        const msg = scheduleOn
+            ? `Schedule this push to your ${recipients ?? 0} ${segLabel.toLowerCase()} for ${when.toLocaleString()}?`
+            : `Send this push to your ${recipients ?? 0} ${segLabel.toLowerCase()} now? This goes to real buyers' phones.`;
+        if (!confirm(msg)) return;
         setBusy(true); setError(null); setResult(null);
         try {
-            const d = await (await fetch("/api/storefront/push", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(f) })).json();
+            const payload = { ...f, ...(scheduleOn ? { scheduledAt: when.toISOString() } : {}) };
+            const d = await (await fetch("/api/storefront/push", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })).json();
             if (d.error) throw new Error(d.error);
             setResult(d);
-            setF({ title: "", body: "", url: "" });
+            setF({ title: "", body: "", url: "", segment: f.segment });
+            setScheduleOn(false); setScheduledAt("");
             loadHistory();
         } catch (e) { setError(e.message); }
         finally { setBusy(false); }
+    };
+
+    const cancelScheduled = async (id) => {
+        if (!confirm("Cancel this scheduled push? It won't be sent.")) return;
+        try {
+            const d = await (await fetch(`/api/storefront/push?id=${encodeURIComponent(id)}`, { method: "DELETE" })).json();
+            if (d.error) throw new Error(d.error);
+            loadHistory();
+        } catch (e) { setError(e.message); }
     };
 
     return (
@@ -255,17 +289,31 @@ function PushBroadcasts() {
             <div style={{ ...card, display: "grid", gap: 12, maxWidth: 620 }}>
                 <h3 style={{ margin: 0 }}>Send a push</h3>
                 <p style={{ color: "#64748b", margin: 0, fontSize: "0.86rem" }}>
-                    Broadcasts to everyone who installed your mobile app and turned on notifications.{" "}
+                    Broadcasts to app users who turned on notifications, in the chosen audience.{" "}
                     {recipients === null ? "Counting recipients…" : <b>{recipients} app user{recipients === 1 ? "" : "s"}</b>} will receive it.
                 </p>
+                <Field label="Audience">
+                    <select style={input} value={f.segment} onChange={set("segment")}>
+                        {PUSH_SEGMENT_OPTIONS.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
+                    </select>
+                </Field>
                 <Field label="Title"><input style={input} placeholder="Weekend sale!" maxLength={80} value={f.title} onChange={set("title")} /></Field>
                 <Field label="Message"><textarea style={{ ...input, minHeight: 70 }} placeholder="20% off everything this weekend only — tap to shop." maxLength={300} value={f.body} onChange={set("body")} /></Field>
                 <Field label="Link / deep-link (optional)"><input style={input} placeholder="/collections/sale  or  https://…" value={f.url} onChange={set("url")} /></Field>
+                <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.86rem", color: "#475569" }}>
+                    <input type="checkbox" checked={scheduleOn} onChange={(e) => { setScheduleOn(e.target.checked); setResult(null); }} />
+                    Schedule for later
+                </label>
+                {scheduleOn && (
+                    <Field label="Send at"><input type="datetime-local" style={input} value={scheduledAt} onChange={(e) => { setScheduledAt(e.target.value); setResult(null); }} /></Field>
+                )}
                 {error && <div style={{ color: "#dc2626", fontSize: "0.88rem" }}>{error}</div>}
-                {result && <div style={{ color: "#16a34a", fontSize: "0.9rem", fontWeight: 600 }}>Sent ✓ — {result.sent} notification{result.sent === 1 ? "" : "s"} to {result.recipients} app user{result.recipients === 1 ? "" : "s"}.</div>}
+                {result && (result.scheduled
+                    ? <div style={{ color: "#2563eb", fontSize: "0.9rem", fontWeight: 600 }}>Scheduled ✓ — for {new Date(result.scheduledAt).toLocaleString()} to ~{result.recipients} app user{result.recipients === 1 ? "" : "s"}.</div>
+                    : <div style={{ color: "#16a34a", fontSize: "0.9rem", fontWeight: 600 }}>Sent ✓ — {result.sent} notification{result.sent === 1 ? "" : "s"} to {result.recipients} app user{result.recipients === 1 ? "" : "s"}.</div>)}
                 <div>
-                    <button onClick={send} disabled={busy || !recipients} style={{ ...btn, ...(!recipients ? { opacity: 0.5, cursor: "not-allowed" } : {}) }}>{busy ? "Sending…" : "Send now"}</button>
-                    {recipients === 0 && <span style={{ marginLeft: 10, color: "#94a3b8", fontSize: "0.82rem" }}>No app users with push enabled yet.</span>}
+                    <button onClick={send} disabled={busy || !recipients} style={{ ...btn, ...(!recipients ? { opacity: 0.5, cursor: "not-allowed" } : {}) }}>{busy ? (scheduleOn ? "Scheduling…" : "Sending…") : (scheduleOn ? "Schedule" : "Send now")}</button>
+                    {recipients === 0 && <span style={{ marginLeft: 10, color: "#94a3b8", fontSize: "0.82rem" }}>No app users with push enabled in this audience yet.</span>}
                 </div>
             </div>
 
@@ -273,15 +321,27 @@ function PushBroadcasts() {
                 <b style={{ fontSize: "0.9rem" }}>Recent sends</b>
                 {history === null ? <div style={{ color: "#64748b" }}>Loading…</div>
                     : history.length === 0 ? <div style={card}>No pushes sent yet.</div>
-                    : history.map((h) => (
-                        <div key={h._id} style={{ ...card, padding: 14 }}>
-                            <div style={{ fontWeight: 700 }}>{h.title}</div>
-                            <div style={{ color: "#475569", fontSize: "0.86rem" }}>{h.body}</div>
-                            <div style={{ color: "#94a3b8", fontSize: "0.78rem", marginTop: 4 }}>
-                                {new Date(h.createdAt).toLocaleString()} · {h.sentCount} sent / {h.recipients} user{h.recipients === 1 ? "" : "s"}{h.url ? ` · → ${h.url}` : ""}
+                    : history.map((h) => {
+                        const status = h.status || "sent";
+                        const badge = status === "scheduled" ? { text: "Scheduled", color: "#2563eb" } : status === "canceled" ? { text: "Canceled", color: "#94a3b8" } : { text: "Sent", color: "#16a34a" };
+                        return (
+                            <div key={h._id} style={{ ...card, padding: 14 }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                    <div style={{ fontWeight: 700 }}>{h.title}</div>
+                                    <span style={{ fontSize: "0.7rem", fontWeight: 700, color: badge.color, border: `1px solid ${badge.color}`, borderRadius: 999, padding: "1px 8px" }}>{badge.text}</span>
+                                    <span style={{ fontSize: "0.74rem", color: "#94a3b8" }}>{PUSH_SEGMENT_LABEL[h.segment] || "All app users"}</span>
+                                    {status === "scheduled" && <button onClick={() => cancelScheduled(h._id)} style={{ marginLeft: "auto", border: "1px solid #fca5a5", background: "#fff", color: "#dc2626", borderRadius: 8, padding: "3px 10px", fontSize: "0.78rem", cursor: "pointer" }}>Cancel</button>}
+                                </div>
+                                <div style={{ color: "#475569", fontSize: "0.86rem" }}>{h.body}</div>
+                                <div style={{ color: "#94a3b8", fontSize: "0.78rem", marginTop: 4 }}>
+                                    {status === "scheduled" && h.scheduledAt
+                                        ? `Scheduled for ${new Date(h.scheduledAt).toLocaleString()} · ~${h.recipients} user${h.recipients === 1 ? "" : "s"}`
+                                        : `${new Date(h.createdAt).toLocaleString()} · ${h.sentCount} sent / ${h.recipients} user${h.recipients === 1 ? "" : "s"}`}
+                                    {h.url ? ` · → ${h.url}` : ""}
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
             </div>
         </div>
     );

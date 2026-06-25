@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { StorefrontCustomer, StorefrontSite } from "@pythias/mongo";
+import { StorefrontCustomer, StorefrontSite, StorefrontPushBroadcast, pushSegmentFilter } from "@pythias/mongo";
 import { assertInternal } from "@/lib/internal";
 import { enqueueAbandonedCart, enqueueAbandonedSession } from "@/lib/emailFlows";
 import { enrollFlows } from "@/lib/flows";
@@ -103,5 +103,25 @@ export async function POST(req) {
         }
     }
 
-    return NextResponse.json({ abandonedCart: cart, abandonedCartPush: push, abandonedSession: session, winBack });
+    // ── Scheduled push broadcasts: dispatch any that are due. ──
+    // Implemented inline (this app doesn't import @pythias/backend) but reuses the SAME
+    // pushSegmentFilter as the platform so a scheduled push targets exactly the previewed audience.
+    // Audience is re-resolved fresh per row; each row is claimed atomically (status flip) so a re-run
+    // can't double-send. Quiet-hours apply (these go to real phones).
+    let scheduledPush = 0;
+    if (withinPushHours()) {
+        const due = await StorefrontPushBroadcast.find({ status: "scheduled", scheduledAt: { $lte: new Date() } }).limit(200).lean();
+        for (const b of due) {
+            const claimed = await StorefrontPushBroadcast.updateOne({ _id: b._id, status: "scheduled" }, { $set: { status: "sent" } });
+            if (!claimed.modifiedCount) continue;
+            const customers = await StorefrontCustomer.find(pushSegmentFilter(b.orgId, b.segment), { pushTokens: 1 }).lean();
+            const tokens = [];
+            for (const c of customers) for (const t of c.pushTokens || []) if (t?.token) tokens.push(t.token);
+            await sendExpoPush(tokens, { title: b.title, body: b.body, data: { type: "broadcast", ...(b.url ? { url: b.url } : {}) } }).catch(() => {});
+            await StorefrontPushBroadcast.updateOne({ _id: b._id }, { $set: { sentCount: tokens.length, recipients: customers.length } });
+            scheduledPush++;
+        }
+    }
+
+    return NextResponse.json({ abandonedCart: cart, abandonedCartPush: push, abandonedSession: session, winBack, scheduledPush });
 }
