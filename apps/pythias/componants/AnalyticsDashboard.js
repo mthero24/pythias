@@ -202,7 +202,7 @@ export default function AnalyticsDashboard() {
                                         <TableCell align="right"><strong>Avg</strong></TableCell>
                                         <TableCell align="right"><strong>Shortest</strong></TableCell>
                                         <TableCell align="right"><strong>Longest</strong></TableCell>
-                                        <TableCell align="right"><strong>Mode</strong></TableCell>
+                                        <TableCell align="right"><strong>Bounce</strong></TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -213,7 +213,7 @@ export default function AnalyticsDashboard() {
                                             <TableCell align="right">{fmtTime(p.avgTime)}</TableCell>
                                             <TableCell align="right" sx={{ color: "success.main", fontSize: "0.75rem" }}>{p.minTime > 0 ? fmtTime(p.minTime) : "—"}</TableCell>
                                             <TableCell align="right" sx={{ color: "warning.main", fontSize: "0.75rem" }}>{p.maxTime > 0 ? fmtTime(p.maxTime) : "—"}</TableCell>
-                                            <TableCell align="right" sx={{ color: "text.secondary", fontSize: "0.75rem" }}>{p.modeTime > 0 ? fmtTime(p.modeTime) : "—"}</TableCell>
+                                            <TableCell align="right" sx={{ fontSize: "0.75rem", color: p.bounceRate == null ? "text.secondary" : p.bounceRate <= 50 ? "success.main" : p.bounceRate <= 70 ? "warning.main" : "error.main" }}>{p.bounceRate == null ? "—" : `${p.bounceRate}%`}</TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>

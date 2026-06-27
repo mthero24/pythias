@@ -29,7 +29,6 @@ export async function GET(req) {
         uniqueSessions,
         humanSessions,
         topPages,
-        modeTimePerPage,
         topSources,
         vitalsPerPage,
         trafficByDay,
@@ -56,23 +55,6 @@ export async function GET(req) {
             }},
             { $sort: { views: -1 } },
             { $limit: 15 },
-        ]),
-
-        // Mode time per page — bucket to 30s, pick most frequent bucket
-        PageView.aggregate([
-            { $match: { ...matchHuman, timeOnPage: { $gt: 0 } } },
-            { $group: {
-                _id: {
-                    page:   "$page",
-                    bucket: { $multiply: [{ $round: [{ $divide: ["$timeOnPage", 30] }, 0] }, 30] },
-                },
-                count: { $sum: 1 },
-            }},
-            { $sort: { count: -1 } },
-            { $group: {
-                _id:      "$_id.page",
-                modeTime: { $first: "$_id.bucket" },
-            }},
         ]),
 
         // Traffic sources
@@ -160,6 +142,23 @@ export async function GET(req) {
     const engEngaged     = engagementAgg[0]?.engaged ?? 0;
     const engagementRate = engTotal > 0 ? Math.round((engEngaged / engTotal) * 1000) / 10 : 0;
     const bounceRate     = engTotal > 0 ? Math.round(((engTotal - engEngaged) / engTotal) * 1000) / 10 : 0;
+
+    // Per-landing-page bounce rate: of the sessions that ENTERED on a page, what % bounced.
+    const pageBounceAgg = await Session.aggregate([
+        { $match: { startedAt: { $gte: since }, isBot: false, entryPage: { $ne: "" } } },
+        { $group: {
+            _id: "$entryPage",
+            entries: { $sum: 1 },
+            engaged: { $sum: { $cond: [
+                { $or: [ { $gte: [{ $size: "$pages" }, 2] }, { $gte: ["$totalTime", 10] } ] },
+                1, 0,
+            ] } },
+        }},
+    ]);
+    const bounceByPage = new Map(pageBounceAgg.map(p => [
+        p._id,
+        p.entries > 0 ? Math.round(((p.entries - p.engaged) / p.entries) * 1000) / 10 : null,
+    ]));
 
     const matchConversions = { occurredAt: { $gte: since } };
     const [totalConversions, conversionsBySource, conversionsByDay, blogViews, blogReads] = await Promise.all([
@@ -267,17 +266,14 @@ export async function GET(req) {
             bySource: conversionsBySource.map(c => ({ source: c._id || "direct", count: c.count })),
             byDay:    conversionsByDay.map(c => ({ date: c._id, count: c.count })),
         },
-        topPages:       (() => {
-            const modeMap = new Map(modeTimePerPage.map(m => [m._id, m.modeTime]));
-            return topPages.map(p => ({
-                page:     p._id,
-                views:    p.views,
-                avgTime:  Math.round(p.avgTime  ?? 0),
-                maxTime:  Math.round(p.maxTime  ?? 0),
-                minTime:  Math.round(p.minTime  ?? 0),
-                modeTime: Math.round(modeMap.get(p._id) ?? 0),
-            }));
-        })(),
+        topPages:       topPages.map(p => ({
+            page:       p._id,
+            views:      p.views,
+            avgTime:    Math.round(p.avgTime  ?? 0),
+            maxTime:    Math.round(p.maxTime  ?? 0),
+            minTime:    Math.round(p.minTime  ?? 0),
+            bounceRate: bounceByPage.get(p._id) ?? null,
+        })),
         topSources:     topSources.map(s => ({ source: s._id || "direct", count: s.count })),
         vitalsPerPage:  vitalsPerPage.map(v => ({
             page:        v._id,
