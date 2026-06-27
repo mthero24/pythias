@@ -1,9 +1,9 @@
 import IndustryLayout from "../solutions/IndustryLayout";
 
 export const metadata = {
-    title: "Software for Print on Demand Businesses — Fulfillment Automation | Pythias",
-    description: "The complete software platform for print-on-demand businesses. Automate order routing, production, inventory, and shipping across 18+ marketplaces from a single dashboard.",
-    keywords: "print on demand software, software for print on demand, POD fulfillment software, print on demand management software, print on demand automation",
+    title: "Print on Demand Software — Order, Production & Fulfillment Automation | Pythias",
+    description: "Pythias is the complete print on demand software platform — automate order routing, production, inventory, and shipping across 18+ marketplaces from one dashboard. The print on demand automation software built to scale with you.",
+    keywords: "print on demand software, print on demand automation software, software for print on demand, POD fulfillment software, print on demand management software, POD automation software",
     alternates: { canonical: "https://pythiastechnologies.com/software-for-print-on-demand" },
     openGraph: {
         title: "Software for Print on Demand | Pythias Technologies",
@@ -113,6 +113,9 @@ const data = {
         { q: "Does Pythias replace ShipStation for POD?", a: "For print-on-demand operations, yes — Pythias includes shipping label generation, carrier rate comparison, and tracking sync as part of the platform. Unlike ShipStation, it also manages your production queue, blank inventory, and marketplace order routing." },
         { q: "Is Pythias suitable for a one-person POD shop or only larger operations?", a: "Pythias is used by solo operators and larger teams alike. The minimum plan starts at $199/month with no per-order fees — at even 100 orders per month, the math typically favors Pythias over per-order tools." },
         { q: "Can I run multiple print types (DTF and embroidery) in the same Pythias account?", a: "Yes. Pythias routes orders to the correct print queue by print type, so DTF jobs and embroidery jobs never mix. Each queue has its own sorting, routing rules, and completion workflow." },
+        { q: "What is print on demand automation software?", a: "Print on demand automation software connects your sales channels to your production and shipping so the steps between an order and a shipped package run themselves — importing orders, routing them to the right print queue, attaching the correct design file, generating shipping labels, and syncing tracking back to every marketplace. Pythias automates this entire POD workflow in one platform instead of stitching together a spreadsheet, a shipping tool, and a separate production list." },
+        { q: "What is the best print on demand software for selling on multiple marketplaces?", a: "For multi-marketplace POD, Pythias is the strongest option because it connects to 18+ channels natively — Amazon, Walmart, Etsy, TikTok Shop, Shopify, eBay, Faire, and more — and pulls every order into a single production queue. Most POD tools focus on Shopify and Etsy only, so multi-channel sellers end up juggling separate dashboards and missing orders." },
+        { q: "Is there free print on demand software?", a: "Pythias Commerce Cloud has a free plan for sellers who use a fulfillment network. For shops that own production equipment and need full automation — production queues, inventory, and automatic shipping — a paid plan (from $199/month, no per-order fees) is the right fit, and typically costs less per order at volume than per-order POD tools." },
     ],
 };
 
