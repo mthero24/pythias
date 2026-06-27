@@ -140,6 +140,27 @@ export async function GET(req) {
           ]))[0]?.avg ?? 0
         : 0;
 
+    // Engagement / bounce rate — a session is "engaged" (not a bounce) if it had 2+ pageviews
+    // or lasted 10+ seconds (GA4's definition). Bounce rate is the inverse. Humans only, no bots.
+    const engagementAgg = await Session.aggregate([
+        { $match: { startedAt: { $gte: since }, isBot: false } },
+        { $group: {
+            _id: null,
+            total:   { $sum: 1 },
+            engaged: { $sum: { $cond: [
+                { $or: [
+                    { $gte: [{ $size: "$pages" }, 2] },
+                    { $gte: ["$totalTime", 10] },
+                ] },
+                1, 0,
+            ] } },
+        }},
+    ]);
+    const engTotal       = engagementAgg[0]?.total   ?? 0;
+    const engEngaged     = engagementAgg[0]?.engaged ?? 0;
+    const engagementRate = engTotal > 0 ? Math.round((engEngaged / engTotal) * 1000) / 10 : 0;
+    const bounceRate     = engTotal > 0 ? Math.round(((engTotal - engEngaged) / engTotal) * 1000) / 10 : 0;
+
     const matchConversions = { occurredAt: { $gte: since } };
     const [totalConversions, conversionsBySource, conversionsByDay, blogViews, blogReads] = await Promise.all([
         Conversion.countDocuments(matchConversions),
@@ -238,6 +259,8 @@ export async function GET(req) {
             avgPagesPerSession: Math.round(avgPagesPerSession * 10) / 10,
             totalConversions,
             conversionRate: humanSessions > 0 ? Math.round((totalConversions / humanSessions) * 1000) / 10 : 0,
+            bounceRate,
+            engagementRate,
         },
         conversions: {
             total: totalConversions,

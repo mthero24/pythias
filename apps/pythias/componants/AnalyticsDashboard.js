@@ -16,6 +16,7 @@ import MailOutlineIcon   from "@mui/icons-material/MailOutline";
 import UnsubscribeIcon   from "@mui/icons-material/Unsubscribe";
 import OpenInNewIcon     from "@mui/icons-material/OpenInNew";
 import AdsClickIcon      from "@mui/icons-material/AdsClick";
+import TrendingDownIcon  from "@mui/icons-material/TrendingDown";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function fmtTime(secs) {
@@ -126,6 +127,7 @@ export default function AnalyticsDashboard() {
                         <StatCard icon={<TrendingUpIcon />}   label="Human Pageviews"  value={s.humanViews.toLocaleString()} sub={`${s.totalViews.toLocaleString()} total`} />
                         <StatCard icon={<PeopleIcon />}       label="Sessions"         value={s.humanSessions.toLocaleString()} sub={`${s.avgPagesPerSession} pages/session`} color="#0ea5e9" />
                         <StatCard icon={<AccessTimeIcon />}   label="Avg Time on Page" value={fmtTime(s.avgTimeOnPage)} color="#10b981" />
+                        <StatCard icon={<TrendingDownIcon />} label="Bounce Rate"      value={`${s.bounceRate ?? 0}%`} sub={`${s.engagementRate ?? 0}% engaged`} color={(s.bounceRate ?? 0) <= 50 ? "#22c55e" : (s.bounceRate ?? 0) <= 70 ? "#f59e0b" : "#ef4444"} />
                         <StatCard icon={<CheckCircleIcon />}  label="Demo Bookings"    value={s.totalConversions ?? 0} sub={`${s.conversionRate ?? 0}% conversion rate`} color="#22c55e" />
                         <StatCard icon={<SmartToyIcon />}     label="Bot Traffic"      value={`${s.botPercent}%`} sub={`${s.botViews.toLocaleString()} bot views`} color="#f59e0b" />
                     </Box>
