@@ -17,10 +17,16 @@ export async function GET(req) {
     else if (range === "90d") since = new Date(now - 90 * 24 * 60 * 60 * 1000);
     else                      since = new Date(now - 7  * 24 * 60 * 60 * 1000); // 7d default
 
+    // Exclude internal traffic (own test browsing + test demo bookings) by IP.
+    // Set ANALYTICS_EXCLUDE_IPS (comma-separated) in the env; no-op until set.
+    const EXCLUDE_IPS = (process.env.ANALYTICS_EXCLUDE_IPS || "").split(",").map(s => s.trim()).filter(Boolean);
+    const notInternal = EXCLUDE_IPS.length ? { ip: { $nin: EXCLUDE_IPS } } : {};
+
     const noBackend  = { page: { $not: { $regex: "^/(api|admin)" } } };
-    const matchAll   = { enteredAt: { $gte: since }, ...noBackend };
-    const matchHuman = { enteredAt: { $gte: since }, isBot: false, ...noBackend };
-    const matchBot   = { enteredAt: { $gte: since }, isBot: true,  ...noBackend };
+    const matchAll   = { enteredAt: { $gte: since }, ...noBackend, ...notInternal };
+    const matchHuman = { enteredAt: { $gte: since }, isBot: false, ...noBackend, ...notInternal };
+    const matchBot   = { enteredAt: { $gte: since }, isBot: true,  ...noBackend, ...notInternal };
+    const sessionMatchHuman = { startedAt: { $gte: since }, isBot: false, ...notInternal };
 
     const [
         totalViews,
@@ -39,8 +45,8 @@ export async function GET(req) {
         PageView.countDocuments(matchHuman),
         PageView.countDocuments(matchBot),
 
-        Session.countDocuments({ startedAt: { $gte: since } }),
-        Session.countDocuments({ startedAt: { $gte: since }, isBot: false }),
+        Session.countDocuments({ startedAt: { $gte: since }, ...notInternal }),
+        Session.countDocuments(sessionMatchHuman),
 
         // Top pages by human views
         PageView.aggregate([
@@ -59,7 +65,7 @@ export async function GET(req) {
 
         // Traffic sources
         Session.aggregate([
-            { $match: { startedAt: { $gte: since }, isBot: false } },
+            { $match: sessionMatchHuman },
             { $group: { _id: "$source", count: { $sum: 1 } } },
             { $sort: { count: -1 } },
             { $limit: 10 },
@@ -102,7 +108,7 @@ export async function GET(req) {
         ]),
 
         // Recent 20 human sessions with journey
-        Session.find({ startedAt: { $gte: since }, isBot: false })
+        Session.find(sessionMatchHuman)
             .sort({ startedAt: -1 })
             .limit(20)
             .lean(),
@@ -117,7 +123,7 @@ export async function GET(req) {
 
     const avgPagesPerSession = humanSessions > 0
         ? (await Session.aggregate([
-            { $match: { startedAt: { $gte: since }, isBot: false } },
+            { $match: sessionMatchHuman },
             { $group: { _id: null, avg: { $avg: { $size: "$pages" } } } },
           ]))[0]?.avg ?? 0
         : 0;
@@ -125,7 +131,7 @@ export async function GET(req) {
     // Engagement / bounce rate — a session is "engaged" (not a bounce) if it had 2+ pageviews
     // or lasted 10+ seconds (GA4's definition). Bounce rate is the inverse. Humans only, no bots.
     const engagementAgg = await Session.aggregate([
-        { $match: { startedAt: { $gte: since }, isBot: false } },
+        { $match: sessionMatchHuman },
         { $group: {
             _id: null,
             total:   { $sum: 1 },
@@ -145,7 +151,7 @@ export async function GET(req) {
 
     // Per-landing-page bounce rate: of the sessions that ENTERED on a page, what % bounced.
     const pageBounceAgg = await Session.aggregate([
-        { $match: { startedAt: { $gte: since }, isBot: false, entryPage: { $ne: "" } } },
+        { $match: { ...sessionMatchHuman, entryPage: { $ne: "" } } },
         { $group: {
             _id: "$entryPage",
             entries: { $sum: 1 },
@@ -160,7 +166,7 @@ export async function GET(req) {
         p.entries > 0 ? Math.round(((p.entries - p.engaged) / p.entries) * 1000) / 10 : null,
     ]));
 
-    const matchConversions = { occurredAt: { $gte: since } };
+    const matchConversions = { occurredAt: { $gte: since }, ...notInternal };
     const [totalConversions, conversionsBySource, conversionsByDay, blogViews, blogReads] = await Promise.all([
         Conversion.countDocuments(matchConversions),
         Conversion.aggregate([
