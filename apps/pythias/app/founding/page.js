@@ -1,6 +1,7 @@
 import Link from "next/link";
 import s from "./founding.module.css";
 import FounderConversionTracker from "@/componants/FounderConversionTracker";
+import FoundingInterestCapture from "@/componants/FoundingInterestCapture";
 import { FounderOrg } from "@/models/Org";
 
 export const dynamic = "force-dynamic";
@@ -820,6 +821,7 @@ export default async function FoundingPage() {
                             Compare the three paths
                         </Link>
                     </div>
+                    <FoundingInterestCapture />
                 </div>
             </section>
         </div>

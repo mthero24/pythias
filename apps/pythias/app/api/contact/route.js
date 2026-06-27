@@ -4,7 +4,7 @@ import { sendEmail, sendInternalAlert, SEQUENCE, nextSendDate } from "@/lib/emai
 
 export async function POST(req) {
     try {
-        const { name, company, phone, email, message } = await req.json();
+        const { name, company, phone, email, message, source } = await req.json();
         if (!name?.trim() || !email?.trim() || !message?.trim()) {
             return NextResponse.json({ success: false, error: "Name, email, and message are required." }, { status: 400 });
         }
@@ -22,7 +22,7 @@ export async function POST(req) {
         }
 
         // Save contact message
-        await ContactMessage.create({ name, company, phone, email, message, source: "contact_form" });
+        await ContactMessage.create({ name, company, phone, email, message, source: source || "contact_form" });
 
         // Upsert lead sequence — don't restart if already in progress
         const existing = await LeadSequence.findOne({ email: email.toLowerCase() });
@@ -30,7 +30,7 @@ export async function POST(req) {
             await LeadSequence.create({
                 email: email.toLowerCase(),
                 name, company,
-                source: "contact_form",
+                source: source || "contact_form",
                 step: 0,
                 nextSendAt: new Date(), // send step 0 immediately via cron
             });
