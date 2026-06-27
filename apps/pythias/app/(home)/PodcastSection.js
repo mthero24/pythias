@@ -9,7 +9,7 @@ export default function PodcastSection() {
                     <div className={s.podcastText}>
                         <p className={s.podcastTag}>Featured Podcast</p>
                         <h2 className={s.podcastH2}>
-                            Hear how we&apos;re changing<br />print-on-demand fulfillment.
+                            Scaling without the chaos:<br />smarter fulfillment for print shops.
                         </h2>
                         <p className={s.podcastSub}>
                             We sat down to talk about the chaos inside most print shops,
@@ -18,7 +18,7 @@ export default function PodcastSection() {
                         </p>
                         <div className={s.podcastMeta}>
                             <span className={s.podcastDot} />
-                            <span className={s.podcastMetaText}>Pythias Technologies · Founder Interview</span>
+                            <span className={s.podcastMetaText}>2 Regular Guys Podcast · Founder Interview</span>
                         </div>
                     </div>
 
@@ -26,8 +26,8 @@ export default function PodcastSection() {
                     <div className={s.podcastEmbed}>
                         <div className={s.podcastFrame}>
                             <iframe
-                                src="https://www.youtube.com/embed/gNssMTukPQk?rel=0&modestbranding=1"
-                                title="Pythias Technologies Podcast Interview"
+                                src="https://www.youtube.com/embed/Pd2YQFWdhhc?rel=0&modestbranding=1"
+                                title="Scaling Without the Chaos — Smarter Fulfillment for Print Shops"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                 allowFullScreen
                             />
