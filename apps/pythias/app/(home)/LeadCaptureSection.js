@@ -75,6 +75,8 @@ export default function LeadCaptureSection() {
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
+      // Real lead captured (saved to ContactMessage) — fire GA4 conversion only on success.
+      try { window.gtag?.("event", "generate_lead", { method: "lead_capture_form" }); } catch {}
       submittedRef.current = true;
       setForm({ name: "", email: "", company: "", orderVolume: "", challenges: "" });
       setSnack({ open: true, msg: "Thanks! We'll be in touch soon.", sev: "success" });

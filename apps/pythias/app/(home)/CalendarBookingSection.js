@@ -179,6 +179,8 @@ function BookingForm({ date, time, onBack, onConfirmed }) {
             });
             const data = await res.json();
             if (!res.ok) { setError(data.error || "Booking failed. Please try again."); setSubmitting(false); return; }
+            // Real lead captured (demo booked + saved) — fire GA4 conversion only on success.
+            try { window.gtag?.("event", "generate_lead", { method: "demo_booking" }); } catch {}
             onConfirmed({ meetLink: data.meetLink, date, startTime: data.startTime, name: form.name.trim(), email: form.email.trim() });
         } catch {
             setError("Network error. Please try again.");

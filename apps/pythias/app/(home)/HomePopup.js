@@ -57,6 +57,8 @@ export default function HomePopup() {
             });
             const data = await res.json();
             if (!data.success) throw new Error(data.error);
+            // Real lead captured (saved to ContactMessage) — fire GA4 conversion only on success.
+            try { window.gtag?.("event", "generate_lead", { method: "popup" }); } catch {}
             sessionStorage.setItem(SESSION_KEY, "1");
             setDone(true);
         } catch (err) {
