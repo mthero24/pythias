@@ -53,6 +53,7 @@ const ROUTES = [
     { url: "/pricing",                                              priority: 0.95, changeFrequency: "monthly" },
     { url: "/multichannel-listing-software",                      priority: 0.92, changeFrequency: "monthly" },
     { url: "/order-management-software",                          priority: 0.92, changeFrequency: "monthly" },
+    { url: "/print-automation-software",                          priority: 0.95, changeFrequency: "monthly" },
     { url: "/inventory-management-software",                      priority: 0.92, changeFrequency: "monthly" },
     { url: "/software-for-amazon-sellers",                        priority: 0.92, changeFrequency: "monthly" },
     { url: "/software-for-shopify-sellers",                       priority: 0.92, changeFrequency: "monthly" },

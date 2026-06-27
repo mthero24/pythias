@@ -5,6 +5,7 @@ import s from "./home.module.css";
 // its dedicated page. Real capabilities only — no fabricated claims.
 const CATEGORIES = [
     { term: "Print-on-demand software", desc: "Automate DTF, DTG, embroidery, and sublimation production from one queue.", href: "/software-for-print-on-demand" },
+    { term: "Print automation software", desc: "Automate the whole production workflow — order routing, queues, labels, and tracking sync.", href: "/print-automation-software" },
     { term: "Fulfillment software", desc: "Route orders, generate carrier labels, and confirm tracking back to every channel.", href: "/fulfillment-cloud" },
     { term: "Inventory management software", desc: "Real-time stock by product, color, and size with low-stock and reorder alerts.", href: "/inventory-management-software" },
     { term: "Marketplace management software", desc: "List and sync products across 18+ marketplaces from a single dashboard.", href: "/multichannel-listing-software" },
