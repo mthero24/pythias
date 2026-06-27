@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { Organization, PlatformUser } from "@pythias/mongo";
 import { getLimits } from "@/lib/tiers";
+import { sendWelcomeEmail } from "@/lib/email";
 
 const FC_TIERS = new Set(['starter', 'professional', 'business', 'scale']);
 const CC_TIERS = new Set(['free', 'launch', 'growth', 'scale', 'enterprise']);
@@ -87,6 +88,10 @@ export async function POST(req) {
         });
 
         await Organization.findByIdAndUpdate(org._id, { 'usage.usersTotal': 1 });
+
+        // Welcome email — fire-and-forget; never block or fail the signup if email errors.
+        sendWelcomeEmail({ to: email, firstName, slug: cleanSlug })
+            .catch((e) => console.error("[orgs welcome email]", e?.message));
 
         return NextResponse.json({ ok: true, slug: cleanSlug }, { status: 201 });
     } catch (err) {
