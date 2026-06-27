@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { PageView, Session, Conversion } from "@/models/Analytics";
-import { LeadSequence, ContactMessage, EmailEvent } from "@pythias/mongo";
+import { LeadSequence, ContactMessage, EmailEvent, DemoBooking } from "@pythias/mongo";
 
 export async function GET(req) {
     const token = await getToken({ req });
@@ -167,17 +167,27 @@ export async function GET(req) {
     ]));
 
     const matchConversions = { occurredAt: { $gte: since }, ...notInternal };
+    // Real demo bookings come from the DemoBooking collection (it stores the booker's email), so we
+    // exclude internal/test bookings by email — robust to dynamic IPs and retroactive. Internal =
+    // anything @pythiastechnologies.com, plus any address in ANALYTICS_EXCLUDE_EMAILS.
+    const EXCLUDE_EMAILS = (process.env.ANALYTICS_EXCLUDE_EMAILS || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+    const demoMatch = {
+        createdAt: { $gte: since },
+        email: {
+            $not: { $regex: "@pythiastechnologies\\.com$", $options: "i" },
+            ...(EXCLUDE_EMAILS.length ? { $nin: EXCLUDE_EMAILS } : {}),
+        },
+    };
     const [totalConversions, conversionsBySource, conversionsByDay, blogViews, blogReads] = await Promise.all([
-        Conversion.countDocuments(matchConversions),
-        Conversion.aggregate([
-            { $match: matchConversions },
-            { $group: { _id: "$source", count: { $sum: 1 } } },
+        DemoBooking.countDocuments(demoMatch),
+        DemoBooking.aggregate([
+            { $match: demoMatch },
+            { $group: { _id: "$status", count: { $sum: 1 } } },
             { $sort: { count: -1 } },
-            { $limit: 10 },
         ]),
-        Conversion.aggregate([
-            { $match: matchConversions },
-            { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$occurredAt" } }, count: { $sum: 1 } } },
+        DemoBooking.aggregate([
+            { $match: demoMatch },
+            { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, count: { $sum: 1 } } },
             { $sort: { _id: 1 } },
         ]),
 
