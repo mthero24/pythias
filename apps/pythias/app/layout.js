@@ -9,6 +9,7 @@ import GtagTracker from "@/componants/GtagTracker";
 import { PageTracker } from "@pythias/backend";
 import GaScripts from "@/componants/GaScripts";
 import TrackingPixels from "@/componants/TrackingPixels";
+import ChatWidget from "@/componants/ChatWidget";
 
 const urbanist = Urbanist({
   variable: "--font-urbanist",
@@ -136,6 +137,7 @@ export default function RootLayout({ children }) {
           <Navbar />
           {children}
           <Footer />
+          <ChatWidget />
         </ThemeProvider>
         <GaScripts />
         <TrackingPixels />
