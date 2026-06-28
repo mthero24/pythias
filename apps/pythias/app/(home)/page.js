@@ -4,6 +4,7 @@ import CloudsSection from "./CloudsSection";
 import SeoAuthoritySection from "./SeoAuthoritySection";
 import CommunitySection from "./CommunitySection";
 import OutcomesSection from "./OutcomesSection";
+import RoiCalculatorSection from "./RoiCalculatorSection";
 import HowItWorksSection from "./HowItWorksSection";
 import FeaturesSection from "./FeaturesSection";
 import FreeAnalysisSection from "./FreeAnalysisSection";
@@ -120,6 +121,7 @@ export default function Home() {
       <HomePopup />
       <HeroSection />
       <OutcomesSection />
+      <RoiCalculatorSection />
       <CloudsSection />
       <SeoAuthoritySection />
       <CommunitySection />
