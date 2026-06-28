@@ -71,8 +71,7 @@ function RegisterForm() {
 
     const [step, setStep]     = useState(1);
     const [form, setForm]     = useState({
-        orgName: "", slug: "", billingEmail: "", tier: initialTier,
-        firstName: "", lastName: "", email: "", password: "", confirm: "",
+        orgName: "", tier: initialTier, firstName: "", email: "", password: "",
     });
     const [error, setError]   = useState("");
     const [loading, setLoading] = useState(false);
@@ -82,14 +81,18 @@ function RegisterForm() {
 
     async function handleSubmit(e) {
         e.preventDefault();
-        if (form.password !== form.confirm) { setError("Passwords do not match"); return; }
         setLoading(true);
         setError("");
+        // Derive the workspace slug from the company name (+ a short suffix so it's always unique) and
+        // reuse the account email for billing — fewer fields = higher signup completion. Editable later.
+        const baseSlug = (form.orgName || form.email.split("@")[0] || "shop")
+            .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 32) || "shop";
+        const slug = `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`;
         try {
             const res = await fetch("/api/orgs", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...form, orgType: orgTypeValue, founder: isFounder }),
+                body: JSON.stringify({ ...form, slug, billingEmail: form.email, lastName: "", orgType: orgTypeValue, founder: isFounder }),
             });
             const data = await res.json().catch(() => ({}));
             if (!res.ok) { setError(data.error || "Registration failed"); setLoading(false); return; }
@@ -98,7 +101,7 @@ function RegisterForm() {
             // Google Ads "Sign-up" conversion WITH enhanced conversions — pass first-party data so the
             // gtag hashes it (SHA-256) client-side and improves match rate / attribution.
             try {
-                window.gtag?.("set", "user_data", { email: form.email, address: { first_name: form.firstName, last_name: form.lastName } });
+                window.gtag?.("set", "user_data", { email: form.email, address: { first_name: form.firstName } });
                 window.gtag?.("event", "conversion", { send_to: "AW-18171939038/_VNDCKOcnMUcEN6Rh9lD" });
             } catch {}
             // Microsoft Advertising (Bing) — custom event a UET conversion goal can target.
@@ -247,45 +250,17 @@ function RegisterForm() {
                                     </>
                                 )}
 
-                                {/* ── Step 2: Org details ── */}
+                                {/* ── Step 2: Account (company + you — trimmed to the essentials) ── */}
                                 {step === 2 && (
                                     <>
-                                        <Typography variant="subtitle2" color="text.secondary">Organization details</Typography>
-                                        <TextField label="Company name" value={form.orgName} onChange={set("orgName")} required fullWidth size="small" />
-                                        <TextField
-                                            label="URL slug"
-                                            value={form.slug}
-                                            onChange={set("slug")}
-                                            required fullWidth size="small"
-                                            helperText="Letters, numbers, and hyphens only"
-                                            inputProps={{ pattern: "[a-z0-9-]+" }}
-                                        />
-                                        <TextField label="Billing email" type="email" value={form.billingEmail} onChange={set("billingEmail")} required fullWidth size="small" />
-                                        <Stack direction="row" spacing={1}>
-                                            <Button variant="outlined" onClick={() => setStep(1)} fullWidth>Back</Button>
-                                            <Button variant="contained" onClick={() => setStep(3)} fullWidth
-                                                sx={accentBtnSx}>
-                                                Continue
-                                            </Button>
-                                        </Stack>
-                                    </>
-                                )}
-
-                                {/* ── Step 3: Account ── */}
-                                {step === 3 && (
-                                    <>
-                                        <Typography variant="subtitle2" color="text.secondary">Your account</Typography>
-                                        <Stack direction="row" spacing={1}>
-                                            <TextField label="First name" value={form.firstName} onChange={set("firstName")} required fullWidth size="small" />
-                                            <TextField label="Last name"  value={form.lastName}  onChange={set("lastName")}  required fullWidth size="small" />
-                                        </Stack>
-                                        <TextField label="Email"            type="email"    value={form.email}    onChange={set("email")}    required fullWidth size="small" />
+                                        <Typography variant="subtitle2" color="text.secondary">Create your account</Typography>
+                                        <TextField label="Company name" value={form.orgName} onChange={set("orgName")} required fullWidth size="small" autoFocus />
+                                        <TextField label="Your first name" value={form.firstName} onChange={set("firstName")} required fullWidth size="small" />
+                                        <TextField label="Email" type="email" value={form.email} onChange={set("email")} required fullWidth size="small" />
                                         <TextField label="Password" type={showPassword ? "text" : "password"} value={form.password} onChange={set("password")} required fullWidth size="small"
                                             InputProps={revealAdornment(showPassword, () => setShowPassword(s => !s))} />
-                                        <TextField label="Confirm password" type={showPassword ? "text" : "password"} value={form.confirm} onChange={set("confirm")} required fullWidth size="small"
-                                            InputProps={revealAdornment(showPassword, () => setShowPassword(s => !s))} />
                                         <Stack direction="row" spacing={1}>
-                                            <Button variant="outlined" onClick={() => setStep(2)} fullWidth>Back</Button>
+                                            <Button variant="outlined" onClick={() => setStep(1)} fullWidth>Back</Button>
                                             <Button type="submit" variant="contained" fullWidth disabled={loading}
                                                 sx={accentBtnSx}>
                                                 {loading ? "Creating account..." : isStorefront ? "Launch my store" : isCommerce ? "Start selling" : "Start free trial"}

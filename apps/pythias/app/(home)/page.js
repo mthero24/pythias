@@ -6,6 +6,7 @@ import CommunitySection from "./CommunitySection";
 import OutcomesSection from "./OutcomesSection";
 import HowItWorksSection from "./HowItWorksSection";
 import FeaturesSection from "./FeaturesSection";
+import FreeAnalysisSection from "./FreeAnalysisSection";
 import TestimonialsSection from "./TestimonialsSection";
 import LeadCaptureSection from "./LeadCaptureSection";
 import PodcastSection from "./PodcastSection";
@@ -124,6 +125,7 @@ export default function Home() {
       <CommunitySection />
       <HowItWorksSection />
       <FeaturesSection />
+      <FreeAnalysisSection />
       <TestimonialsSection />
       <PodcastSection />
       <LeadCaptureSection />
