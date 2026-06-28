@@ -4,6 +4,7 @@ import { Article } from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
 import { generateArticle } from "@pythias/backend";
 import { PYTHIAS_BRAND } from "@/lib/pythiasBrand";
+import { generateArticleImage } from "@/lib/articleImage";
 
 export async function POST(req) {
     const token = await getToken({ req });
@@ -24,6 +25,9 @@ export async function POST(req) {
     let n = 1;
     while (await Article.findOne({ slug })) slug = `${generated.slug}-${++n}`;
 
+    // Branded AI cover image relating to the topic (fail-soft — null if Gemini key/render unavailable).
+    const coverImage = await generateArticleImage({ topic: generated.title || topic.trim() }).catch(() => null);
+
     const doc = await Article.create({
         title: generated.title,
         slug,
@@ -33,6 +37,7 @@ export async function POST(req) {
         tags: generated.tags,
         author: generated.author,
         faqJsonLd: generated.faqJsonLd,
+        coverImage: coverImage || "",
         published: Boolean(publish), // default false — created as a draft for review
         ...(publish ? { publishedAt: new Date() } : {}),
     });
