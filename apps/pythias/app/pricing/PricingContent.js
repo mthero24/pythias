@@ -337,11 +337,13 @@ export default function PricingContent() {
                     </div>
 
                     <h1 className={s.h1}>
-                        Simple, transparent pricing.<br />
-                        <span className={s.accent}>No per-order fees.</span>
+                        Flat monthly plans.<br />
+                        <span className={s.accent}>No per-order fees, ever.</span>
                     </h1>
                     <p className={s.heroSub}>
-                        One flat monthly rate. Choose the product that fits your business model.
+                        You pay one predictable monthly rate — never a cut of every sale or a fee on every order.
+                        Plan limits keep pricing predictable; go past your included usage and extra orders bill at a
+                        small, transparent rate (or just upgrade). Choose the product that fits your business model.
                     </p>
 
                     {/* Toggle */}
@@ -435,9 +437,9 @@ export default function PricingContent() {
 
                             {/* Overage table */}
                             <div className={s.sectionDark} style={{ borderRadius: 20, marginTop: 48, padding: "32px 36px" }}>
-                                <p className={s.sectionTag} style={{ marginBottom: 6 }}>Overage Rates</p>
+                                <p className={s.sectionTag} style={{ marginBottom: 6 }}>If you go over your plan</p>
                                 <p className={s.sectionSubLight} style={{ marginBottom: 24, textAlign: "left", maxWidth: "none" }}>
-                                    Usage beyond your plan limits is billed at these rates. Scale and Enterprise have no overages.
+                                    These aren&apos;t per-order fees — your plan is a flat monthly rate. They only apply if you exceed your plan&apos;s included usage, and you can always upgrade instead. Scale and Enterprise have no overages.
                                 </p>
                                 <div className={s.tableWrap}>
                                     <table className={s.table}>

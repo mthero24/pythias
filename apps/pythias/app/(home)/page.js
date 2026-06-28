@@ -1,5 +1,6 @@
 import dynamic from "next/dynamic";
 import HeroSection from "./HeroSection";
+import BusinessPathSection from "./BusinessPathSection";
 import CloudsSection from "./CloudsSection";
 import SeoAuthoritySection from "./SeoAuthoritySection";
 import CommunitySection from "./CommunitySection";
@@ -16,52 +17,6 @@ import FinalCTASection from "./FinalCTASection";
 import HomePopup from "./HomePopup";
 
 const CalendarBookingSection = dynamic(() => import("./CalendarBookingSection"));
-
-const reviewSchema = {
-  "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  name: "Pythias Technologies",
-  applicationCategory: "BusinessApplication",
-  operatingSystem: "Web",
-  url: "https://pythiastechnologies.com",
-  aggregateRating: {
-    "@type": "AggregateRating",
-    ratingValue: 5,
-    bestRating: 5,
-    worstRating: 1,
-    ratingCount: 4,
-  },
-  review: [
-    {
-      "@type": "Review",
-      author: { "@type": "Person", name: "Mason Katty" },
-      reviewRating: { "@type": "Rating", ratingValue: 5, bestRating: 5, worstRating: 1 },
-      reviewBody: "Pythias Technologies cut our shipping time by 40% and eliminated manual order processing. Our team can now focus on growing the business instead of managing chaos.",
-      name: "40% faster shipping",
-    },
-    {
-      "@type": "Review",
-      author: { "@type": "Person", name: "Mike Rodriguez" },
-      reviewRating: { "@type": "Rating", ratingValue: 5, bestRating: 5, worstRating: 1 },
-      reviewBody: "The Brother GTX integration was seamless. We went from manual job tracking to fully automated production in just one week. Game changer for our POD business.",
-      name: "Automated 100% of production",
-    },
-    {
-      "@type": "Review",
-      author: { "@type": "Person", name: "Emily Chen" },
-      reviewRating: { "@type": "Rating", ratingValue: 5, bestRating: 5, worstRating: 1 },
-      reviewBody: "Managing orders from Etsy, Amazon, and Walmart used to be a nightmare. Now everything flows automatically through one system. Revenue up 60% in 3 months.",
-      name: "60% revenue increase in 3 months",
-    },
-    {
-      "@type": "Review",
-      author: { "@type": "Person", name: "David Thompson" },
-      reviewRating: { "@type": "Rating", ratingValue: 5, bestRating: 5, worstRating: 1 },
-      reviewBody: "The inventory management alone saved us thousands in overstock and stockouts. Real-time tracking across all our products has transformed our operations.",
-      name: "Eliminated stockouts",
-    },
-  ],
-};
 
 const faqSchema = {
   "@context": "https://schema.org",
@@ -116,10 +71,10 @@ export const metadata = {
 export default function Home() {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(reviewSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <HomePopup />
       <HeroSection />
+      <BusinessPathSection />
       <OutcomesSection />
       <RoiCalculatorSection />
       <CloudsSection />

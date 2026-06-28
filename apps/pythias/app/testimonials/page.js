@@ -18,14 +18,6 @@ const schema = {
     "@type": "Organization",
     "name": "Pythias Technologies",
     "url": "https://pythiastechnologies.com",
-    "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "5",
-        "bestRating": "5",
-        "worstRating": "1",
-        "ratingCount": "50",
-        "reviewCount": "50",
-    },
 };
 
 export default function TestimonialsPage() {
@@ -54,20 +46,20 @@ export default function TestimonialsPage() {
                 <div className={s.wrap}>
                     <div className={s.statsGrid}>
                         <div className={s.stat}>
-                            <p className={s.statGold}>40%</p>
-                            <p className={s.statLabel}>Average shipping time reduction</p>
+                            <p className={s.statGold}>18+</p>
+                            <p className={s.statLabel}>Marketplace integrations</p>
                         </div>
                         <div className={s.stat}>
-                            <p className={s.statGold}>60%</p>
-                            <p className={s.statLabel}>Average revenue increase in 3 months</p>
+                            <p className={s.statGold}>200+</p>
+                            <p className={s.statLabel}>Channels via Mirakl &amp; Acenda</p>
                         </div>
                         <div className={s.stat}>
-                            <p className={s.statGold}>100%</p>
-                            <p className={s.statLabel}>Production automation achieved</p>
+                            <p className={s.statGold}>$0</p>
+                            <p className={s.statLabel}>Per-order fees</p>
                         </div>
                         <div className={s.stat}>
                             <p className={s.statNum}>{"<"} 2 wks</p>
-                            <p className={s.statLabel}>Average onboarding time</p>
+                            <p className={s.statLabel}>Typical onboarding</p>
                         </div>
                     </div>
                 </div>
