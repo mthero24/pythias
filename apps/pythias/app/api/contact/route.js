@@ -4,7 +4,7 @@ import { sendEmail, sendInternalAlert, SEQUENCE, nextSendDate } from "@/lib/emai
 
 export async function POST(req) {
     try {
-        const { name, company, phone, email, message, source } = await req.json();
+        const { name, company, phone, email, message, source, partial } = await req.json();
         if (!name?.trim() || !email?.trim() || !message?.trim()) {
             return NextResponse.json({ success: false, error: "Name, email, and message are required." }, { status: 400 });
         }
@@ -24,27 +24,27 @@ export async function POST(req) {
         // Save contact message
         await ContactMessage.create({ name, company, phone, email, message, source: source || "contact_form" });
 
-        // Upsert lead sequence — don't restart if already in progress
-        const existing = await LeadSequence.findOne({ email: email.toLowerCase() });
-        if (!existing) {
-            await LeadSequence.create({
-                email: email.toLowerCase(),
-                name, company,
-                source: source || "contact_form",
-                step: 0,
-                nextSendAt: new Date(), // send step 0 immediately via cron
-            });
+        // Partial (e.g. abandoned signup): capture + alert Michael only — no nurture sequence and
+        // no "thanks for contacting" auto-reply (they're mid-signup, not reaching out).
+        if (!partial) {
+            const existing = await LeadSequence.findOne({ email: email.toLowerCase() });
+            if (!existing) {
+                await LeadSequence.create({
+                    email: email.toLowerCase(),
+                    name, company,
+                    source: source || "contact_form",
+                    step: 0,
+                    nextSendAt: new Date(), // send step 0 immediately via cron
+                });
+            }
         }
 
-        // Fire-and-forget: send immediate auto-reply + internal alert (don't block response)
-        Promise.all([
-            sendEmail({
-                to: email,
-                subject: SEQUENCE[0].subject,
-                html: SEQUENCE[0].html(name),
-            }),
-            sendInternalAlert({ name, email, company, message, source: "contact_form" }),
-        ]).catch(e => console.error("[contact email]", e.message));
+        // Fire-and-forget: internal alert always; visitor auto-reply only for real (non-partial) contacts.
+        const mails = [sendInternalAlert({ name, email, company, message, source: source || "contact_form" })];
+        if (!partial) {
+            mails.push(sendEmail({ to: email, subject: SEQUENCE[0].subject, html: SEQUENCE[0].html(name) }));
+        }
+        Promise.all(mails).catch(e => console.error("[contact email]", e.message));
 
         return NextResponse.json({ success: true });
     } catch (err) {

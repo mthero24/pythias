@@ -1,5 +1,5 @@
 "use client";
-import { useState, Suspense } from "react";
+import { useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Script from "next/script";
 import { Box, Card, CardContent, TextField, Button, Typography, Alert, Stack, Divider, Chip, IconButton, InputAdornment } from "@mui/material";
@@ -78,6 +78,19 @@ function RegisterForm() {
     const [showPassword, setShowPassword] = useState(false);
 
     const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
+
+    // Abandoned-signup capture: the first time a valid email is entered, fire it off (once) so a
+    // half-finished signup still becomes a lead Michael can follow up on.
+    const partialSent = useRef(false);
+    const firePartial = () => {
+        if (partialSent.current || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email.trim())) return;
+        partialSent.current = true;
+        fetch("/api/lead-partial", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: form.email.trim(), plan: form.tier, type: orgTypeValue }),
+        }).catch(() => {});
+    };
 
     async function handleSubmit(e) {
         e.preventDefault();
@@ -256,7 +269,7 @@ function RegisterForm() {
                                         <Typography variant="subtitle2" color="text.secondary">Create your account</Typography>
                                         <TextField label="Company name" value={form.orgName} onChange={set("orgName")} required fullWidth size="small" autoFocus />
                                         <TextField label="Your first name" value={form.firstName} onChange={set("firstName")} required fullWidth size="small" />
-                                        <TextField label="Email" type="email" value={form.email} onChange={set("email")} required fullWidth size="small" />
+                                        <TextField label="Email" type="email" value={form.email} onChange={set("email")} onBlur={firePartial} required fullWidth size="small" />
                                         <TextField label="Password" type={showPassword ? "text" : "password"} value={form.password} onChange={set("password")} required fullWidth size="small"
                                             InputProps={revealAdornment(showPassword, () => setShowPassword(s => !s))} />
                                         <Stack direction="row" spacing={1}>
