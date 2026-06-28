@@ -1,4 +1,5 @@
 import PricingContent from "./PricingContent";
+import FeeCalculatorSection from "./FeeCalculatorSection";
 
 export const metadata = {
     title: "Pricing — Pythias Technologies | No Per-Order Fees",
@@ -36,6 +37,7 @@ export default function PricingPage() {
         <>
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
             <PricingContent />
+            <FeeCalculatorSection />
         </>
     );
 }
