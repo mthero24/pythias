@@ -1,14 +1,19 @@
 // Branded cover-image generator for AI-written articles. Gemini 2.5 Flash Image renders a
 // topic-relevant editorial photo, then we composite the REAL Pythias logo (public/logo.png — gold
-// on transparent) over a dark bottom gradient with sharp, so the logo is pixel-perfect and always
-// legible (never a hallucinated/mangled logo). Saves to public/article-images and returns the path.
-// Fails soft everywhere: no GEMINI key or any error -> returns null and the article is just imageless.
+// on transparent) over a dark bottom gradient with sharp (pixel-perfect, always legible), and
+// store the result in Wasabi/CDN — served via images1.pythiastechnologies.com, NOT Next's public
+// folder (which doesn't reliably serve files written at runtime). Returns the public URL.
+// Fails soft everywhere: missing GEMINI/Wasabi creds or any error -> null, and the article is imageless.
 import fs from "fs/promises";
 import path from "path";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
-const GEMINI_MODEL = "gemini-2.5-flash-image";
+const GEMINI_MODEL  = "gemini-2.5-flash-image";
+const WASABI_BUCKET = "images1.pythiastechnologies.com";
 const geminiKey = () =>
     process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY || process.env.GOOGLE_GENAI_API_KEY || "";
+const wasabiReady = () =>
+    !!process.env.NEXT_PUBLIC_WASABI_KEY_ID && !!process.env.NEXT_PUBLIC_WASABI_SECRET;
 
 const PROMPT = (topic) =>
     `A clean, modern, professional editorial photograph representing: ${topic}. ` +
@@ -61,21 +66,28 @@ async function brand(buffer) {
     }
 }
 
+async function uploadWasabi(buffer) {
+    const s3 = new S3Client({
+        credentials: { accessKeyId: process.env.NEXT_PUBLIC_WASABI_KEY_ID, secretAccessKey: process.env.NEXT_PUBLIC_WASABI_SECRET },
+        region: "us-west-1",
+        endpoint: "https://s3.us-west-1.wasabisys.com/",
+    });
+    const key = `article-images/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.png`;
+    await s3.send(new PutObjectCommand({ Bucket: WASABI_BUCKET, Key: key, Body: buffer, ACL: "public-read", ContentType: "image/png" }));
+    return `https://${WASABI_BUCKET}/${key}`;
+}
+
 /**
  * Generate a branded cover image for an article topic.
- * @returns {Promise<string|null>} a public path like "/article-images/abc.png", or null on any failure.
+ * @returns {Promise<string|null>} a public CDN URL, or null on any failure.
  */
 export async function generateArticleImage({ topic } = {}) {
-    if (!topic || !geminiKey()) return null;
+    if (!topic || !geminiKey() || !wasabiReady()) return null;
     const raw = await renderGemini(PROMPT(topic));
     if (!raw) return null;
     const branded = await brand(raw);
     try {
-        const dir = path.join(process.cwd(), "public", "article-images");
-        await fs.mkdir(dir, { recursive: true });
-        const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.png`;
-        await fs.writeFile(path.join(dir, name), branded);
-        return `/article-images/${name}`;
+        return await uploadWasabi(branded);
     } catch {
         return null;
     }
