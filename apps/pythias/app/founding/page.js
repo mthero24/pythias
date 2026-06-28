@@ -4,7 +4,10 @@ import FounderConversionTracker from "@/componants/FounderConversionTracker";
 import FoundingInterestCapture from "@/componants/FoundingInterestCapture";
 import { FounderOrg } from "@/models/Org";
 
-export const dynamic = "force-dynamic";
+// ISR instead of force-dynamic: the founder count powers the "X of 10 left" badge but doesn't
+// need per-request freshness. Caching the render (revalidate every 60s) drops TTFB from ~2s to
+// near-instant — the DB count query runs once a minute instead of on every visit.
+export const revalidate = 60;
 
 const FOUNDER_SLOTS = 10;
 const EARLY_SLOTS = 50; // early-bird covers slots 11–60
