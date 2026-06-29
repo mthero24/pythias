@@ -59,6 +59,7 @@ const FEATURES = [
     { icon: "💳", title: "Pre-Funded Wallet", desc: "Fund your wallet, set auto-recharge thresholds. Wholesale costs are deducted automatically at order placement — no invoice chasing." },
     { icon: "📊", title: "Analytics & Reports", desc: "Track revenue, margin, channel performance, and fulfillment metrics across all your stores from a single dashboard." },
     { icon: "🔁", title: "Automatic Tracking Updates", desc: "When a partner ships, tracking flows back through the platform and directly to your customer on every channel." },
+    { icon: "🧾", title: "Customer Invoicing", desc: "Email customers a secure pay link for custom or phone orders — or mark them paid for cash. Payment lands straight in your connected Stripe account and auto-deposits to your bank." },
 ];
 
 const TIERS = [

@@ -16,6 +16,8 @@ import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
+import PaidIcon from "@mui/icons-material/Paid";
 import axios from "axios";
 import { RetryImage } from "../reusable/RetryImage";
 import { CustomOrderBuilder } from "./CustomOrderBuilder";
@@ -60,14 +62,15 @@ function CreateOrderModal({ open, onClose, onCreated }) {
 
     // ── Order info ──────────────────────────────────────────────────────────────
     const [po, setPo]               = useState("");
-    const [market, setMkt]          = useState("");
+    const [email, setEmail]         = useState("");
+    const [payment, setPayment]     = useState("invoice"); // "invoice" → email a pay link · "paid" → already collected
     const [addr, setAddr]           = useState({ name: "", phone: "", address1: "", address2: "", city: "", state: "", zip: "", country: "US" });
     const [inStorePickup, setInStorePickup] = useState(false);
     const [saving, setSaving]       = useState(false);
     const [saveErr, setSaveErr]     = useState("");
 
     const resetLookup = () => { setSku(""); setProduct(null); setLookupErr(""); setSelColor(null); setSelSizeId(null); setQty(1); };
-    const handleClose = () => { resetLookup(); setCartItems([]); setPo(""); setMkt(""); setAddr({ name: "", phone: "", address1: "", address2: "", city: "", state: "", zip: "", country: "US" }); setInStorePickup(false); setSaving(false); setSaveErr(""); onClose(); };
+    const handleClose = () => { resetLookup(); setCartItems([]); setPo(""); setEmail(""); setPayment("invoice"); setAddr({ name: "", phone: "", address1: "", address2: "", city: "", state: "", zip: "", country: "US" }); setInStorePickup(false); setSaving(false); setSaveErr(""); onClose(); };
 
     // ── Lookup ──────────────────────────────────────────────────────────────────
     const lookupSku = useCallback(async () => {
@@ -141,10 +144,13 @@ function CreateOrderModal({ open, onClose, onCreated }) {
 
     const addrChange = (field) => (e) => setAddr(p => ({ ...p, [field]: e.target.value }));
 
+    const subtotal = cartItems.reduce((s, i) => s + (Number(i.price) || 0) * (i.qty ?? 1), 0);
+
     // ── Submit ──────────────────────────────────────────────────────────────────
     const submit = async () => {
         if (cartItems.length === 0) { setSaveErr("Add at least one item"); return; }
-        if (!po.trim()) { setSaveErr("PO number is required"); return; }
+        if (!po.trim()) { setSaveErr("PO / order number is required"); return; }
+        if (payment === "invoice" && !email.trim()) { setSaveErr("A customer email is required to send an invoice"); return; }
         if (!inStorePickup && (!addr.name || !addr.address1 || !addr.city || !addr.country)) {
             setSaveErr("Name, address, city, and country are required"); return;
         }
@@ -153,12 +159,25 @@ function CreateOrderModal({ open, onClose, onCreated }) {
         try {
             const res = await axios.post("/api/orders/create", {
                 items:           cartItems,
-                marketplace:     market.trim() || "Manual",
                 poNumber:        po.trim(),
                 shippingAddress: addr,
                 inStorePickup,
+                customerEmail:   email.trim(),
+                paid:            payment === "paid",
             });
-            onCreated?.(res.data.orderId);
+            const newId = res.data.orderId;
+            // Invoice path: email the payable pay link right away (best-effort — if payouts aren't
+            // set up yet it fails softly and the rep can resend from the order page).
+            if (payment === "invoice" && email.trim()) {
+                try {
+                    await axios.post("/api/admin/custom-order/invoice/pay", { orderId: newId, email: email.trim() });
+                } catch (e) {
+                    setSaveErr(`Order created, but the invoice didn't send: ${e.response?.data?.error ?? "error"}. Send it from the order page.`);
+                    setTimeout(() => { onCreated?.(newId); handleClose(); }, 2800);
+                    return;
+                }
+            }
+            onCreated?.(newId);
             handleClose();
         } catch (e) {
             setSaveErr(e.response?.data?.error ?? "Failed to create order");
@@ -365,17 +384,44 @@ function CreateOrderModal({ open, onClose, onCreated }) {
                                     </Box>
                                 ))}
                             </Stack>
+                            <Stack direction="row" justifyContent="flex-end" sx={{ mt: 1, pt: 1, borderTop: "1px dashed #e2e8f0" }}>
+                                <Typography variant="body2" sx={{ fontWeight: 700 }}>Subtotal&nbsp;&nbsp;${subtotal.toFixed(2)}</Typography>
+                            </Stack>
                         </Box>
                     )}
 
-                    {/* ── Order info ── */}
+                    {/* ── Order reference ── */}
                     <Box>
                         <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 0.5, display: "block", mb: 0.75 }}>
-                            Order Info
+                            Order Reference
                         </Typography>
-                        <Stack direction="row" spacing={1.5}>
-                            <TextField {...fs} fullWidth label="PO Number" value={po} onChange={e => setPo(e.target.value)} required />
-                            <TextField {...fs} fullWidth label="Marketplace" value={market} onChange={e => setMkt(e.target.value)} placeholder="e.g. Amazon, Manual" />
+                        <TextField {...fs} fullWidth label="PO / Order Number" value={po} onChange={e => setPo(e.target.value)} required />
+                    </Box>
+
+                    {/* ── Payment ── */}
+                    <Box>
+                        <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 0.5, display: "block", mb: 0.75 }}>
+                            Payment
+                        </Typography>
+                        <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                            {[
+                                { key: "invoice", title: "Send an invoice", sub: "Email the customer a secure pay link", icon: <ReceiptLongIcon sx={{ fontSize: 18 }} /> },
+                                { key: "paid",    title: "Paid in person",   sub: "Cash or card — already collected",   icon: <PaidIcon sx={{ fontSize: 18 }} /> },
+                            ].map(opt => {
+                                const on = payment === opt.key;
+                                return (
+                                    <Box key={opt.key} onClick={() => setPayment(opt.key)}
+                                        sx={{ flex: 1, p: 1.25, borderRadius: 1.5, cursor: "pointer", transition: "all 120ms",
+                                            border: on ? "2px solid #6366f1" : "1px solid #e2e8f0",
+                                            bgcolor: on ? "rgba(99,102,241,0.06)" : "#fff" }}>
+                                        <Stack direction="row" alignItems="center" spacing={0.75}>
+                                            <Box sx={{ color: on ? "#6366f1" : "text.secondary", display: "flex" }}>{opt.icon}</Box>
+                                            <Typography variant="body2" fontWeight={700}>{opt.title}</Typography>
+                                        </Stack>
+                                        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.25 }}>{opt.sub}</Typography>
+                                    </Box>
+                                );
+                            })}
                         </Stack>
                     </Box>
 
@@ -390,13 +436,16 @@ function CreateOrderModal({ open, onClose, onCreated }) {
                     {/* ── Shipping address ── */}
                     <Box>
                         <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 0.5, display: "block", mb: 0.75 }}>
-                            {inStorePickup ? "Customer Name" : "Shipping Address"}
+                            {inStorePickup ? "Customer & Pickup" : "Customer & Shipping"}
                         </Typography>
                         <Stack spacing={1.25}>
                             <Stack direction="row" spacing={1.5}>
                                 <TextField {...fs} fullWidth label="Full Name" value={addr.name} onChange={addrChange("name")} required />
                                 <TextField {...fs} fullWidth label="Phone" value={addr.phone} onChange={addrChange("phone")} />
                             </Stack>
+                            <TextField {...fs} fullWidth type="email"
+                                label={payment === "invoice" ? "Customer Email (for the invoice)" : "Customer Email (optional)"}
+                                value={email} onChange={e => setEmail(e.target.value)} required={payment === "invoice"} />
                             {!inStorePickup && (
                                 <>
                                     <TextField {...fs} fullWidth label="Address Line 1" value={addr.address1} onChange={addrChange("address1")} required />
@@ -442,14 +491,11 @@ function CreateOrderModal({ open, onClose, onCreated }) {
                 <Button onClick={handleClose} disabled={saving}>Cancel</Button>
                 <Button
                     variant="contained" onClick={submit}
-                    disabled={saving || cartItems.length === 0 || !po.trim() || !addr.name || (!inStorePickup && (!addr.address1 || !addr.city))}
-                    startIcon={saving ? <CircularProgress size={14} color="inherit" /> : null}
+                    disabled={saving || cartItems.length === 0 || !po.trim() || !addr.name || (payment === "invoice" && !email.trim()) || (!inStorePickup && (!addr.address1 || !addr.city))}
+                    startIcon={saving ? <CircularProgress size={14} color="inherit" /> : (payment === "invoice" ? <ReceiptLongIcon sx={{ fontSize: 16 }} /> : <PaidIcon sx={{ fontSize: 16 }} />)}
                     sx={{ background: "linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)" }}
                 >
-                    {(() => {
-                        const units = cartItems.reduce((s, i) => s + (i.qty ?? 1), 0);
-                        return `Create Order${units > 0 ? ` (${units} item${units !== 1 ? "s" : ""})` : ""}`;
-                    })()}
+                    {saving ? "Working…" : payment === "invoice" ? "Create & Send Invoice" : "Create Order"}
                 </Button>
             </DialogActions>
         </Dialog>

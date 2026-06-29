@@ -40,7 +40,7 @@ export async function POST(request) {
         if (!orderId) return NextResponse.json({ error: "orderId is required" }, { status: 400 });
 
         const [order, org] = await Promise.all([
-            Order.findOne({ _id: orderId, marketplace: { $in: ["custom order", "custom"] } }),
+            Order.findOne({ _id: orderId }),   // custom orders + customer-service orders
             Organization.findOne({ slug: process.env.PREMIER_ORG_SLUG || "premier-printing" }).select("name storefrontConnect").lean(),
         ]);
         if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });

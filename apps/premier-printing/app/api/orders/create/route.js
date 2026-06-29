@@ -44,7 +44,12 @@ export async function POST(req) {
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const { items, marketplace, poNumber, shippingAddress, inStorePickup } = body;
+    const { items, marketplace, poNumber, shippingAddress, inStorePickup, customerEmail } = body;
+    // Orders from the new-order modal are "customer service" orders. They can be created already
+    // paid (cash/card in person) or unpaid — in which case the rep sends a payable invoice or marks
+    // them paid later. Unpaid orders wait at custom_pending until paid (then awaiting_shipment).
+    const isPaid      = body.paid ?? true;
+    const orderStatus = isPaid ? "awaiting_shipment" : "custom_pending";
 
     if (!Array.isArray(items) || !items.length) {
         return NextResponse.json({ error: "items array is required" }, { status: 400 });
@@ -60,9 +65,10 @@ export async function POST(req) {
     const order = await new Order({
         orderId,
         poNumber,
-        status:        "awaiting_shipment",
+        status:        orderStatus,
         shippingType:  inStorePickup ? "In-Store Pickup" : "Standard",
-        marketplace:   marketplace?.trim() || "Manual",
+        marketplace:   marketplace?.trim() || "customer service",
+        customerEmail: customerEmail?.trim() || "",
         inStorePickup: !!inStorePickup,
         shippingAddress: {
             name:     shippingAddress.name.trim(),
@@ -106,8 +112,8 @@ export async function POST(req) {
                 poNumber,
                 shippingType: inStorePickup ? "In-Store Pickup" : "Standard",
                 quantity:     "1",
-                status:       "awaiting_shipment",
-                paid:         true,
+                status:       orderStatus,
+                paid:         isPaid,
                 isBlank:      false,
                 price:        price ?? 0,
                 date:         now,

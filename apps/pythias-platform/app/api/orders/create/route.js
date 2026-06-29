@@ -24,7 +24,12 @@ export async function POST(req) {
     const orgId = session?.user?.orgId;
 
     const body = await req.json();
-    const { items, marketplace, poNumber, shippingAddress } = body;
+    const { items, marketplace, poNumber, shippingAddress, customerEmail, inStorePickup } = body;
+    // Orders from the new-order modal are "customer service" orders. They can be created already
+    // paid (cash/card in person) or unpaid — in which case the rep sends a payable invoice or marks
+    // them paid later. Unpaid orders wait at custom_pending until paid (then awaiting_shipment).
+    const isPaid      = body.paid ?? true;
+    const orderStatus = isPaid ? "awaiting_shipment" : "custom_pending";
 
     if (!Array.isArray(items) || !items.length) {
         return NextResponse.json({ error: "items array is required" }, { status: 400 });
@@ -41,9 +46,11 @@ export async function POST(req) {
         orgId,
         orderId,
         poNumber,
-        status:       "awaiting_shipment",
-        shippingType: "Standard",
-        marketplace:  marketplace?.trim() || "Manual",
+        status:        orderStatus,
+        shippingType:  "Standard",
+        marketplace:   marketplace?.trim() || "customer service",
+        customerEmail: customerEmail?.trim() || "",
+        inStorePickup: !!inStorePickup,
         shippingAddress: {
             name:     shippingAddress.name.trim(),
             phone:    shippingAddress.phone?.trim() ?? "",
@@ -57,7 +64,7 @@ export async function POST(req) {
         items: [],
         date:  now,
         new:   true,
-        paid:  true,
+        paid:  isPaid,
     }).save();
 
     const savedItems = (await Promise.all(items.map(async (cartItem) => {
@@ -87,8 +94,8 @@ export async function POST(req) {
                 poNumber,
                 shippingType: "Standard",
                 quantity:     "1",
-                status:       "awaiting_shipment",
-                paid:         true,
+                status:       orderStatus,
+                paid:         isPaid,
                 isBlank:      false,
                 price:        price ?? 0,
                 date:         now,
@@ -103,8 +110,9 @@ export async function POST(req) {
     order.total = total;
     await order.save();
 
-    // For Commerce Cloud orgs, route the order to a fulfillment provider immediately
-    if (session.user.orgType === "commerce") {
+    // For Commerce Cloud orgs, route the order to a fulfillment provider immediately — but only
+    // once it's paid (unpaid customer-service orders route when the invoice/cash is collected).
+    if (isPaid && session.user.orgType === "commerce") {
         const org = await Organization.findById(orgId, "orgType wallet _id").lean();
         if (org?.orgType === "commerce") {
             const result = await routeOrder(order, savedItems, org);

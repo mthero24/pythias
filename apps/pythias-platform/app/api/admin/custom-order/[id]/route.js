@@ -18,7 +18,9 @@ export async function PATCH(request, { params }) {
     const orgId = token?.orgId;
     const data  = await request.json();
 
-    const order = await Order.findOne({ _id: params.id, orgId, marketplace: "custom order" });
+    // Any of the org's orders can be marked paid here — custom orders and "customer service"
+    // orders from the new-order modal both flow through this PATCH.
+    const order = await Order.findOne({ _id: params.id, orgId });
     if (!order) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
     if (data.poNumber        !== undefined) order.poNumber        = data.poNumber;

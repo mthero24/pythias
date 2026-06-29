@@ -297,12 +297,12 @@ export function Main({ ord, blanks, source, base = "" }) {
                         )}
                     </Stack>
                     <Stack direction="row" spacing={1}>
-                        {order.marketplace === "custom order" && !order.paid && !order.canceled && (
+                        {!order.paid && !order.canceled && (
                             <Button size="small" variant="outlined" color="success" startIcon={<ReceiptLongIcon />} onClick={sendInvoice} disabled={sendingInvoice} sx={{ fontSize: "0.75rem" }}>
                                 {sendingInvoice ? "Sending…" : "Send Invoice"}
                             </Button>
                         )}
-                        {order.marketplace === "custom order" && !order.paid && !order.canceled && (
+                        {!order.paid && !order.canceled && (
                             <Button size="small" variant="contained" color="success" startIcon={<PaidIcon />} onClick={markPaid} disabled={markingPaid} sx={{ fontSize: "0.75rem" }}>
                                 {markingPaid ? "Marking…" : "Mark Paid"}
                             </Button>

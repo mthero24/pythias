@@ -91,6 +91,12 @@ const FEATURES = [
         color: "#14b8a6",
         desc: "Daily output reports, line efficiency, revenue by channel, and custom date-range exports. Know exactly how many units your team produced, how long each job took, and which channels drive the most margin.",
     },
+    {
+        icon: "🧾",
+        title: "Customer Invoicing",
+        color: "#0ea5e9",
+        desc: "Email customers a secure pay link for custom or phone orders — or mark them paid for cash. Payment lands straight in your connected Stripe account and auto-deposits to your bank.",
+    },
 ];
 
 const BEFORE_AFTER = [
@@ -387,7 +393,7 @@ export default async function FulfillmentCloudPage() {
                 <div className={s.wrap} style={{ position: "relative" }}>
                     <div className={s.head}>
                         <p className={s.sectionTag}>What&apos;s Included</p>
-                        <h2 className={s.h2Light}>Eight products. One platform. One price.</h2>
+                        <h2 className={s.h2Light}>Nine products. One platform. One price.</h2>
                         <p className={s.sectionSubLight}>Every Fulfillment Cloud plan includes the full product suite — no add-on fees for individual modules.</p>
                     </div>
                     <ul className={s.featureGrid} style={{ listStyle: "none", padding: 0, margin: 0 }}>
