@@ -63,12 +63,16 @@ const SectionCard = ({ icon, title, subtitle, children, action }) => (
     </Card>
 );
 
+// Custom items legitimately don't have color/size/blank references (they carry free-text
+// colorName/sizeName instead), so a custom item is never "missing info."
 const isItemMissing = (i) =>
-    (i.design == undefined && !i.isBlank) ||
-    (Object.keys(i.design ?? {}).length === 0 && !i.isBlank) ||
-    i.size == undefined ||
-    i.color == undefined ||
-    (i.blank == undefined && i.styleV2 == undefined);
+    !i.custom && (
+        (i.design == undefined && !i.isBlank) ||
+        (Object.keys(i.design ?? {}).length === 0 && !i.isBlank) ||
+        i.size == undefined ||
+        i.color == undefined ||
+        (i.blank == undefined && i.styleV2 == undefined)
+    );
 
 export function Main({ ord, blanks, source, base = "" }) {
     const [order, setOrder] = useState(ord);
