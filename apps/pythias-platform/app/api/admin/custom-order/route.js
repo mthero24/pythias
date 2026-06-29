@@ -43,7 +43,7 @@ export async function GET(request) {
     const skip  = parseInt(searchParams.get("skip") || "0");
     const limit = 25;
 
-    const filter = { orgId, marketplace: "custom" };
+    const filter = { orgId, marketplace: { $in: ["custom order", "custom"] } };
     if (q) {
         filter.$or = [
             { poNumber:              { $regex: q, $options: "i" } },
