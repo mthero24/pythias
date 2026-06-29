@@ -139,6 +139,8 @@ const schema = new mongoose.Schema(
     discount: { type: Number, default: 0 },
     discountName: { type: String },
     custom:  { type: Boolean, default: false },
+    // Bring Your Own Blanks: customer supplied the garment — don't pull/source a blank; price is print-only.
+    byob:    { type: Boolean, default: false },
     // Cart gift add-on items (gift bag, gift message, branded packaging) — their own line so the floor
     // handles them; no blank/design, so routing leaves them in-house.
     addOn:       { type: Boolean, default: false },

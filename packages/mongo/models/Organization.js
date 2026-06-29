@@ -39,6 +39,11 @@ const schema = new mongoose.Schema({
         status:      { type: String, enum: ["none", "pending", "active"], default: "none" },
         onboardedAt: { type: Date },
     },
+    // Bring Your Own Blanks pricing: when a quote/order line is BYOB (customer supplies the
+    // garment), the line price auto-fills with the print-only rate for its print type, falling
+    // back to byobDefaultRate.
+    byobDefaultRate: { type: Number, default: 0 },
+    byobRatesByType: [{ printType: { type: String }, rate: { type: Number } }],
     // snapshot of current limits — set from TIERS on tier change
     limits: {
         ordersPerMonth: { type: Number, default: 500 },

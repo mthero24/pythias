@@ -51,6 +51,7 @@ async function convertQuoteToOrder(quote, orgId) {
                 status:    "awaiting_shipment",
                 paid:      true,
                 custom:    true,
+                byob:      !!l.byob,
                 order:     order._id,
                 poNumber:  quote.quoteId,
                 name:      l.title || "",

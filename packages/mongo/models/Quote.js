@@ -25,6 +25,9 @@ const lineSchema = new mongoose.Schema({
     quantity:  { type: Number, default: 1 },
     unitPrice: { type: Number, default: 0 },
     setupFee:  { type: Number, default: 0 },
+    // Bring Your Own Blanks: customer supplies the garment, so production doesn't pull/source a
+    // blank and the price is the print-only (BYOB) rate.
+    byob:      { type: Boolean, default: false },
     notes:     { type: String },
 });
 

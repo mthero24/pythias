@@ -4,6 +4,7 @@ import {
     Box, Container, Stack, Typography, Button, Chip, Card, IconButton, TextField,
     Dialog, DialogTitle, DialogContent, DialogActions, InputAdornment, MenuItem,
     Select, FormControl, InputLabel, CircularProgress, Divider, Tooltip,
+    Checkbox, FormControlLabel,
 } from "@mui/material";
 import RequestQuoteIcon from "@mui/icons-material/RequestQuote";
 import AddIcon from "@mui/icons-material/Add";
@@ -25,7 +26,7 @@ const STATUS = {
 const STATUS_FILTERS = ["all", "requested", "draft", "sent", "approved", "converted"];
 const money = (n) => `$${(Number(n) || 0).toFixed(2)}`;
 
-const emptyLine = () => ({ id: Date.now() + Math.random(), title: "", sku: "", quantity: 1, unitPrice: 0, setupFee: 0, notes: "" });
+const emptyLine = () => ({ id: Date.now() + Math.random(), title: "", sku: "", quantity: 1, unitPrice: 0, setupFee: 0, byob: false, notes: "" });
 const emptyQuote = () => ({
     customer: { name: "", email: "", phone: "", company: "" },
     lines: [emptyLine()],
@@ -41,7 +42,7 @@ function toEditor(q) {
         lines: (q.lines?.length ? q.lines : [emptyLine()]).map((l, i) => ({
             id: l._id || i, title: l.title || "", sku: l.sku || "",
             quantity: l.quantity || 1, unitPrice: l.unitPrice || 0, setupFee: l.setupFee || 0,
-            notes: l.notes || "", _keep: l,   // preserve design/personalization on round-trip
+            byob: !!l.byob, notes: l.notes || "", _keep: l,   // preserve design/personalization on round-trip
         })),
         discountAmount: q.discountAmount || 0, discountName: q.discountName || "",
         shippingCost: q.shippingCost || 0, taxRatePct: (q.taxRate || 0) * 100,
@@ -55,6 +56,8 @@ export default function QuotesClient({ base = "" }) {
     const [search, setSearch]   = useState("");
     const [status, setStatus]   = useState("all");
     const [editing, setEditing] = useState(null);   // editor quote state, or null
+    const [byobRates, setByobRates] = useState({ byobDefaultRate: 0, byobRatesByType: [] });
+    const [ratesOpen, setRatesOpen] = useState(false);
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -66,6 +69,7 @@ export default function QuotesClient({ base = "" }) {
     }, [status, search]);
 
     useEffect(() => { load(); }, [status]);   // eslint-disable-line react-hooks/exhaustive-deps
+    useEffect(() => { axios.get("/api/byob-rates").then((r) => setByobRates(r.data)).catch(() => {}); }, []);
 
     return (
         <Box sx={{ width: "100%" }}>
@@ -80,10 +84,13 @@ export default function QuotesClient({ base = "" }) {
                             <Typography variant="body2" color="text.secondary">Build, price, and send customer quotes</Typography>
                         </Box>
                     </Stack>
-                    <Button variant="contained" startIcon={<AddIcon />} onClick={() => setEditing(emptyQuote())}
-                        sx={{ background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)", borderRadius: 1.5, fontWeight: 600 }}>
-                        New Quote
-                    </Button>
+                    <Stack direction="row" spacing={1}>
+                        <Button variant="outlined" onClick={() => setRatesOpen(true)} sx={{ borderRadius: 1.5, fontWeight: 600 }}>BYOB Rates</Button>
+                        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setEditing(emptyQuote())}
+                            sx={{ background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)", borderRadius: 1.5, fontWeight: 600 }}>
+                            New Quote
+                        </Button>
+                    </Stack>
                 </Box>
             </Box>
 
@@ -139,13 +146,61 @@ export default function QuotesClient({ base = "" }) {
                 )}
             </Container>
 
-            {editing && <QuoteEditor quote={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />}
+            {editing && <QuoteEditor quote={editing} byobRates={byobRates} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />}
+            {ratesOpen && <ByobRatesDialog rates={byobRates} onClose={() => setRatesOpen(false)} onSaved={(r) => { setByobRates(r); setRatesOpen(false); }} />}
         </Box>
     );
 }
 
+// ── BYOB rates config ─────────────────────────────────────────────────────────────
+function ByobRatesDialog({ rates, onClose, onSaved }) {
+    const [def, setDef]   = useState(rates.byobDefaultRate || 0);
+    const [rows, setRows] = useState((rates.byobRatesByType || []).map((r, i) => ({ id: i, printType: r.printType, rate: r.rate })));
+    const [saving, setSaving] = useState(false);
+
+    const addRow = () => setRows((p) => [...p, { id: Date.now() + Math.random(), printType: "", rate: 0 }]);
+    const setRow = (id, field, val) => setRows((p) => p.map((r) => r.id === id ? { ...r, [field]: val } : r));
+    const delRow = (id) => setRows((p) => p.filter((r) => r.id !== id));
+
+    const save = async () => {
+        setSaving(true);
+        try {
+            const r = await axios.put("/api/byob-rates", { byobDefaultRate: Number(def) || 0, byobRatesByType: rows.map((x) => ({ printType: x.printType, rate: x.rate })) });
+            onSaved(r.data);
+        } catch { setSaving(false); }
+    };
+
+    return (
+        <Dialog open onClose={onClose} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 2 } }}>
+            <DialogTitle sx={{ fontWeight: 700 }}>Bring Your Own Blanks — print rates</DialogTitle>
+            <DialogContent dividers>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    When a line is marked BYO, its price auto-fills with the print-only rate for its print type (or the default below).
+                </Typography>
+                <TextField size="small" type="number" label="Default rate ($/item)" value={def}
+                    onChange={(e) => setDef(parseFloat(e.target.value) || 0)} inputProps={{ min: 0, step: 0.01 }} sx={{ mb: 2, width: 200 }} />
+                <Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 0.5, display: "block", mb: 1 }}>By print type</Typography>
+                <Stack spacing={1}>
+                    {rows.map((r) => (
+                        <Stack key={r.id} direction="row" spacing={1} alignItems="center">
+                            <TextField size="small" label="Print type" placeholder="e.g. DTG, Screen Print, Embroidery" value={r.printType} onChange={(e) => setRow(r.id, "printType", e.target.value)} sx={{ flex: 1 }} />
+                            <TextField size="small" type="number" label="$/item" value={r.rate} onChange={(e) => setRow(r.id, "rate", parseFloat(e.target.value) || 0)} inputProps={{ min: 0, step: 0.01 }} sx={{ width: 110 }} />
+                            <IconButton size="small" color="error" onClick={() => delRow(r.id)}><DeleteOutlineIcon fontSize="small" /></IconButton>
+                        </Stack>
+                    ))}
+                </Stack>
+                <Button size="small" startIcon={<AddIcon />} onClick={addRow} sx={{ mt: 1 }}>Add print type</Button>
+            </DialogContent>
+            <DialogActions sx={{ px: 3, py: 2 }}>
+                <Button onClick={onClose} disabled={saving}>Cancel</Button>
+                <Button variant="contained" onClick={save} disabled={saving} sx={{ background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)" }}>Save rates</Button>
+            </DialogActions>
+        </Dialog>
+    );
+}
+
 // ── Editor ──────────────────────────────────────────────────────────────────────
-function QuoteEditor({ quote, onClose, onSaved }) {
+function QuoteEditor({ quote, byobRates = { byobDefaultRate: 0, byobRatesByType: [] }, onClose, onSaved }) {
     const [q, setQ]         = useState(quote);
     const [saving, setSaving] = useState(false);
     const [sending, setSending] = useState(false);
@@ -156,6 +211,16 @@ function QuoteEditor({ quote, onClose, onSaved }) {
     const setLine = (id, field, val) => setQ((p) => ({ ...p, lines: p.lines.map((l) => l.id === id ? { ...l, [field]: val } : l) }));
     const addLine = () => setQ((p) => ({ ...p, lines: [...p.lines, emptyLine()] }));
     const removeLine = (id) => setQ((p) => ({ ...p, lines: p.lines.filter((l) => l.id !== id) }));
+
+    // BYO: customer supplies the garment → fill the line with the print-only rate (by print type,
+    // falling back to the default). The rep can still override the filled price.
+    const byobRateFor = (l) => {
+        const pt = l._keep?.printType || l.printType;
+        const hit = (byobRates.byobRatesByType || []).find((r) => pt && r.printType?.toLowerCase() === String(pt).toLowerCase());
+        return hit ? hit.rate : (byobRates.byobDefaultRate || 0);
+    };
+    const toggleByob = (id, on) => setQ((p) => ({ ...p, lines: p.lines.map((l) =>
+        l.id === id ? { ...l, byob: on, ...(on ? { unitPrice: byobRateFor(l) } : {}) } : l) }));
 
     const subtotal = q.lines.reduce((s, l) => s + (Number(l.unitPrice) || 0) * (Number(l.quantity) || 1) + (Number(l.setupFee) || 0), 0);
     const discount = Number(q.discountAmount) || 0;
@@ -168,7 +233,7 @@ function QuoteEditor({ quote, onClose, onSaved }) {
         const payload = {
             customer: q.customer,
             // keep any design/personalization a studio line carried; merge the edited pricing fields
-            lines: q.lines.map((l) => ({ ...(l._keep || {}), title: l.title, sku: l.sku, quantity: l.quantity, unitPrice: l.unitPrice, setupFee: l.setupFee, notes: l.notes })),
+            lines: q.lines.map((l) => ({ ...(l._keep || {}), title: l.title, sku: l.sku, quantity: l.quantity, unitPrice: l.unitPrice, setupFee: l.setupFee, byob: !!l.byob, notes: l.notes })),
             discountAmount: Number(q.discountAmount) || 0,
             discountName: q.discountName,
             shippingCost: Number(q.shippingCost) || 0,
@@ -246,7 +311,10 @@ function QuoteEditor({ quote, onClose, onSaved }) {
                                 <Box key={l.id} sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "2fr 70px 90px 90px 36px" }, gap: 1, alignItems: "center", p: 1, border: "1px solid #e2e8f0", borderRadius: 1 }}>
                                     <Box>
                                         <TextField {...fs} fullWidth label="Description" value={l.title} onChange={(e) => setLine(l.id, "title", e.target.value)} />
-                                        {l._keep?.personalization && <Typography variant="caption" color="success.main">✓ customer artwork attached</Typography>}
+                                        {l._keep?.personalization && <Typography variant="caption" color="success.main" sx={{ display: "block" }}>✓ customer artwork attached</Typography>}
+                                        <FormControlLabel sx={{ m: 0 }}
+                                            control={<Checkbox size="small" sx={{ p: 0.5 }} checked={!!l.byob} onChange={(e) => toggleByob(l.id, e.target.checked)} />}
+                                            label={<Typography variant="caption" color="text.secondary">Customer brings blank (BYO) — print-only price</Typography>} />
                                     </Box>
                                     <TextField {...fs} label="Qty" type="number" value={l.quantity} onChange={(e) => setLine(l.id, "quantity", parseInt(e.target.value) || 1)} inputProps={{ min: 1 }} />
                                     <TextField {...fs} label="Unit $" type="number" value={l.unitPrice} onChange={(e) => setLine(l.id, "unitPrice", parseFloat(e.target.value) || 0)} inputProps={{ min: 0, step: 0.01 }} />

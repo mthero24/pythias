@@ -9,7 +9,7 @@ const normalizeLine = (l) => ({
     design: l.design || undefined, personalization: l.personalization || undefined,
     printType: l.printType || "", image: l.image || "",
     quantity: Math.max(1, parseInt(l.quantity) || 1), unitPrice: Number(l.unitPrice) || 0,
-    setupFee: Number(l.setupFee) || 0, notes: l.notes || "",
+    setupFee: Number(l.setupFee) || 0, byob: !!l.byob, notes: l.notes || "",
 });
 
 export async function GET(request, { params }) {
