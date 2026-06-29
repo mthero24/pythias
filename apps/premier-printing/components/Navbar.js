@@ -60,6 +60,7 @@ import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 import SystemUpdateAltIcon from "@mui/icons-material/SystemUpdateAlt";
 import OndemandVideoIcon from "@mui/icons-material/OndemandVideo";
 import ReceiptIcon from "@mui/icons-material/Receipt";
+import RequestQuoteIcon from "@mui/icons-material/RequestQuote";
 import AppsIcon from "@mui/icons-material/Apps";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import LabelIcon from "@mui/icons-material/Label";
@@ -132,6 +133,7 @@ const NAV_SECTIONS = [
     label: "Orders",
     items: [
       { label: "Orders", href: "/orders", icon: <ShoppingCartIcon fontSize="small" />, showCSV: false },
+      { label: "Quotes", href: "/quotes", icon: <RequestQuoteIcon fontSize="small" />, showCSV: false, permission: "orders" },
     ],
   },
   {

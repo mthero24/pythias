@@ -24,6 +24,7 @@ import CheckroomIcon from "@mui/icons-material/Checkroom";
 import BrushIcon from "@mui/icons-material/Brush";
 import InventoryIcon from "@mui/icons-material/Inventory";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import RequestQuoteIcon from "@mui/icons-material/RequestQuote";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import PrintIcon from "@mui/icons-material/Print";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
@@ -186,6 +187,7 @@ function buildFulfillmentSections(base) {
             label: "Orders",
             items: [
                 { label: "Orders",            path: "orders",            icon: <ShoppingCartIcon fontSize="small" /> },
+                { label: "Quotes",            path: "quotes",            icon: <RequestQuoteIcon fontSize="small" /> },
                 { label: "Marketplaces",      path: "marketplaces",      icon: <StorefrontIcon fontSize="small" /> },
                 { label: "Inventory",         path: "inventory",         icon: <WarehouseIcon fontSize="small" /> },
                 { label: "Product Inventory", path: "inventory/product", icon: <InventoryIcon fontSize="small" /> },
@@ -270,6 +272,7 @@ function buildCommerceSections(base) {
             label: "Orders",
             items: [
                 { label: "Orders",            path: "orders",            icon: <ShoppingCartIcon fontSize="small" /> },
+                { label: "Quotes",            path: "quotes",            icon: <RequestQuoteIcon fontSize="small" /> },
                 { label: "Marketplaces",      path: "marketplaces",      icon: <StorefrontIcon fontSize="small" /> },
                 { label: "Product Inventory", path: "inventory/product", icon: <InventoryIcon fontSize="small" /> },
             ],
@@ -331,6 +334,7 @@ function buildStorefrontSections(base) {
             label: "Orders",
             items: [
                 { label: "Orders",  path: "orders",  icon: <ShoppingCartIcon fontSize="small" /> },
+                { label: "Quotes",  path: "quotes",  icon: <RequestQuoteIcon fontSize="small" /> },
                 { label: "Payouts", path: "payouts", icon: <PaymentIcon fontSize="small" /> },
             ],
         },

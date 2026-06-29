@@ -71,6 +71,7 @@ export { PicklistSettingsMain } from "./components/settings/PicklistSettingsMain
 export { BrandsMain } from "./components/brands/BrandsMain";
 export { CreateNFProduct } from "./components/product/CreateNFProduct";
 export { CustomOrderBuilder }      from "./components/orders/CustomOrderBuilder";
+export { default as QuotesClient } from "./components/quotes/QuotesClient";
 export { CustomOrdersList }        from "./components/orders/CustomOrdersList";
 export { EmbroideryDesignPicker }  from "./components/orders/EmbroideryDesignPicker";
 export { default as OutreachClient } from "./components/OutreachClient";

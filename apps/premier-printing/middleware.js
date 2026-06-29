@@ -57,6 +57,11 @@ const protectedRoutes = [
     permission: "integrations"
   },
   {
+    path: "/quotes",
+    roles: ["admin", "production"],
+    permission: "orders"
+  },
+  {
     path: "/admin/shopify",
     roles: ["admin"],
     permission: "integrations"
