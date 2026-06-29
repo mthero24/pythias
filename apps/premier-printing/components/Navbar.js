@@ -171,7 +171,7 @@ export default function ButtonAppBar() {
   const { data: session }           = useSession();
   const pathname                    = usePathname();
 
-  if (pathname === "/login" || pathname?.startsWith("/pay")) return null;
+  if (pathname === "/login" || pathname?.startsWith("/pay") || pathname?.startsWith("/quote/")) return null;
 
   useEffect(() => {
     if (!session?.user) return;

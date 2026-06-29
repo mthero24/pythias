@@ -10,6 +10,7 @@ import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import SearchIcon from "@mui/icons-material/Search";
+import SendIcon from "@mui/icons-material/Send";
 import axios from "axios";
 
 const STATUS = {
@@ -147,7 +148,9 @@ export default function QuotesClient({ base = "" }) {
 function QuoteEditor({ quote, onClose, onSaved }) {
     const [q, setQ]         = useState(quote);
     const [saving, setSaving] = useState(false);
+    const [sending, setSending] = useState(false);
     const [err, setErr]     = useState("");
+    const busy = saving || sending;
 
     const setCustomer = (field) => (e) => setQ((p) => ({ ...p, customer: { ...p.customer, [field]: e.target.value } }));
     const setLine = (id, field, val) => setQ((p) => ({ ...p, lines: p.lines.map((l) => l.id === id ? { ...l, [field]: val } : l) }));
@@ -160,9 +163,8 @@ function QuoteEditor({ quote, onClose, onSaved }) {
     const tax      = (subtotal - discount) * taxRate;
     const due      = subtotal - discount + (Number(q.shippingCost) || 0) + tax;
 
-    const save = async () => {
-        if (!q.customer.name && !q.customer.email) { setErr("Add a customer name or email"); return; }
-        setSaving(true); setErr("");
+    // Persist the current edits (create or update) and return the quote id.
+    const persist = async () => {
         const payload = {
             customer: q.customer,
             // keep any design/personalization a studio line carried; merge the edited pricing fields
@@ -175,14 +177,26 @@ function QuoteEditor({ quote, onClose, onSaved }) {
             status: q.status,
             expiresAt: q.expiresAt || undefined,
         };
+        if (q._id) { await axios.patch(`/api/quotes/${q._id}`, payload); return q._id; }
+        const res = await axios.post(`/api/quotes`, payload);
+        return res.data.quote._id;
+    };
+
+    const save = async () => {
+        if (!q.customer.name && !q.customer.email) { setErr("Add a customer name or email"); return; }
+        setSaving(true); setErr("");
+        try { await persist(); onSaved(); }
+        catch (e) { setErr(e.response?.data?.error ?? "Failed to save quote"); setSaving(false); }
+    };
+
+    const sendQuote = async () => {
+        if (!q.customer.email) { setErr("Add a customer email to send the quote"); return; }
+        setSending(true); setErr("");
         try {
-            if (q._id) await axios.patch(`/api/quotes/${q._id}`, payload);
-            else       await axios.post(`/api/quotes`, payload);
+            const id = await persist();
+            await axios.post(`/api/quotes/${id}/send`);
             onSaved();
-        } catch (e) {
-            setErr(e.response?.data?.error ?? "Failed to save quote");
-            setSaving(false);
-        }
+        } catch (e) { setErr(e.response?.data?.error ?? "Failed to send the quote"); setSending(false); }
     };
 
     const del = async () => {
@@ -285,14 +299,22 @@ function QuoteEditor({ quote, onClose, onSaved }) {
             </DialogContent>
 
             <DialogActions sx={{ px: 3, py: 2, justifyContent: "space-between" }}>
-                <Box>{q._id && <Button color="error" onClick={del} disabled={saving} startIcon={<DeleteOutlineIcon />}>Delete</Button>}</Box>
+                <Box>{q._id && <Button color="error" onClick={del} disabled={busy} startIcon={<DeleteOutlineIcon />}>Delete</Button>}</Box>
                 <Stack direction="row" spacing={1}>
-                    <Button onClick={onClose} disabled={saving}>Cancel</Button>
-                    <Button variant="contained" onClick={save} disabled={saving}
-                        startIcon={saving ? <CircularProgress size={14} color="inherit" /> : null}
-                        sx={{ background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)" }}>
-                        {q._id ? "Save Quote" : "Create Quote"}
+                    <Button onClick={onClose} disabled={busy}>Cancel</Button>
+                    <Button variant="outlined" onClick={save} disabled={busy}
+                        startIcon={saving ? <CircularProgress size={14} color="inherit" /> : null}>
+                        {q._id ? "Save" : "Create"}
                     </Button>
+                    <Tooltip title={q.customer.email ? "Save and email the customer a pay link" : "Add a customer email first"}>
+                        <span>
+                            <Button variant="contained" onClick={sendQuote} disabled={busy || !q.customer.email}
+                                startIcon={sending ? <CircularProgress size={14} color="inherit" /> : <SendIcon sx={{ fontSize: 16 }} />}
+                                sx={{ background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)" }}>
+                                Send to Customer
+                            </Button>
+                        </span>
+                    </Tooltip>
                 </Stack>
             </DialogActions>
         </Dialog>
