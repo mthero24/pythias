@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { PlatformOrder as Order, PlatformItem as Item } from "@pythias/mongo";
+import { PlatformOrder as Order, PlatformItem as Item, PlatformBlank as Blank } from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
 import { logActivity, userFromToken } from "@pythias/backend/server";
 import { generatePieceID } from "@pythias/integrations";
@@ -12,6 +12,28 @@ async function uniquePieceId() {
     }
     return id;
 }
+
+const eq = (a, b) => a && b && String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
+
+// Resolve the form's blank id + free-text color/size names into the same refs a storefront
+// design-studio item carries (blank/color/size), plus the title and the pieces a SKU needs.
+async function resolveCustomBlank(blankId, colorName, sizeName) {
+    if (!blankId) return {};
+    try {
+        const blank = await Blank.findById(blankId).populate("colors", "name sku").select("code name colors sizes").lean();
+        if (!blank) return {};
+        const color = (blank.colors ?? []).find((c) => eq(c.name, colorName) || eq(c.sku, colorName)) ?? null;
+        const sz    = (blank.sizes  ?? []).find((s) => eq(s.name, sizeName)  || eq(s.sku, sizeName))  ?? null;
+        return {
+            blank: blank._id, code: blank.code || "", name: blank.name || "",
+            color: color?._id ?? null, colorSku: color?.sku ?? "",
+            size: sz?._id ?? null, sizeSku: sz?.sku ?? "", sizeName: sz?.name ?? sizeName ?? "",
+        };
+    } catch { return {}; }
+}
+
+// Same SKU format the order pipeline uses (functions/pullOrders.js CreateSku); custom design token = "CUSTOM".
+const customSku = (r) => (r.code && r.colorSku && r.sizeSku) ? `${r.code}_${r.colorSku}_${r.sizeSku}_CUSTOM` : "";
 
 export async function GET(request) {
     const token  = await getToken({ req: request });
@@ -91,6 +113,7 @@ export async function POST(request) {
     const itemIds = [];
     for (const line of (data.items || [])) {
         const qty = Math.max(1, parseInt(line.quantity) || 1);
+        const r = await resolveCustomBlank(line.blank, line.color, line.size);
         for (let u = 0; u < qty; u++) {
             const item = new Item({
                 orgId,
@@ -100,10 +123,14 @@ export async function POST(request) {
                 custom:     true,
                 order:      order._id,
                 poNumber:   data.poNumber,
-                blank:      line.blank || null,
-                styleCode:  line.styleCode || "",
+                name:       r.name || line.blankName || "",
+                sku:        customSku(r),
+                blank:      r.blank || line.blank || null,
+                color:      r.color || null,
+                size:       r.size  || null,
+                styleCode:  r.code  || line.styleCode || "",
                 colorName:  line.color     || "",
-                sizeName:   line.size      || "",
+                sizeName:   r.sizeName || line.size || "",
                 price:      line.unitPrice || 0,
                 quantity:   "1",
                 type:       line.printType || "",
