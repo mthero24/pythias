@@ -17,6 +17,7 @@ import { RetryImage } from "../../reusable/RetryImage";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import NoteAddIcon from "@mui/icons-material/NoteAdd";
+import PaidIcon from "@mui/icons-material/Paid";
 import EditIcon from "@mui/icons-material/Edit";
 import BrushIcon from "@mui/icons-material/Brush";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
@@ -194,6 +195,21 @@ export function Main({ ord, blanks, source, base = "" }) {
         }
     };
 
+    const [markingPaid, setMarkingPaid] = useState(false);
+    const markPaid = async () => {
+        setMarkingPaid(true);
+        try {
+            const res = await axios.patch(`/api/admin/custom-order/${order._id}`, { paid: true });
+            if (res.data?.order) setOrder(res.data.order);
+            else setOrder(prev => ({ ...prev, paid: true, status: "awaiting_shipment" }));
+            setRepullSnack({ open: true, msg: "Marked paid — moved to awaiting shipment", severity: "success" });
+        } catch (e) {
+            setRepullSnack({ open: true, msg: e.response?.data?.error ?? "Failed to mark paid", severity: "error" });
+        } finally {
+            setMarkingPaid(false);
+        }
+    };
+
     const repullOrder = async () => {
         setRepulling(true);
         try {
@@ -266,6 +282,11 @@ export function Main({ ord, blanks, source, base = "" }) {
                         )}
                     </Stack>
                     <Stack direction="row" spacing={1}>
+                        {order.marketplace === "custom order" && !order.paid && !order.canceled && (
+                            <Button size="small" variant="contained" color="success" startIcon={<PaidIcon />} onClick={markPaid} disabled={markingPaid} sx={{ fontSize: "0.75rem" }}>
+                                {markingPaid ? "Marking…" : "Mark Paid"}
+                            </Button>
+                        )}
                         {canCancel && (
                             <Button size="small" variant="outlined" color="error" startIcon={<CancelIcon />} onClick={() => { setCancelErr(""); setCancelOpen(true); }} sx={{ fontSize: "0.75rem" }}>
                                 Cancel Order
