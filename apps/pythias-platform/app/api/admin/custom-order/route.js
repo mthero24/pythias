@@ -65,9 +65,11 @@ export async function POST(request) {
     const orgId = token?.orgId;
     const data  = await request.json();
 
-    const subtotal = (data.items || []).reduce((s, i) => s + (i.quantity || 0) * (i.unitPrice || 0), 0);
-    const tax      = subtotal * (data.taxRate || 0);
-    const total    = subtotal + (data.shippingCost || 0) + tax;
+    const subtotal       = (data.items || []).reduce((s, i) => s + (i.quantity || 0) * (i.unitPrice || 0), 0);
+    const discountAmount = subtotal * (data.discountPct || 0);
+    const tax            = (subtotal - discountAmount) * (data.taxRate || 0);
+    // total is the pre-discount figure; the order page shows total − discountAmount as the amount due.
+    const total          = subtotal + (data.shippingCost || 0) + tax;
     const orderId  = `CUSTOM-${Date.now()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
 
     const embroideryFiles = (data.designs || [])
@@ -86,6 +88,8 @@ export async function POST(request) {
         shippingType:  data.inStorePickup ? "In-Store Pickup" : (data.shippingType || "Standard"),
         inStorePickup: !!data.inStorePickup,
         total,
+        discountAmount,
+        discountName:  data.discountName || (data.discountPct > 0 ? `${(data.discountPct * 100).toFixed(0)}% off` : undefined),
         shippingCost:  data.shippingCost || 0,
         taxRate:       data.taxRate      || 0,
         customerEmail: data.customerEmail || "",
