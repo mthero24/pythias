@@ -18,6 +18,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import NoteAddIcon from "@mui/icons-material/NoteAdd";
 import PaidIcon from "@mui/icons-material/Paid";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import EditIcon from "@mui/icons-material/Edit";
 import BrushIcon from "@mui/icons-material/Brush";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
@@ -210,6 +211,20 @@ export function Main({ ord, blanks, source, base = "" }) {
         }
     };
 
+    const [sendingInvoice, setSendingInvoice] = useState(false);
+    const sendInvoice = async () => {
+        setSendingInvoice(true);
+        try {
+            const res = await axios.post("/api/admin/custom-order/invoice/pay", { orderId: order._id });
+            if (res.data?.url) setOrder(prev => ({ ...prev, payUrl: res.data.url }));
+            setRepullSnack({ open: true, msg: `Payable invoice emailed to ${order.customerEmail || "the customer"}`, severity: "success" });
+        } catch (e) {
+            setRepullSnack({ open: true, msg: e.response?.data?.error ?? "Failed to send invoice", severity: "error" });
+        } finally {
+            setSendingInvoice(false);
+        }
+    };
+
     const repullOrder = async () => {
         setRepulling(true);
         try {
@@ -282,6 +297,11 @@ export function Main({ ord, blanks, source, base = "" }) {
                         )}
                     </Stack>
                     <Stack direction="row" spacing={1}>
+                        {order.marketplace === "custom order" && !order.paid && !order.canceled && (
+                            <Button size="small" variant="outlined" color="success" startIcon={<ReceiptLongIcon />} onClick={sendInvoice} disabled={sendingInvoice} sx={{ fontSize: "0.75rem" }}>
+                                {sendingInvoice ? "Sending…" : "Send Invoice"}
+                            </Button>
+                        )}
                         {order.marketplace === "custom order" && !order.paid && !order.canceled && (
                             <Button size="small" variant="contained" color="success" startIcon={<PaidIcon />} onClick={markPaid} disabled={markingPaid} sx={{ fontSize: "0.75rem" }}>
                                 {markingPaid ? "Marking…" : "Mark Paid"}

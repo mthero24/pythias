@@ -14,7 +14,9 @@ export async function ensureConnectAccount(orgId) {
         type: "express",
         email: org?.billingEmail || undefined,
         business_profile: { name: org?.name || undefined },
-        capabilities: { transfers: { requested: true } },
+        // transfers: receive marketplace payouts. card_payments: accept the direct charge used by
+        // custom-order invoices (seller is merchant of record, Stripe takes its fee from them).
+        capabilities: { transfers: { requested: true }, card_payments: { requested: true } },
     });
     await Organization.updateOne({ _id: orgId }, { $set: { "storefrontConnect.accountId": acct.id, "storefrontConnect.status": "pending" } });
     return acct.id;

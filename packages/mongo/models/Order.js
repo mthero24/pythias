@@ -13,6 +13,11 @@ const schema = new mongoose.Schema({
   productCost: Number,
   shippingCost: Number,
   discountAmount: { type: Number, default: 0 },
+  // Payable custom-order invoice: token gates the public pay page, session id + url from the
+  // Stripe Checkout (direct charge on the seller's connected account).
+  invoiceToken:      { type: String, index: true },
+  paymentSessionId:  { type: String },
+  payUrl:            { type: String },
   status: {
     type: String,
     required: true,

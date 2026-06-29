@@ -100,6 +100,7 @@ const NAV_SECTIONS = [
       { label: "Kling Invoices",    href: "/admin/kling-invoices",   icon: <OndemandVideoIcon fontSize="small" />, showCSV: false },
       { label: "Service Plans",    href: "/admin/service-plans",    icon: <AppsIcon fontSize="small" />,         showCSV: false },
       { label: "Service Invoices", href: "/admin/service-invoices", icon: <ReceiptIcon fontSize="small" />,      showCSV: false },
+      { label: "Payouts",          href: "/payouts",                icon: <AttachMoneyIcon fontSize="small" />,  showCSV: false, permission: "integrations" },
       { label: "Activity",         href: "/admin/activity",       icon: <BarChartIcon fontSize="small" />,               showCSV: false, charts: true },
       { label: "Analytics",        href: "/admin/analytics",      icon: <TrendingUpIcon fontSize="small" />,             showCSV: false, charts: true },
       { label: "Downloads",        href: "/admin/downloads",      icon: <SystemUpdateAltIcon fontSize="small" />,        showCSV: false },
@@ -168,7 +169,7 @@ export default function ButtonAppBar() {
   const { data: session }           = useSession();
   const pathname                    = usePathname();
 
-  if (pathname === "/login") return null;
+  if (pathname === "/login" || pathname?.startsWith("/pay")) return null;
 
   useEffect(() => {
     if (!session?.user) return;
