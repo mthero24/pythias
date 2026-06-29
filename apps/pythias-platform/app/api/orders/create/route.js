@@ -70,7 +70,7 @@ export async function POST(req) {
     const savedItems = (await Promise.all(items.map(async (cartItem) => {
         const {
             sku, colorId, colorName, sizeId, sizeName, blankId, styleCode,
-            designId, designImages, printType, price, title, qty,
+            designId, designImages, printType, price, title, qty, byob,
         } = cartItem;
 
         const resolvedDesign = await resolveDesign(designImages, designId);
@@ -97,6 +97,7 @@ export async function POST(req) {
                 status:       orderStatus,
                 paid:         isPaid,
                 isBlank:      false,
+                byob:         !!byob,
                 price:        price ?? 0,
                 date:         now,
                 name:         title || sku,

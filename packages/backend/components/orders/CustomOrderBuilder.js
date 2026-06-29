@@ -20,7 +20,7 @@ import axios            from "axios";
 import { UpscaleButton } from "../../exports";
 
 const emptyCustomer = () => ({ name: "", email: "", company: "", phone: "", address: { street: "", city: "", state: "", zip: "", country: "US" } });
-const emptyItem     = () => ({ blank: null, blankName: "", styleCode: "", color: "", size: "", quantity: 1, unitPrice: 0, printType: "", selectedDesigns: {} });
+const emptyItem     = () => ({ blank: null, blankName: "", styleCode: "", color: "", size: "", quantity: 1, unitPrice: 0, printType: "", byob: false, selectedDesigns: {} });
 const emptyDesign   = () => ({ location: "", artwork: "", dst: "" });
 
 function PriceChip({ label, value, onSelect }) {
@@ -293,7 +293,7 @@ function multiDesignLocations(designs) {
     return Object.fromEntries(Object.entries(counts).filter(([, arr]) => arr.length > 1));
 }
 
-function LineItem({ idx, item, onUpdate, onRemove, apiBase, printTypes, designs }) {
+function LineItem({ idx, item, onUpdate, onRemove, apiBase, printTypes, designs, byobRates = { byobDefaultRate: 0, byobRatesByType: [] } }) {
     const [blanks,        setBlanks]        = useState([]);
     const [blanksLoading, setBlanksLoading] = useState(false);
     const debounceRef = useRef(null);
@@ -453,6 +453,15 @@ function LineItem({ idx, item, onUpdate, onRemove, apiBase, printTypes, designs 
                                 <PriceChip label="Wholesale" value={selSize.wholesalePrice} onSelect={() => onUpdate(idx, { unitPrice: selSize.wholesalePrice || 0 })} />
                             </Stack>
                         )}
+                        <FormControlLabel sx={{ m: 0, mt: 0.25 }}
+                            control={<Checkbox size="small" sx={{ p: 0.25 }} checked={!!item.byob}
+                                onChange={e => {
+                                    const on = e.target.checked;
+                                    const hit = (byobRates.byobRatesByType || []).find(r => item.printType && r.printType?.toLowerCase() === String(item.printType).toLowerCase());
+                                    const rate = hit ? hit.rate : (byobRates.byobDefaultRate || 0);
+                                    onUpdate(idx, on ? { byob: true, unitPrice: rate } : { byob: false });
+                                }} />}
+                            label={<Typography variant="caption" color="text.secondary">Customer brings blank (BYO)</Typography>} />
                     </Grid2>
 
                     {/* Line total */}
@@ -546,12 +555,14 @@ export function CustomOrderBuilder({ open, setOpen, onSaved, apiBase = "" }) {
     const [emailForm,      setEmailForm]      = useState({ show: false, address: "", sending: false, sent: false, err: "" });
     const [printLocations, setPrintLocations] = useState([]);
     const [printTypes,     setPrintTypes]     = useState([]);
+    const [byobRates,      setByobRates]      = useState({ byobDefaultRate: 0, byobRatesByType: [] });
 
     useEffect(() => {
         if (!open) return;
         Promise.all([
             axios.get(`${apiBase}/api/admin/custom-order/print-locations`).then(r => setPrintLocations(r.data?.locations || [])).catch(() => {}),
             axios.get(`${apiBase}/api/admin/custom-order/print-types`).then(r => setPrintTypes(r.data?.printTypes || [])).catch(() => {}),
+            axios.get(`${apiBase}/api/byob-rates`).then(r => setByobRates(r.data)).catch(() => {}),
         ]);
     }, [open, apiBase]);
 
@@ -780,7 +791,7 @@ export function CustomOrderBuilder({ open, setOpen, onSaved, apiBase = "" }) {
                                 <LineItem key={idx} idx={idx} item={item}
                                     onUpdate={updateItem} onRemove={removeItem}
                                     apiBase={apiBase} printTypes={printTypes}
-                                    designs={designs} />
+                                    designs={designs} byobRates={byobRates} />
                             ))}
                         </Box>
                     </Card>

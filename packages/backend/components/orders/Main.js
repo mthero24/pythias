@@ -6,7 +6,7 @@ import {
     Alert, CircularProgress, MenuItem, Select, FormControl, InputLabel,
     Checkbox, FormControlLabel,
 } from "@mui/material";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import SearchIcon from "@mui/icons-material/Search";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -59,6 +59,7 @@ function CreateOrderModal({ open, onClose, onCreated }) {
 
     // ── Items cart ──────────────────────────────────────────────────────────────
     const [cartItems, setCartItems] = useState([]);
+    const [byobRates, setByobRates] = useState({ byobDefaultRate: 0, byobRatesByType: [] });
 
     // ── Order info ──────────────────────────────────────────────────────────────
     const [po, setPo]               = useState("");
@@ -140,6 +141,17 @@ function CreateOrderModal({ open, onClose, onCreated }) {
     ));
     const changePrice  = (id, val) => setCartItems(prev => prev.map(i =>
         i.id === id ? { ...i, price: val } : i
+    ));
+
+    // BYO: customer supplies the garment → fill the line with the print-only rate (by print type,
+    // falling back to the default). Production won't pull/source a blank.
+    useEffect(() => { if (open) axios.get("/api/byob-rates").then(r => setByobRates(r.data)).catch(() => {}); }, [open]);
+    const byobRateFor = (item) => {
+        const hit = (byobRates.byobRatesByType || []).find(r => item.printType && r.printType?.toLowerCase() === String(item.printType).toLowerCase());
+        return hit ? hit.rate : (byobRates.byobDefaultRate || 0);
+    };
+    const toggleCartByob = (id, on) => setCartItems(prev => prev.map(i =>
+        i.id === id ? { ...i, byob: on, ...(on ? { price: byobRateFor(i) } : {}) } : i
     ));
 
     const addrChange = (field) => (e) => setAddr(p => ({ ...p, [field]: e.target.value }));
@@ -355,6 +367,9 @@ function CreateOrderModal({ open, onClose, onCreated }) {
                                                 </Typography>
                                                 <Typography variant="caption" color="text.disabled">· {item.sku}</Typography>
                                             </Stack>
+                                            <FormControlLabel sx={{ m: 0 }}
+                                                control={<Checkbox size="small" sx={{ p: 0.25 }} checked={!!item.byob} onChange={e => toggleCartByob(item.id, e.target.checked)} />}
+                                                label={<Typography variant="caption" color="text.secondary">Customer brings blank (BYO)</Typography>} />
                                         </Box>
                                         {/* Price override */}
                                         <TextField

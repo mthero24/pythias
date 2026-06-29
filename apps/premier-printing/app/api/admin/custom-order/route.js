@@ -125,6 +125,7 @@ export async function POST(request) {
                 status:     "custom_pending",
                 paid:       false,
                 custom:     true,
+                byob:       !!line.byob,
                 order:      order._id,
                 poNumber:   data.poNumber,
                 name:       r.name || line.blankName || "",
