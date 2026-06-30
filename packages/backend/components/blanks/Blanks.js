@@ -200,9 +200,11 @@ export function BlanksComponent({blanks, mPs, source, orgId, basePath = "/admin/
                     )}
                     {visibleBlanks.map((b) => {
                         const colorIds = new Set(b.colors?.map(c => c._id?.toString()))
-                        const frontImage = b.images?.find(img => img.color && colorIds.has(img.color?.toString()))
-                            ?? b.images?.[0]
-                            ?? null
+                        // Only images whose color is still on the blank (a removed color's images never show).
+                        // Prefer an image that has a front print box; otherwise fall back to any available-color image.
+                        const availableImages = (b.images || []).filter(img => img.color && colorIds.has(img.color.toString()))
+                        const hasFrontBox = (img) => img.boxes && Object.keys(img.boxes).some(k => k.toLowerCase() === "front")
+                        const frontImage = availableImages.find(hasFrontBox) ?? availableImages[0] ?? null
                         const thumbSrc = frontImage
                             ? `${frontImage.image.replace("images1.pythiastechnologies.com", "images2.pythiastechnologies.com/origin")}?width=400`
                             : "/missingImage.jpg"
