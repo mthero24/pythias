@@ -76,7 +76,9 @@ const DEFAULT_PLANS = [
 const money = (c) => `$${(c / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 const card = { background: "#fff", border: "1px solid #e2e8f0", borderRadius: 14, padding: 22 };
 
-export default function StorefrontWelcome({ plans = DEFAULT_PLANS, subscribable = false }) {
+// subscribable → in-app Stripe checkout (platform). signupUrl → buttons link to that signup URL
+// with ?plan=<key> (used by apps that don't bill storefronts themselves, e.g. the fulfiller app).
+export default function StorefrontWelcome({ plans = DEFAULT_PLANS, subscribable = false, signupUrl = "" }) {
     const [busy, setBusy] = useState("");
     const [error, setError] = useState("");
 
@@ -121,9 +123,9 @@ export default function StorefrontWelcome({ plans = DEFAULT_PLANS, subscribable 
             </div>
 
             {/* Pricing */}
-            <h2 style={{ textAlign: "center", fontSize: "1.6rem", margin: "44px 0 4px" }}>{subscribable ? "Launch your storefront" : "Pricing"}</h2>
+            <h2 style={{ textAlign: "center", fontSize: "1.6rem", margin: "44px 0 4px" }}>{(subscribable || signupUrl) ? "Launch your storefront" : "Pricing"}</h2>
             <p style={{ textAlign: "center", color: "#64748b", margin: "0 0 22px" }}>
-                {subscribable ? "Pick a plan to turn it on instantly. Cancel anytime." : "Monthly, per organization. Add extra stores at any tier for a per-store add-on."}
+                {subscribable ? "Pick a plan to turn it on instantly. Cancel anytime." : signupUrl ? "Pick a plan to get started." : "Monthly, per organization. Add extra stores at any tier for a per-store add-on."}
             </p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(250px,1fr))", gap: 18 }}>
                 {plans.map((p) => (
@@ -136,15 +138,20 @@ export default function StorefrontWelcome({ plans = DEFAULT_PLANS, subscribable 
                         <div style={{ display: "grid", gap: 8, flex: 1, marginBottom: 16 }}>
                             {p.features.map((f) => <div key={f} style={{ display: "flex", gap: 9, fontSize: "0.86rem" }}><span style={{ color: "#6366f1", fontWeight: 800 }}>✓</span><span>{f}</span></div>)}
                         </div>
-                        {subscribable && <button onClick={() => subscribe(p.key)} disabled={!!busy}
+                        {subscribable ? <button onClick={() => subscribe(p.key)} disabled={!!busy}
                             style={{ width: "100%", padding: "11px 0", borderRadius: 10, border: "none", background: p.popular ? "#6366f1" : "#111827", color: "#fff", fontWeight: 700, cursor: "pointer", opacity: busy && busy !== p.key ? 0.5 : 1 }}>
                             {busy === p.key ? "Starting…" : `Choose ${p.name}`}
-                        </button>}
+                        </button> : signupUrl ? <a href={`${signupUrl}${signupUrl.includes("?") ? "&" : "?"}plan=${p.key}`}
+                            style={{ width: "100%", padding: "11px 0", borderRadius: 10, background: p.popular ? "#6366f1" : "#111827", color: "#fff", fontWeight: 700, textAlign: "center", textDecoration: "none", display: "block", boxSizing: "border-box" }}>
+                            Get Started
+                        </a> : null}
                     </div>
                 ))}
             </div>
             {subscribable
                 ? <p style={{ textAlign: "center", color: "#94a3b8", fontSize: "0.76rem", marginTop: 14 }}>Secure checkout by Stripe. Your storefront tools unlock the moment payment succeeds.{error && <><br /><span style={{ color: "#dc2626" }}>{error}</span></>}</p>
+                : signupUrl
+                ? <p style={{ textAlign: "center", color: "#94a3b8", fontSize: "0.8rem", marginTop: 14 }}>You&apos;ll finish signup and billing on the Pythias platform.</p>
                 : <p style={{ textAlign: "center", color: "#94a3b8", fontSize: "0.8rem", marginTop: 14 }}>Storefront is managed and billed from the Pythias platform (seller) app.</p>}
         </div>
     );
