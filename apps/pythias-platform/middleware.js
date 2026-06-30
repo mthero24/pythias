@@ -2,6 +2,6 @@ export { default } from "next-auth/middleware";
 
 export const config = {
     matcher: [
-        "/((?!login|register|pay|api/pay|quote/|api/quote/|api/quotes/request|api/auth|api/orgs|api/partner|api/provider-callback|api/billing/webhook|api/renderImages|api/integrations/shopify|api/internal|_next/static|_next/image|favicon.ico|robots.js).*)",
+        "/((?!login|register|pay|api/pay|quote/|api/quote/|api/quotes/request|design/|api/design/|api/auth|api/orgs|api/partner|api/provider-callback|api/billing/webhook|api/renderImages|api/integrations/shopify|api/internal|_next/static|_next/image|favicon.ico|robots.js).*)",
     ],
 };
