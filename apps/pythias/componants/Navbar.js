@@ -15,6 +15,7 @@ const NAV_LINKS = [
   { label: "Fulfillment Cloud", href: "/fulfillment-cloud" },
   { label: "Commerce Cloud",    href: "/commerce-cloud" },
   { label: "Storefront Cloud",  href: "/storefront-cloud" },
+  { label: "Quote-to-Production", href: "/quote-to-production" },
   { label: "Community",         href: "/community" },
   { label: "Integrations",      href: "/integrations" },
   { label: "Contact Us",        href: "/contact" },

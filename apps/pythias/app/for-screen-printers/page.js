@@ -1,6 +1,7 @@
 import LandingPage from "../../components/LandingPage";
 
 export const metadata = {
+    robots: { index: false, follow: true },   // paid-ad landing page — noindex so it doesn't compete with the organic /software-for-screen-printing-shops page
     title: "Pythias for Screen Printers — Quote & Order Software",
     description:
         "Screen printing quote software that turns custom quote requests into production-ready orders. Customers upload artwork, choose blanks, sizes, and colors, approve pricing, and pay online — then the job flows straight into production.",

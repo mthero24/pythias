@@ -1,6 +1,7 @@
 import LandingPage from "../../components/LandingPage";
 
 export const metadata = {
+    robots: { index: false, follow: true },   // paid-ad landing page — noindex so it doesn't compete with the organic /software-for-shopify-sellers page
     title: "Pythias for Shopify Print Sellers — Order Fulfillment",
     description:
         "Shopify print fulfillment software that sends store orders straight to production. Auto-import Shopify and 18+ marketplace orders into one production queue, print labels automatically, and sync tracking back — no orders lost between admin, email, and shipping software.",

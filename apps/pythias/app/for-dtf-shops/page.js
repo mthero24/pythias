@@ -1,6 +1,7 @@
 import LandingPage from "../../components/LandingPage";
 
 export const metadata = {
+    robots: { index: false, follow: true },   // paid-ad landing page — noindex so it doesn't compete with the organic /software-for-dtf-shops page
     title: "Pythias for DTF Shops — Order & Production Software",
     description:
         "DTF order management software for growing shops. Collect visual quotes, organize artwork, import Shopify and marketplace orders, run one production queue, and auto-print shipping labels — all in one platform.",

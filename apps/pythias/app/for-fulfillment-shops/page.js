@@ -1,6 +1,7 @@
 import LandingPage from "../../components/LandingPage";
 
 export const metadata = {
+    robots: { index: false, follow: true },   // paid-ad landing page — noindex so it doesn't compete with the organic /software-for-fulfillment-providers page
     title: "Pythias for Fulfillment Shops — Production & Shipping Automation",
     description:
         "Print shop production software for multichannel fulfillment. Bring Shopify, 18+ marketplace, and custom orders into one production queue, auto-print labels on scan, track blank inventory, and run your floor with team management and analytics.",

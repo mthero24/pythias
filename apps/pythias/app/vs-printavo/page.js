@@ -1,4 +1,5 @@
 export const metadata = {
+    robots: { index: false, follow: true },   // paid-ad landing page — noindex so it doesn't compete with the organic /compare/pythias-vs-printavo page
     title: "Pythias vs Printavo — A Modern Print Shop Alternative",
     description:
         "Looking for a Printavo alternative? Pythias turns customer requests into production-ready orders — visual quote intake, e-commerce and marketplace order import, online approval and payment, production queues, auto shipping labels, and built-in fulfillment.",
