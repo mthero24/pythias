@@ -1,5 +1,7 @@
 import dynamic from "next/dynamic";
 import HeroSection from "./HeroSection";
+import PainPointsSection from "./PainPointsSection";
+import QuoteToProductionSection from "./QuoteToProductionSection";
 import CloudsSection from "./CloudsSection";
 import SeoAuthoritySection from "./SeoAuthoritySection";
 import CommunitySection from "./CommunitySection";
@@ -73,6 +75,8 @@ export default function Home() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <HomePopup />
       <HeroSection />
+      <PainPointsSection />
+      <QuoteToProductionSection />
       <CloudsSection />
       <OutcomesSection />
       <RoiCalculatorSection />
