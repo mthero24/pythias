@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 import { SupportTicket, Organization } from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
 
-async function nextTicketNumber(orgId) {
-    const last = await SupportTicket.findOne({ orgId }).sort({ createdAt: -1 }).select("ticketNumber").lean();
-    if (!last) return "TK-0001";
-    const num = parseInt(last.ticketNumber.replace("TK-", ""), 10) || 0;
+// Ticket numbers are GLOBALLY unique (the index is not per-org), so number from the global max.
+// A per-org count collides across orgs — two orgs' first tickets would both be TK-0001.
+async function nextTicketNumber() {
+    const last = await SupportTicket.findOne({}).sort({ ticketNumber: -1 }).select("ticketNumber").lean();
+    const num = last ? (parseInt(last.ticketNumber.replace("TK-", ""), 10) || 0) : 0;
     return `TK-${String(num + 1).padStart(4, "0")}`;
 }
 
@@ -46,20 +47,29 @@ export async function POST(req) {
             return NextResponse.json({ error: true, msg: "Subject, type, and description are required" }, { status: 400 });
         }
 
-        const ticketNumber = await nextTicketNumber(orgId);
         const authorName = [token.firstName, token.lastName].filter(Boolean).join(" ") || token.userName || "User";
 
-        const ticket = await SupportTicket.create({
-            orgId,
-            ticketNumber,
-            subject: subject.trim(),
-            type,
-            priority: priority || "normal",
-            status: "open",
-            createdByUserId: token.id || token.sub,
-            createdByName: authorName,
-            messages: [{ body: description.trim(), authorName, authorType: "user" }],
-        });
+        // Retry on a duplicate ticketNumber (concurrent creates racing for the same next number).
+        let ticket;
+        for (let attempt = 0; ; attempt++) {
+            try {
+                ticket = await SupportTicket.create({
+                    orgId,
+                    ticketNumber: await nextTicketNumber(),
+                    subject: subject.trim(),
+                    type,
+                    priority: priority || "normal",
+                    status: "open",
+                    createdByUserId: token.id || token.sub,
+                    createdByName: authorName,
+                    messages: [{ body: description.trim(), authorName, authorType: "user" }],
+                });
+                break;
+            } catch (e) {
+                if (e?.code === 11000 && attempt < 5) continue;
+                throw e;
+            }
+        }
 
         return NextResponse.json({ ticket });
     } catch (e) {
