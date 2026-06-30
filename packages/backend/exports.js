@@ -10,6 +10,7 @@ export {Main as UsersMain} from "./components/users/Main";
 export {Main as LoginMain} from "./components/login/Main";
 export {Main as AccountMain} from "./components/account/Main";
 export { Main as DesignMain } from "./components/design/Main";
+export { default as DesignStudio } from "./components/design/DesignStudio";
 export { Main as DesignsMain } from "./components/design/DesignsMain";
 export {Blank as BlankMain} from "./components/blanks/Blank";
 export {Search} from "./components/design/Search";
