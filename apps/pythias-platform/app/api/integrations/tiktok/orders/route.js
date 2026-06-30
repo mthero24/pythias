@@ -3,7 +3,8 @@ import { TikTokAuth } from "@pythias/mongo";
 import {
     getOrdersTikTok,
     getAccessTokenFromRefreshToken,
-    fulfillOrderTikTok,
+    createPackageTikTok,
+    shipPackageTikTok,
     getShippingProvidersTikTok,
 } from "@pythias/integrations";
 
@@ -53,26 +54,23 @@ export async function POST(req) {
     }
 
     if (action === "ship") {
-        if (!orderId || !lineItemIds?.length || !trackingNumber || !shippingProviderId) {
-            return NextResponse.json({ error: "orderId, lineItemIds, trackingNumber, and shippingProviderId required" }, { status: 400 });
+        if (!orderId || !trackingNumber || !shippingProviderId) {
+            return NextResponse.json({ error: "orderId, trackingNumber, and shippingProviderId required" }, { status: 400 });
         }
-        let res = await fulfillOrderTikTok(
-            orderId,
-            { line_item_ids: lineItemIds, tracking_number: trackingNumber, shipping_provider_id: shippingProviderId },
-            credentials,
-            shopCipher
-        );
+        // TikTok 202309: create the package for the line items, then ship it with tracking.
+        const doShip = async () => {
+            const created = await createPackageTikTok(orderId, lineItemIds || [], credentials, shopCipher);
+            if (created.error) return created;
+            if (!created.package_id) return { error: true, msg: "No TikTok package id returned" };
+            return shipPackageTikTok(created.package_id, { tracking_number: trackingNumber, shipping_provider_id: shippingProviderId }, credentials, shopCipher);
+        };
+        let res = await doShip();
         if (res.error && res.msg === "refresh") {
             credentials = await refreshCredentials(credentials);
-            res = await fulfillOrderTikTok(
-                orderId,
-                { line_item_ids: lineItemIds, tracking_number: trackingNumber, shipping_provider_id: shippingProviderId },
-                credentials,
-                shopCipher
-            );
+            res = await doShip();
         }
         if (res.error) return NextResponse.json({ error: res.msg }, { status: 500 });
-        return NextResponse.json({ error: false, package_id: res.package_id });
+        return NextResponse.json({ error: false });
     }
 
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });

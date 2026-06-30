@@ -12,7 +12,8 @@ import {
   getOrCreateBrandTikTok,
   getShippingProvidersTikTok,
   getOrderDetailTikTok,
-  fulfillOrderTikTok,
+  createPackageTikTok,
+  shipPackageTikTok,
 } from "@pythias/integrations";
 import { maybeDropshipOrder } from "@pythias/backend/server";
 const TOKEN_FIELDS = ["access_token", "access_token_expire_in", "refresh_token", "refresh_token_expire_in", "open_id", "granted_scopes", "seller_base_region", "user_type"];
@@ -98,20 +99,23 @@ export async function shipOrderTikTok({ order, items, trackingNumber, provider }
         : (items || []).map(i => i.orderItemId))
         .filter(Boolean);
 
-    let res = await fulfillOrderTikTok(
-        order.poNumber,
-        { line_item_ids, tracking_number: trackingNumber, shipping_provider_id: shippingProviderId },
-        credentials,
-        shopCipher
-    );
+    // TikTok 202309 is two-step: get/create the package, then ship it. TikTok usually auto-creates
+    // one package per order, so prefer the existing package id; create one only if it's missing.
+    let packageId = tikTokOrder?.packages?.[0]?.id || tikTokOrder?.package_list?.[0]?.id || null;
+    const shipOnce = async () => {
+        if (!packageId) {
+            const created = await createPackageTikTok(order.poNumber, line_item_ids, credentials, shopCipher);
+            if (created?.error) return created;
+            packageId = created.package_id;
+        }
+        if (!packageId) return { error: true, msg: "No TikTok package id available to ship" };
+        return shipPackageTikTok(packageId, { tracking_number: trackingNumber, shipping_provider_id: shippingProviderId }, credentials, shopCipher);
+    };
+
+    let res = await shipOnce();
     if (res?.error && res?.msg === "refresh") {
         credentials = await refresh(credentials, shopCipher);
-        res = await fulfillOrderTikTok(
-            order.poNumber,
-            { line_item_ids, tracking_number: trackingNumber, shipping_provider_id: shippingProviderId },
-            credentials,
-            shopCipher
-        );
+        res = await shipOnce();
     }
     if (res?.error) return { error: true, msg: res.msg };
     return { error: false };
