@@ -634,21 +634,16 @@ export const getShippingProvidersTikTok = async (credentials, shop_cipher, deliv
     return { error: false, providers: result?.data?.data?.shipping_providers ?? [] };
 };
 
-export const fulfillOrderTikTok = async (order_id, { line_item_ids, tracking_number, shipping_provider_id }, credentials, shop_cipher) => {
+// Create a package for an order's line items. TikTok's 202309 Fulfillment API is two-step:
+// Create Package → Ship Package. (The old single call to /orders/{id}/packages was not a real
+// endpoint, so it 4xx'd and the order never fulfilled on TikTok.)  POST /fulfillment/202309/packages
+export const createPackageTikTok = async (order_id, line_item_ids, credentials, shop_cipher) => {
     const config = await getConfig();
-    const baseUrl = `https://open-api.tiktokglobalshop.com/fulfillment/202309/orders/${order_id}/packages`;
+    const baseUrl = "https://open-api.tiktokglobalshop.com/fulfillment/202309/packages";
     const accessToken = credentials.access_token;
-    const params = { app_key: config.app_key, shop_cipher, version: "202309" };
-    const body = {
-        tracking_number,
-        shipping_provider_id,
-    };
-    // Only scope to specific line items when we actually have their ids; otherwise TikTok
-    // packs every unfulfilled line item in the order into the package (the whole order ships).
-    // Per the "Mark Package As Shipped" API: order_line_item_ids is a LIST OF STRINGS.
-    if (Array.isArray(line_item_ids) && line_item_ids.length) {
-        body.order_line_item_ids = line_item_ids;
-    }
+    const params = { app_key: config.app_key, shop_cipher };
+    const body = { order_id };
+    if (Array.isArray(line_item_ids) && line_item_ids.length) body.order_line_item_ids = line_item_ids;
     let signUrl = buildUrl(baseUrl, params);
     const { signature, timestamp } = tiktokShop.signByUrl(signUrl, config.app_secret, body);
     params["sign"] = signature; params["timestamp"] = timestamp; params["access_token"] = accessToken;
@@ -660,5 +655,27 @@ export const fulfillOrderTikTok = async (order_id, { line_item_ids, tracking_num
         if (errRes.code == 36009004 || errRes.code == 105002) return { error: true, msg: "refresh" };
         return { error: true, msg: errRes.message ?? String(errRes.code) };
     }
-    return { error: false, package_id: result?.data?.data?.package_id };
+    const data = result?.data?.data;
+    return { error: false, package_id: data?.package_id ?? data?.packages?.[0]?.id ?? null };
+};
+
+// Mark a package as shipped with the carrier + tracking. POST /fulfillment/202309/packages/{id}/ship
+export const shipPackageTikTok = async (package_id, { tracking_number, shipping_provider_id }, credentials, shop_cipher) => {
+    const config = await getConfig();
+    const baseUrl = `https://open-api.tiktokglobalshop.com/fulfillment/202309/packages/${package_id}/ship`;
+    const accessToken = credentials.access_token;
+    const params = { app_key: config.app_key, shop_cipher };
+    const body = { tracking_number, shipping_provider_id };
+    let signUrl = buildUrl(baseUrl, params);
+    const { signature, timestamp } = tiktokShop.signByUrl(signUrl, config.app_secret, body);
+    params["sign"] = signature; params["timestamp"] = timestamp; params["access_token"] = accessToken;
+    let errRes;
+    await axios.post(buildUrl(baseUrl, params), body, {
+        headers: { "Content-Type": "application/json", "x-tts-access-token": accessToken },
+    }).catch(e => { errRes = e.response?.data; });
+    if (errRes) {
+        if (errRes.code == 36009004 || errRes.code == 105002) return { error: true, msg: "refresh" };
+        return { error: true, msg: errRes.message ?? String(errRes.code) };
+    }
+    return { error: false };
 };
