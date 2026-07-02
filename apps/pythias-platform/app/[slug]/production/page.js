@@ -9,6 +9,7 @@ import ReplayIcon from "@mui/icons-material/Replay";
 import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
 import FolderOpenIcon from "@mui/icons-material/FolderOpen";
 import ViewListIcon from "@mui/icons-material/ViewList";
+import ColorLensIcon from "@mui/icons-material/ColorLens";
 import { useOrg } from "@/components/OrgProvider";
 
 const PATHS = [
@@ -21,6 +22,7 @@ const PATHS = [
     { label: "Sublimation",  path: "production/sublimation",   icon: <PhotoCameraIcon fontSize="large" /> },
     { label: "Returns",      path: "production/returns",       icon: <ReplayIcon fontSize="large" /> },
     { label: "ROQ Folder",   path: "production/roq-folder",    icon: <FolderOpenIcon fontSize="large" /> },
+    { label: "Ink Mix",      path: "production/ink-mix",       icon: <ColorLensIcon fontSize="large" /> },
 ];
 
 export default function ProductionPage() {

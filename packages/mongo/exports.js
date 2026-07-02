@@ -75,6 +75,8 @@ export { default as KlingInvoicePlatform } from "./models/KlingInvoicePlatform";
 export { default as PlatformUser } from "./models/User";
 export { default as PlatformOrder } from "./models/Order";
 export { default as PlatformItem } from "./models/Items";
+export { default as InkBase } from "./models/InkBase";
+export { default as InkFormula } from "./models/InkFormula";
 export { default as PlatformQuote } from "./models/Quote";
 export { default as PlatformBlank } from "./models/Blanks";
 export { default as PlatformDesign } from "./models/Design";
