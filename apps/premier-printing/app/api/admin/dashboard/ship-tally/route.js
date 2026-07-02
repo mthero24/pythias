@@ -4,7 +4,7 @@ import { authOptions } from "@/auth";
 import { Items } from "@pythias/mongo";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const DAYS   = 7;
+const DAYS   = 10;
 
 function startOfDay(d) {
     const x = new Date(d);
@@ -25,7 +25,7 @@ export async function GET(req) {
     }
     try {
         const today = startOfDay(new Date());
-        const end   = new Date(today.getTime() + DAYS * DAY_MS); // exclusive upper bound (today + 5d)
+        const end   = new Date(today.getTime() + DAYS * DAY_MS); // exclusive upper bound (today + 10d)
 
         // Due to ship = NOT shipped, NOT cancelled, with a shipByDate.
         const baseFilter = {
@@ -37,7 +37,7 @@ export async function GET(req) {
         const [overdueCount, dailyAgg] = await Promise.all([
             // Overdue: unshipped items whose shipByDate is before today.
             Items.countDocuments({ ...baseFilter, shipByDate: { $lt: today } }),
-            // Next 5 calendar days, grouped by day.
+            // Next 10 calendar days, grouped by day.
             Items.aggregate([
                 { $match: { ...baseFilter, shipByDate: { $gte: today, $lt: end } } },
                 { $group: {

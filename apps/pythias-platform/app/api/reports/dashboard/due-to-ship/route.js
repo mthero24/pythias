@@ -3,8 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/auth";
 import { PlatformItem } from "@pythias/mongo";
 
-// "Items Due to Ship — Next 5 Days": for staffing decisions, a daily tally of the org's
-// unshipped, un-cancelled items whose shipByDate falls in [startOfToday .. +5d), plus a
+// "Items Due to Ship — Next 10 Days": for staffing decisions, a daily tally of the org's
+// unshipped, un-cancelled items whose shipByDate falls in [startOfToday .. +10d), plus a
 // leading "Overdue" bucket (ship-by already past). Org-scoped via the platform session.
 export async function GET() {
     try {
@@ -14,7 +14,7 @@ export async function GET() {
 
         const startOfToday = new Date();
         startOfToday.setHours(0, 0, 0, 0);
-        const horizonDays = 7;
+        const horizonDays = 10;
         const end = new Date(startOfToday);
         end.setDate(end.getDate() + horizonDays);
 
