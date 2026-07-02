@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { PlatformQuote as Quote } from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
 import { quoteTotals } from "../route";
+import { computeInternalCosts } from "@/lib/quoteCosts";
 
 const normalizeLine = (l) => ({
     sku: l.sku, title: l.title, blank: l.blank || null, styleCode: l.styleCode || "",
@@ -10,6 +11,8 @@ const normalizeLine = (l) => ({
     printType: l.printType || "", image: l.image || "",
     quantity: Math.max(1, parseInt(l.quantity) || 1), unitPrice: Number(l.unitPrice) || 0,
     setupFee: Number(l.setupFee) || 0, byob: !!l.byob, notes: l.notes || "",
+    printAreaSqIn: l.printAreaSqIn != null ? Number(l.printAreaSqIn) : undefined,
+    numColors: l.numColors != null ? Number(l.numColors) : undefined,
 });
 
 export async function GET(request, { params }) {
@@ -31,7 +34,11 @@ export async function PATCH(request, { params }) {
     const quote = await Quote.findOne({ _id: params.id, orgId });
     if (!quote) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    if (data.lines           !== undefined) quote.lines          = data.lines.map(normalizeLine);
+    if (data.lines           !== undefined) {
+        const { lines, internalCosts } = await computeInternalCosts(data.lines.map(normalizeLine), orgId);
+        quote.lines         = lines;
+        quote.internalCosts = internalCosts;
+    }
     if (data.customer        !== undefined) quote.customer       = data.customer;
     if (data.discountAmount  !== undefined) quote.discountAmount = Number(data.discountAmount) || 0;
     if (data.discountName    !== undefined) quote.discountName   = data.discountName;

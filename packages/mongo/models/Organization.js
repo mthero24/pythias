@@ -75,6 +75,14 @@ const schema = new mongoose.Schema({
             secondaryKey: { type: String },
             accountNumber: { type: String },
         },
+        // Internal production cost rates (COGS/margin tracking — never charged to the customer).
+        // Ink cost = design.printAreaSqIn × the per-print-type $/in² rate. Screen-burn cost =
+        // design.numColors × screenBurnRatePerScreen (one-time setup per design).
+        productionCosts: {
+            dtfInkRatePerSqIn:       { type: Number, default: 0 },
+            dtgInkRatePerSqIn:       { type: Number, default: 0 },
+            screenBurnRatePerScreen: { type: Number, default: 0 },
+        },
     },
     // Return/from address printed on shipping labels for this org's orders.
     // For Commerce Cloud, the provider (e.g. Premier) ships blind under this address.

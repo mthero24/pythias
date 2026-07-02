@@ -25,6 +25,12 @@ const lineSchema = new mongoose.Schema({
     quantity:  { type: Number, default: 1 },
     unitPrice: { type: Number, default: 0 },
     setupFee:  { type: Number, default: 0 },
+    // Internal cost snapshot (COGS — never added to unitPrice/total, which stay customer-facing).
+    // Computed at pricing time from the line's design + the org's productionCosts rates.
+    printAreaSqIn:  { type: Number, default: 0 },   // snapshot from design
+    numColors:      { type: Number, default: 0 },   // snapshot from design (screen count)
+    inkCost:        { type: Number, default: 0 },   // area × rate × quantity
+    screenBurnCost: { type: Number, default: 0 },   // colors × burn rate (once per line)
     // Bring Your Own Blanks: customer supplies the garment, so production doesn't pull/source a
     // blank and the price is the print-only (BYOB) rate.
     byob:      { type: Boolean, default: false },
@@ -53,6 +59,13 @@ const schema = new mongoose.Schema({
     shippingCost:   { type: Number, default: 0 },
     taxRate:        { type: Number, default: 0 },
     total:          { type: Number, default: 0 },
+
+    // Internal COGS rollup for margin reporting (shop-only; not shown on the customer quote).
+    internalCosts: {
+        ink:        { type: Number, default: 0 },
+        screenBurn: { type: Number, default: 0 },
+        total:      { type: Number, default: 0 },
+    },
 
     // Public approve + pay page is gated by this unguessable token (mirrors order.invoiceToken);
     // payUrl / paymentSessionId come from the same Stripe Checkout direct-charge flow as invoices.

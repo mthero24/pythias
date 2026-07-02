@@ -64,6 +64,11 @@ const schema = new mongoose.Schema({
   gender: String,
   season: String,
   sendToMarketplaces: {type: Boolean, default: false},
+  // Internal cost inputs (COGS/margin tracking, not customer-facing):
+  // printAreaSqIn drives DTF/DTG ink cost (area × org $/in² rate); numColors drives
+  // screen-burn cost (colors × org $/screen rate) for screen-printed jobs.
+  printAreaSqIn: { type: Number },
+  numColors: { type: Number },
 });
 
 export default PremierPrinting.model("Design", schema);

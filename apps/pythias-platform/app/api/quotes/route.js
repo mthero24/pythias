@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { PlatformQuote as Quote } from "@pythias/mongo";
 import { getToken } from "next-auth/jwt";
 import crypto from "crypto";
+import { computeInternalCosts } from "@/lib/quoteCosts";
 
 // `total` is the pre-discount figure (amount due = total − discountAmount), matching the order
 // convention so a quote converts to an Order 1:1.
@@ -19,6 +20,8 @@ const normalizeLine = (l) => ({
     printType: l.printType || "", image: l.image || "",
     quantity: Math.max(1, parseInt(l.quantity) || 1), unitPrice: Number(l.unitPrice) || 0,
     setupFee: Number(l.setupFee) || 0, byob: !!l.byob, notes: l.notes || "",
+    printAreaSqIn: l.printAreaSqIn != null ? Number(l.printAreaSqIn) : undefined,
+    numColors: l.numColors != null ? Number(l.numColors) : undefined,
 });
 
 // GET /api/quotes?status=&q=&skip= — list the org's quotes
@@ -55,8 +58,9 @@ export async function POST(request) {
     if (!orgId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const data    = await request.json();
-    const lines   = (data.lines || []).map(normalizeLine);
-    const { total } = quoteTotals(lines, data);
+    const normalized = (data.lines || []).map(normalizeLine);
+    const { total } = quoteTotals(normalized, data);
+    const { lines, internalCosts } = await computeInternalCosts(normalized, orgId);
 
     const quote = await Quote.create({
         orgId,
@@ -65,6 +69,7 @@ export async function POST(request) {
         status:  data.status || "draft",
         customer: data.customer || {},
         lines,
+        internalCosts,
         discountAmount: Number(data.discountAmount) || 0,
         discountName:   data.discountName,
         shippingCost:   Number(data.shippingCost) || 0,
