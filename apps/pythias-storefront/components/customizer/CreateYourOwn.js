@@ -48,6 +48,14 @@ const sideKey = (colorName, idx) => `${colorName}::${idx}`;
 // Load CDN images through our same-origin proxy so the canvas stays clean (untainted) and toDataURL
 // works — for both the production artwork export and the cart mockup.
 const proxied = (u) => (u && /^https?:\/\//i.test(u) ? `/api/img?u=${encodeURIComponent(u)}` : u);
+// Resize DISPLAY thumbnails through the images app (images2). images1 (Wasabi) ignores ?width=, so
+// the tiles were downloading full-res source files; /origin actually resizes. Canvas images are
+// deliberately NOT routed here — they load via the same-origin proxy so toDataURL stays untainted.
+const IMG1 = "https://images1.pythiastechnologies.com";
+const img2 = (u, width = 300) =>
+    (typeof u === "string" && u.startsWith(IMG1))
+        ? `https://images2.pythiastechnologies.com/origin${u.slice(IMG1.length)}${u.includes("?") ? "&" : "?"}width=${width}`
+        : u;
 // Web-safe fonts + a few popular Google fonts (loaded on mount) the buyer can set their text in.
 const GOOGLE_FONTS = ["Anton", "Bebas Neue", "Oswald", "Montserrat", "Pacifico", "Lobster", "Permanent Marker", "Caveat"];
 const FONTS = ["Arial", "Georgia", "Times New Roman", "Courier New", "Verdana", "Trebuchet MS", "Impact", "Comic Sans MS", ...GOOGLE_FONTS];
@@ -127,6 +135,10 @@ export default function CreateYourOwn({ blanks = [], embed = false }) {
     const [savedList, setSavedList] = useState([]);     // the buyer's saved designs
     const [, setDesignV] = useState(0);                 // bump to re-render when art (a ref) changes
     const touch = () => setDesignV((v) => v + 1);
+
+    // Warm up Fabric.js as soon as the studio mounts (a ~300KB CDN script) so it's ready by the time
+    // the buyer picks a product to design — takes the load wait off the first interaction.
+    useEffect(() => { loadFabric().catch(() => {}); }, []);
 
     const [isMobile, setIsMobile] = useState(false);
     // Scale the Fabric canvas (which wraps itself in a fixed-px container) down to fit narrow screens,
@@ -379,7 +391,7 @@ export default function CreateYourOwn({ blanks = [], embed = false }) {
                 xPct: clamp01((ab.left - boxLeft) / z.w), yPct: clamp01((ab.top - boxTop) / z.h),
                 wPct: clamp01(ab.width / z.w), hPct: clamp01(ab.height / z.h),
             };
-            const mult = Math.max(4, Math.min(12, 3000 / Math.max(ab.width, ab.height, 1)));
+            const mult = Math.max(4, Math.min(12, (isMobile ? 2200 : 3000) / Math.max(ab.width, ab.height, 1)));
             let dataUrl = null;
             try { dataUrl = c.toDataURL({ format: "png", left: ab.left, top: ab.top, width: ab.width, height: ab.height, multiplier: mult }); }
             catch { /* cross-origin taint — production re-composites from the stored art */ }
@@ -452,17 +464,23 @@ export default function CreateYourOwn({ blanks = [], embed = false }) {
         if (!hasArt) { setMsg("Add a design first — upload one or generate with AI."); return; }
         setBusy("cart"); setMsg("");
         try {
-            // Cart/order thumbnail: real mockup(s) — front + back corner if both designed — else blank.
-            let cartImage = color?.image || null;
+            // Capture the mockup + per-side art on the (shared) canvas, then upload them all
+            // concurrently — serial uploads were the add-to-cart bottleneck, especially on mobile.
             const mockup = await buildCartImage();
-            if (mockup) { const d = await (await fetch("/api/customizer/upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dataUrl: mockup }) })).json(); if (!d.error) cartImage = d.url; }
             const exported = exportAllSides();
-            const sidesOut = [];
-            for (const s of exported) {
-                let artworkUrl = null;
-                if (s.dataUrl) { const d = await (await fetch("/api/customizer/upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dataUrl: s.dataUrl }) })).json(); if (!d.error) artworkUrl = d.url; }
-                sidesOut.push({ view: s.view, location: s.location, artworkUrl, place: s.place, styleImage: s.styleImage });
-            }
+            const uploadDataUrl = async (dataUrl) => {
+                if (!dataUrl) return null;
+                try {
+                    const d = await (await fetch("/api/customizer/upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dataUrl }) })).json();
+                    return d.error ? null : d.url;
+                } catch { return null; }
+            };
+            const [mockupUrl, ...sideUrls] = await Promise.all([
+                uploadDataUrl(mockup),
+                ...exported.map((s) => uploadDataUrl(s.dataUrl)),
+            ]);
+            const cartImage = mockupUrl || color?.image || null;
+            const sidesOut = exported.map((s, i) => ({ view: s.view, location: s.location, artworkUrl: sideUrls[i], place: s.place, styleImage: s.styleImage }));
             const line = {
                 blankId: blank.id, styleCode: blank.code, title: blank.name,
                 color: color?.color || "", size: size.name, sku: size.sku || `${blank.code}-${color?.color || ""}-${size.name}`,
@@ -650,7 +668,7 @@ export default function CreateYourOwn({ blanks = [], embed = false }) {
                 return (
                     <button key={b.id} onClick={() => { changeBlank(b); setTool(null); }} style={{ minWidth: 0, border: "2px solid " + (on ? "var(--sf-accent, #635bff)" : "#eef2f7"), borderRadius: 14, background: "#fff", padding: 8, cursor: "pointer", textAlign: "center" }}>
                         <div style={{ width: "100%", aspectRatio: "1", background: "#f8fafc", borderRadius: 10, overflow: "hidden" }}>
-                            {b.image && <img src={`${b.image}?width=200&height=200`} alt={b.name} style={{ width: "100%", height: "100%", objectFit: "contain" }} />}
+                            {b.image && <img src={img2(b.image, 200)} alt={b.name} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "contain" }} />}
                         </div>
                         <div style={{ fontSize: "0.78rem", fontWeight: 700, color: "#334155", marginTop: 6, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{b.name}</div>
                     </button>
@@ -678,7 +696,7 @@ export default function CreateYourOwn({ blanks = [], embed = false }) {
                 {uploads.map((u) => (
                     <div key={u} style={{ position: "relative" }}>
                         <button onClick={() => addArt(u)} title="Add to this side" style={{ width: "100%", aspectRatio: "1", border: "1px solid #e2e8f0", borderRadius: 10, background: "#f8fafc", padding: 0, cursor: "pointer", overflow: "hidden" }}>
-                            <img src={`${u}?width=120&height=120`} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                            <img src={img2(u, 120)} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
                         </button>
                         <button onClick={() => removeUpload(u)} title="Remove" style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: "50%", border: "none", background: "#1e293b", color: "#fff", fontSize: "0.68rem", cursor: "pointer", lineHeight: 1 }}>✕</button>
                     </div>
@@ -712,7 +730,7 @@ export default function CreateYourOwn({ blanks = [], embed = false }) {
                             return (
                                 <button key={s.side + i} onClick={() => setSideIdx(i)} title={s.label}
                                     style={{ position: "relative", padding: 0, width: 54, height: 54, borderRadius: 12, overflow: "hidden", cursor: "pointer", background: "#f8fafc", border: "2px solid " + (on ? "var(--sf-accent, #635bff)" : "#e2e8f0") }}>
-                                    <img src={`${s.image}?width=120&height=120`} alt={s.label} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                    <img src={img2(s.image, 120)} alt={s.label} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                     <span style={{ position: "absolute", bottom: 0, left: 0, right: 0, fontSize: "0.6rem", fontWeight: 800, textAlign: "center", color: "#fff", background: "rgba(15,23,42,0.55)", padding: "1px 0" }}>{s.label}{designed ? " ✓" : ""}</span>
                                 </button>
                             );

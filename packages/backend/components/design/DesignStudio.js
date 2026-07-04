@@ -14,6 +14,18 @@ const enc = encodeURIComponent;
 // Append &orgSlug=… to a URL when we're on the multi-tenant (platform) side.
 const withSlug = (url, orgSlug) => (orgSlug ? `${url}${url.includes("?") ? "&" : "?"}orgSlug=${enc(orgSlug)}` : url);
 
+// Route images1-hosted catalog images through the images app (images2) for on-the-fly
+// thumbnail resizing — the studio only needs small previews, not full-res source files, so
+// this cuts page weight. Uses the /origin endpoint (transparent bg, format preserved). No-op
+// for any non-images1 URL (renderImages previews, data: URLs, external images).
+const IMG_ORIGIN = "https://images1.pythiastechnologies.com";
+const IMG_RESIZER = "https://images2.pythiastechnologies.com";
+const img2 = (url, width = 400) => {
+    if (!url || typeof url !== "string" || !url.startsWith(IMG_ORIGIN)) return url;
+    const path = url.slice(IMG_ORIGIN.length);              // "/<key>" (may include a query)
+    return `${IMG_RESIZER}/origin${path}${path.includes("?") ? "&" : "?"}width=${width}`;
+};
+
 // The live preview is just an <img>: the server composites the art onto the blank-color at `place`.
 // Keyed on the placement so it refetches whenever the art is moved/resized.
 const previewUrl = ({ code, colorName, artUrl, place, orgSlug }) => {
@@ -362,7 +374,7 @@ export default function DesignStudio({ orgSlug } = {}) {
                                 return (
                                     <button key={b._id} onClick={() => toggleBlank(b)} style={{ position: "relative", textAlign: "left", border: `2px solid ${on ? C.accent : "#eef2f7"}`, borderRadius: 14, background: "#fff", padding: 8, cursor: "pointer" }}>
                                         <div style={{ width: "100%", aspectRatio: "1", background: "#f8fafc", borderRadius: 10, overflow: "hidden" }}>
-                                            {b.image && <img src={b.image} alt={b.name} style={{ width: "100%", height: "100%", objectFit: "contain" }} />}
+                                            {b.image && <img src={img2(b.image, 280)} alt={b.name} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "contain" }} />}
                                         </div>
                                         <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "#334155", marginTop: 7, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{b.name}</div>
                                         {(b.brand || b.code) && <div style={{ fontSize: "0.72rem", color: "#94a3b8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{b.brand || b.code}</div>}
@@ -387,7 +399,7 @@ export default function DesignStudio({ orgSlug } = {}) {
                             {selectedList.map(({ blank, colors, qty }) => (
                                 <div key={blank._id} style={{ ...C.card, padding: 16 }}>
                                     <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
-                                        {blank.image && <img src={blank.image} alt="" style={{ width: 48, height: 48, objectFit: "contain", borderRadius: 8, background: "#f8fafc" }} />}
+                                        {blank.image && <img src={img2(blank.image, 96)} alt="" loading="lazy" style={{ width: 48, height: 48, objectFit: "contain", borderRadius: 8, background: "#f8fafc" }} />}
                                         <div>
                                             <div style={{ fontWeight: 800 }}>{blank.name}</div>
                                             {(blank.brand || blank.code) && <div style={{ fontSize: "0.78rem", color: "#94a3b8" }}>{blank.brand}{blank.brand && blank.code ? " · " : ""}{blank.code}</div>}
@@ -402,7 +414,7 @@ export default function DesignStudio({ orgSlug } = {}) {
                                                 <button key={c._id || c.name} title={c.name} onClick={() => toggleColor(blank._id, c.name)}
                                                     style={{ display: "flex", alignItems: "center", gap: 7, padding: "5px 12px 5px 6px", borderRadius: 999, cursor: "pointer", background: on ? "rgba(99,91,255,0.08)" : "#fff", border: `1.5px solid ${on ? C.accent : "#e2e8f0"}`, color: on ? C.accent : "#334155", fontWeight: 700, fontSize: "0.82rem" }}>
                                                     <span style={{ width: 22, height: 22, borderRadius: "50%", background: c.hexcode || "#e2e8f0", border: "1px solid rgba(0,0,0,0.18)", overflow: "hidden", flexShrink: 0 }}>
-                                                        {c.image && <img src={c.image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
+                                                        {c.image && <img src={img2(c.image, 48)} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
                                                     </span>
                                                     {c.name}
                                                 </button>
@@ -475,7 +487,7 @@ export default function DesignStudio({ orgSlug } = {}) {
                                     </div>
                                 )}
                                 {previewBlank?.image ? (
-                                    <PlacementBox refImage={previewBlank.image} artUrl={artUrl} artAspect={artAspect} place={place} onChange={setPlace} />
+                                    <PlacementBox refImage={img2(previewBlank.image, 700)} artUrl={artUrl} artAspect={artAspect} place={place} onChange={setPlace} />
                                 ) : (
                                     <p style={{ color: "#94a3b8" }}>Select a product above to position your art.</p>
                                 )}
