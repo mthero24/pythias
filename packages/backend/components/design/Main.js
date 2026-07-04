@@ -680,6 +680,31 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
                                     />
                                 </Grid2>
                             </Grid2>
+
+                            {source === "platform" && (
+                                <Grid2 container spacing={2}>
+                                    <Grid2 size={{ xs: 12, sm: 6 }}>
+                                        <Typography variant="caption" sx={{ display: "block", mb: 0.5, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, color: "text.secondary" }}>Print Area (in²) — internal ink cost</Typography>
+                                        <TextField
+                                            type="number" size="small" fullWidth disabled={!canEdit}
+                                            placeholder="e.g. 90"
+                                            value={des.printAreaSqIn ?? ""}
+                                            onChange={(e) => setDesign({ ...des, printAreaSqIn: e.target.value })}
+                                            onBlur={() => updateDesign({ ...des })}
+                                        />
+                                    </Grid2>
+                                    <Grid2 size={{ xs: 12, sm: 6 }}>
+                                        <Typography variant="caption" sx={{ display: "block", mb: 0.5, fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.5, color: "text.secondary" }}>Colors / screens — screen-burn cost</Typography>
+                                        <TextField
+                                            type="number" size="small" fullWidth disabled={!canEdit}
+                                            placeholder="e.g. 3"
+                                            value={des.numColors ?? ""}
+                                            onChange={(e) => setDesign({ ...des, numColors: e.target.value })}
+                                            onBlur={() => updateDesign({ ...des })}
+                                        />
+                                    </Grid2>
+                                </Grid2>
+                            )}
                         </Stack>
                     </SectionCard>
 

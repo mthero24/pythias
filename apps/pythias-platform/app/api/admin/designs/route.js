@@ -74,6 +74,10 @@ export async function PUT(req) {
     const update = {};
     const scalar = ["sku", "name", "description", "printType", "published", "active", "retailPrice", "cost"];
     for (const k of scalar) if (design[k] !== undefined) update[k] = design[k];
+    // Internal cost inputs (drive quote COGS): coerce "" → null so clearing a field works.
+    for (const k of ["printAreaSqIn", "numColors"]) {
+        if (design[k] !== undefined) update[k] = (design[k] === "" || design[k] === null) ? null : Number(design[k]);
+    }
     if (design.tags       !== undefined) update.tags             = design.tags;
     if (design.images     !== undefined) update.images           = design.images;
     if (design.sublimationImages !== undefined) update.sublimationImages = design.sublimationImages;

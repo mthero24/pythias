@@ -46,6 +46,7 @@ function toEditor(q) {
         })),
         discountAmount: q.discountAmount || 0, discountName: q.discountName || "",
         shippingCost: q.shippingCost || 0, taxRatePct: (q.taxRate || 0) * 100,
+        internalCosts: q.internalCosts || { ink: 0, screenBurn: 0, total: 0 },
         message: q.message || "", expiresAt: q.expiresAt ? q.expiresAt.slice(0, 10) : "",
     };
 }
@@ -227,6 +228,7 @@ function QuoteEditor({ quote, byobRates = { byobDefaultRate: 0, byobRatesByType:
     const taxRate  = (Number(q.taxRatePct) || 0) / 100;
     const tax      = (subtotal - discount) * taxRate;
     const due      = subtotal - discount + (Number(q.shippingCost) || 0) + tax;
+    const ic       = q.internalCosts || { ink: 0, screenBurn: 0, total: 0 };   // COGS, computed server-side on save
 
     // Persist the current edits (create or update) and return the quote id.
     const persist = async () => {
@@ -242,8 +244,13 @@ function QuoteEditor({ quote, byobRates = { byobDefaultRate: 0, byobRatesByType:
             status: q.status,
             expiresAt: q.expiresAt || undefined,
         };
-        if (q._id) { await axios.patch(`/api/quotes/${q._id}`, payload); return q._id; }
+        if (q._id) {
+            const res = await axios.patch(`/api/quotes/${q._id}`, payload);
+            setQ((p) => ({ ...p, internalCosts: res.data?.quote?.internalCosts || p.internalCosts }));
+            return q._id;
+        }
         const res = await axios.post(`/api/quotes`, payload);
+        setQ((p) => ({ ...p, internalCosts: res.data?.quote?.internalCosts || p.internalCosts }));
         return res.data.quote._id;
     };
 
@@ -343,6 +350,17 @@ function QuoteEditor({ quote, byobRates = { byobDefaultRate: 0, byobRatesByType:
                             <Divider sx={{ my: 0.75 }} />
                             <Row label="Total Due" value={money(due)} bold />
                         </Box>
+                        {ic.total > 0 && (
+                            <Box sx={{ bgcolor: "#fff7ed", border: "1px solid #fed7aa", borderRadius: 1.5, p: 1.5, mt: 1 }}>
+                                <Typography variant="caption" sx={{ fontWeight: 700, color: "#9a3412", display: "block", mb: 0.5 }}>Internal cost — shop only</Typography>
+                                {ic.ink > 0 && <Row label="Ink" value={money(ic.ink)} />}
+                                {ic.screenBurn > 0 && <Row label="Screen burn" value={money(ic.screenBurn)} />}
+                                <Row label="Total cost" value={money(ic.total)} />
+                                <Divider sx={{ my: 0.75 }} />
+                                <Row label="Margin" value={money(due - ic.total)} bold color={(due - ic.total) >= 0 ? "success.main" : "error.main"} />
+                                <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>Updates on save · not shown to the customer</Typography>
+                            </Box>
+                        )}
                     </Box>
 
                     {/* Message + status */}
