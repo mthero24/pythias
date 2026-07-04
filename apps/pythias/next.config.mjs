@@ -8,7 +8,11 @@ const nextConfig = {
     remotePatterns: [],
   },
   experimental: {
-    optimizePackageImports: ["@mui/material", "@mui/icons-material"],
+    // Rewrite barrel imports (named → direct module) so a page that pulls one component
+    // from a big index doesn't drag the whole graph into its client bundle. @pythias/backend's
+    // "." is a 75-export barrel (incl. MUI-based DesignMain); importing ContactForm (contact
+    // page) or PageTracker (root layout → every page) otherwise pulls far more than needed.
+    optimizePackageImports: ["@mui/material", "@mui/icons-material", "@pythias/backend"],
   },
 };
 
