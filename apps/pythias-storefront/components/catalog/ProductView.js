@@ -7,6 +7,7 @@ import ExpressCheckout from "@/components/checkout/ExpressCheckout";
 import { track } from "@/components/analytics/tracker";
 import { useI18n } from "@/components/i18n/I18nProvider";
 import { buildRenderUrl } from "@/lib/renderUrl";
+import { prefetchImages } from "@/lib/prefetchImages";
 
 // Request an image at a given pixel size (CDN + renderImages both honor width/height). Used to serve a
 // sharper main carousel image (the URLs are saved at width=400) without changing the stored `img`.
@@ -25,6 +26,8 @@ export default function ProductView({ productId, title, images = [], variants = 
         [v.color, { name: v.color, hex: v.hex || null, image: variants.find((x) => x.color === v.color && x.image)?.image || null }])).values()], [variants]);
     const sizes = useMemo(() => [...new Set(variants.map((v) => v.size).filter(Boolean))], [variants]);
     const hasColors = colors.length > 0, hasSizes = sizes.length > 0;
+    // Precache every color's carousel image on idle so clicking a swatch is instant (never blocks load).
+    useEffect(() => { prefetchImages(colors.map((c) => c.image).filter(Boolean).map((u) => atWidth(u, 700))); }, [colors]);
     // Free-form options (catalog / buy-not-build products: no color/size, just a name per variant).
     const options = useMemo(() => (!hasColors && !hasSizes) ? [...new Set(variants.map((v) => v.name).filter(Boolean))] : [], [variants, hasColors, hasSizes]);
     const hasOptions = options.length > 0;

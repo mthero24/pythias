@@ -3,6 +3,7 @@ import { useRef, useEffect, useState } from "react";
 import { useCart } from "@/components/cart/CartProvider";
 import { useCustomer, authHeaders } from "@/components/account/CustomerProvider";
 import DesignThumb from "@/components/customizer/DesignThumb";
+import { prefetchImages } from "@/lib/prefetchImages";
 
 // "Create your own" design studio: pick a BLANK garment, then design its Front / Back / Sleeve (each
 // side that the blank has a print box for). Drop uploaded or AI-generated artwork into the print zone,
@@ -139,6 +140,14 @@ export default function CreateYourOwn({ blanks = [], embed = false }) {
     // Warm up Fabric.js as soon as the studio mounts (a ~300KB CDN script) so it's ready by the time
     // the buyer picks a product to design — takes the load wait off the first interaction.
     useEffect(() => { loadFabric().catch(() => {}); }, []);
+
+    // Precache the selected blank's color images (garment backgrounds) on idle so switching color on
+    // the canvas is instant. Runs on each blank change; never blocks — it's idle + low-priority.
+    useEffect(() => {
+        if (!blank) return;
+        prefetchImages((blank.colors || []).flatMap((cc) => (cc.sides || []).slice(0, 1)
+            .map((sd) => (sd?.image ? proxied(`${sd.image}?width=${W}&height=${H}`) : null))).filter(Boolean));
+    }, [blank]);
 
     const [isMobile, setIsMobile] = useState(false);
     // Scale the Fabric canvas (which wraps itself in a fixed-px container) down to fit narrow screens,
