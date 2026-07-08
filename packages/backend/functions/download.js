@@ -4,13 +4,17 @@ import axios from 'axios';
 
 const sanitizeColorForKohls = (name) => {
     if (!name) return "";
-    return name.replace(/[^a-zA-Z0-9 ]/g, " ").replace(/\s+/g, " ").trim().slice(0, 22).trim();
+    return name.replace(/[^a-zA-Z0-9 ]/g, " ").replace(/\s+/g, " ").trim().slice(0, 32).trim();
 };
 
 const isKohlsMarketplace = (mpName) => {
     if (!mpName || typeof mpName !== "string") return false;
     return mpName.toLowerCase().replace(/['']/g, "").includes("kohls");
 };
+
+// Color as it should appear in a marketplace's output — Kohl's needs special chars stripped and a
+// 32-char cap EVERYWHERE the color is emitted (the Color column AND anywhere it's baked into a title).
+const colorForMarketplace = (colorName, mpName) => isKohlsMarketplace(mpName) ? sanitizeColorForKohls(colorName) : (colorName || "");
 
 // //note: This code is used to generate a CSV file for product data based on the selected market place and product.
 const csvFunctions = {
@@ -290,7 +294,7 @@ export const downloadProduct = async ({ products, marketPlace, header, disableDe
                                                 let val = product.marketplaceValues[marketPlace._id][key].replace("- {color} ", "").replace("- {blank} ", "").replace("- {size} ", "");
                                                 thisHead[marketPlace.productDropDowns[key]["label"]] = val;
                                             }
-                                            let val = product.marketplaceValues[marketPlace._id][key].replace("{color}", v.color.name).replace("{blank}", v.blank.name).replace("{size}", v.size.name);
+                                            let val = product.marketplaceValues[marketPlace._id][key].replace("{color}", colorForMarketplace(v.color.name, marketPlace.name)).replace("{blank}", v.blank.name).replace("{size}", v.size.name);
                                             thisHead[marketPlace.productDropDowns[key]["label"]] = val;
                                             
                                         }
@@ -300,8 +304,8 @@ export const downloadProduct = async ({ products, marketPlace, header, disableDe
                                 // variantTitle: append "- Color - Size" AFTER marketplace values so they don't overwrite it
                                 if (marketPlace.variantTitle && v.color?.name) {
                                     const titleHeader = Object.keys(marketPlace.defaultValues ?? {}).find(k => marketPlace.defaultValues[k] === "productTitle");
-                                    if (titleHeader && thisHead[titleHeader] && !String(thisHead[titleHeader]).includes(` - ${v.color.name}`)) {
-                                        const parts = [String(thisHead[titleHeader]), v.color.name];
+                                    if (titleHeader && thisHead[titleHeader] && !String(thisHead[titleHeader]).includes(` - ${colorForMarketplace(v.color.name, marketPlace.name)}`)) {
+                                        const parts = [String(thisHead[titleHeader]), colorForMarketplace(v.color.name, marketPlace.name)];
                                         if (v.size?.name) parts.push(v.size.name);
                                         thisHead[titleHeader] = parts.join(" - ");
                                     }
@@ -349,7 +353,7 @@ export const downloadProduct = async ({ products, marketPlace, header, disableDe
                                         if(!marketPlace.productDropDowns || !marketPlace.productDropDowns[key] || !marketPlace.productDropDowns[key]["label"]) {
                                             return;
                                         }
-                                        let val = product.marketplaceValues[marketPlace._id][key].replace("{color}", v.color.name).replace("{blank}", v.blank.name).replace("{size}", v.size.name);
+                                        let val = product.marketplaceValues[marketPlace._id][key].replace("{color}", colorForMarketplace(v.color.name, marketPlace.name)).replace("{blank}", v.blank.name).replace("{size}", v.size.name);
                                         thisHead[marketPlace.productDropDowns[key]["label"]] = val;
                                         
                                     }
@@ -359,8 +363,8 @@ export const downloadProduct = async ({ products, marketPlace, header, disableDe
                             // variantTitle: append "- Color - Size" AFTER marketplace values so they don't overwrite it
                             if (marketPlace.variantTitle && v.color?.name) {
                                 const titleHeader = Object.keys(marketPlace.defaultValues ?? {}).find(k => marketPlace.defaultValues[k] === "productTitle");
-                                if (titleHeader && thisHead[titleHeader] && !String(thisHead[titleHeader]).includes(` - ${v.color.name}`)) {
-                                    const parts = [String(thisHead[titleHeader]), v.color.name];
+                                if (titleHeader && thisHead[titleHeader] && !String(thisHead[titleHeader]).includes(` - ${colorForMarketplace(v.color.name, marketPlace.name)}`)) {
+                                    const parts = [String(thisHead[titleHeader]), colorForMarketplace(v.color.name, marketPlace.name)];
                                     if (v.size?.name) parts.push(v.size.name);
                                     thisHead[titleHeader] = parts.join(" - ");
                                 }
