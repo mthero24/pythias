@@ -4,7 +4,7 @@ import axios from 'axios';
 
 const sanitizeColorForKohls = (name) => {
     if (!name) return "";
-    return name.replace(/[^a-zA-Z0-9 ]/g, " ").replace(/\s+/g, " ").trim().slice(0, 32).trim();
+    return name.replace(/[^a-zA-Z0-9 ]/g, " ").replace(/\s+/g, " ").trim().slice(0, 22).trim();
 };
 
 const isKohlsMarketplace = (mpName) => {
@@ -13,7 +13,7 @@ const isKohlsMarketplace = (mpName) => {
 };
 
 // Color as it should appear in a marketplace's output — Kohl's needs special chars stripped and a
-// 32-char cap EVERYWHERE the color is emitted (the Color column AND anywhere it's baked into a title).
+// 22-char cap EVERYWHERE the color is emitted (the Color column AND anywhere it's baked into a title).
 const colorForMarketplace = (colorName, mpName) => isKohlsMarketplace(mpName) ? sanitizeColorForKohls(colorName) : (colorName || "");
 
 // //note: This code is used to generate a CSV file for product data based on the selected market place and product.
