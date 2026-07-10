@@ -4,7 +4,7 @@ import {
     Chip, Card, Collapse, Divider, InputAdornment, IconButton, Tooltip,
     Button, Dialog, DialogTitle, DialogContent, DialogActions,
     Alert, CircularProgress, MenuItem, Select, FormControl, InputLabel,
-    Checkbox, FormControlLabel,
+    Checkbox, FormControlLabel, Autocomplete,
 } from "@mui/material";
 import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -57,6 +57,18 @@ function CreateOrderModal({ open, onClose, onCreated }) {
     const [selSizeId, setSelSizeId] = useState(null); // blank size _id string
     const [qty, setQty]             = useState(1);
 
+    // ── Build-a-SKU state (pick design + blank + color + size → compose the SKU) ──
+    const [buildBlanks, setBuildBlanks]     = useState([]);
+    const [selBlank, setSelBlank]           = useState(null);
+    const [selBuildColor, setSelBuildColor] = useState(null);
+    const [selBuildSize, setSelBuildSize]   = useState(null);
+    const [designOpts, setDesignOpts]       = useState([]);
+    const [designQuery, setDesignQuery]     = useState("");
+    const [selDesign, setSelDesign]         = useState(null);
+    const [designLoading, setDesignLoading] = useState(false);
+    const [buildQty, setBuildQty]           = useState(1);
+    const [buildPrice, setBuildPrice]       = useState(0);
+
     // ── Items cart ──────────────────────────────────────────────────────────────
     const [cartItems, setCartItems] = useState([]);
     const [byobRates, setByobRates] = useState({ byobDefaultRate: 0, byobRatesByType: [] });
@@ -72,6 +84,46 @@ function CreateOrderModal({ open, onClose, onCreated }) {
 
     const resetLookup = () => { setSku(""); setProduct(null); setLookupErr(""); setSelColor(null); setSelSizeId(null); setQty(1); };
     const handleClose = () => { resetLookup(); setCartItems([]); setPo(""); setEmail(""); setPayment("invoice"); setAddr({ name: "", phone: "", address1: "", address2: "", city: "", state: "", zip: "", country: "US" }); setInStorePickup(false); setSaving(false); setSaveErr(""); onClose(); };
+
+    // ── Build-a-SKU: load blanks (with colors+sizes) on open; search designs by sku ──
+    useEffect(() => {
+        if (!open || buildBlanks.length) return;
+        axios.get("/api/admin/custom-order/blanks").then(r => setBuildBlanks(r.data?.blanks ?? [])).catch(() => {});
+    }, [open]);
+    useEffect(() => {
+        if (!open) return;
+        const q = designQuery.trim();
+        const t = setTimeout(async () => {
+            setDesignLoading(true);
+            try { const r = await axios.get(`/api/admin/designs?q=${encodeURIComponent(q)}`); const d = r.data?.designs ?? r.data ?? []; setDesignOpts(Array.isArray(d) ? d : []); }
+            catch { setDesignOpts([]); }
+            finally { setDesignLoading(false); }
+        }, 300);
+        return () => clearTimeout(t);
+    }, [designQuery, open]);
+
+    // Composed SKU (matches CreateSku: blankCode_colorSku_sizeSku_designSku).
+    const builtSku = (selBlank && selBuildColor && selBuildSize && selDesign)
+        ? `${selBlank.code}_${selBuildColor.sku}_${selBuildSize.sku}_${selDesign.sku}` : "";
+
+    const addBuiltItem = () => {
+        if (!builtSku) return;
+        const im = selDesign.images;
+        const firstImg = typeof im === "string" ? im : (im ? (Object.values(im).find(v => typeof v === "string") ?? null) : null);
+        setCartItems(prev => [...prev, {
+            id:           Date.now(),
+            sku:          builtSku,
+            title:        selDesign.name || `${selBlank.code} · ${selDesign.sku}`,
+            colorId:      selBuildColor._id, colorName: selBuildColor.name, colorHex: selBuildColor.hexcode ?? null,
+            sizeId:       selBuildSize._id, sizeName: selBuildSize.name,
+            blankId:      selBlank._id, styleCode: selBlank.code,
+            designId:     selDesign._id, designImages: selDesign.images ?? null, printType: selDesign.printType ?? null,
+            price:        Number(buildPrice) || 0,
+            image:        firstImg,
+            qty:          Math.max(1, Number(buildQty) || 1),
+        }]);
+        setSelDesign(null); setSelBlank(null); setSelBuildColor(null); setSelBuildSize(null); setBuildQty(1); setBuildPrice(0); setDesignQuery("");
+    };
 
     // ── Lookup ──────────────────────────────────────────────────────────────────
     const lookupSku = useCallback(async () => {
@@ -232,6 +284,47 @@ function CreateOrderModal({ open, onClose, onCreated }) {
                             </Button>
                         </Stack>
                         {lookupErr && <Alert severity="error" sx={{ mb: 1 }}>{lookupErr}</Alert>}
+
+                        {/* ── Or build a SKU from design + blank + color + size ── */}
+                        <Divider sx={{ my: 1.25 }}><Typography variant="caption" color="text.secondary">or build a SKU</Typography></Divider>
+                        <Stack spacing={1} sx={{ mb: 1 }}>
+                            <Autocomplete
+                                size="small" options={designOpts} value={selDesign}
+                                getOptionLabel={o => o?.sku ? `${o.sku}${o.name ? ` — ${o.name}` : ""}` : ""}
+                                isOptionEqualToValue={(o, v) => o._id === v._id}
+                                filterOptions={x => x} loading={designLoading}
+                                onChange={(e, v) => setSelDesign(v)}
+                                onInputChange={(e, v) => setDesignQuery(v)}
+                                renderInput={p => <TextField {...p} size="small" label="Design (search by SKU)" />}
+                            />
+                            <Autocomplete
+                                size="small" options={buildBlanks} value={selBlank}
+                                getOptionLabel={b => b?.code ? `${b.code}${b.name ? ` — ${b.name}` : ""}` : ""}
+                                isOptionEqualToValue={(o, v) => o._id === v._id}
+                                onChange={(e, v) => { setSelBlank(v); setSelBuildColor(null); setSelBuildSize(null); }}
+                                renderInput={p => <TextField {...p} size="small" label="Blank" />}
+                            />
+                            <Stack direction="row" spacing={1}>
+                                <FormControl size="small" fullWidth disabled={!selBlank}>
+                                    <InputLabel>Color</InputLabel>
+                                    <Select label="Color" value={selBuildColor?._id ?? ""} onChange={e => setSelBuildColor((selBlank?.colors ?? []).find(c => c._id === e.target.value) ?? null)}>
+                                        {(selBlank?.colors ?? []).map(c => <MenuItem key={c._id} value={c._id}>{c.name}</MenuItem>)}
+                                    </Select>
+                                </FormControl>
+                                <FormControl size="small" fullWidth disabled={!selBlank}>
+                                    <InputLabel>Size</InputLabel>
+                                    <Select label="Size" value={selBuildSize?._id ?? ""} onChange={e => setSelBuildSize((selBlank?.sizes ?? []).find(s => s._id === e.target.value) ?? null)}>
+                                        {(selBlank?.sizes ?? []).map(s => <MenuItem key={s._id} value={s._id}>{s.name}</MenuItem>)}
+                                    </Select>
+                                </FormControl>
+                            </Stack>
+                            <Stack direction="row" spacing={1} alignItems="center">
+                                <TextField size="small" type="number" label="Qty" value={buildQty} onChange={e => setBuildQty(e.target.value)} sx={{ width: 90 }} inputProps={{ min: 1 }} />
+                                <TextField size="small" type="number" label="Unit $" value={buildPrice} onChange={e => setBuildPrice(e.target.value)} sx={{ width: 110 }} inputProps={{ min: 0, step: 0.01 }} />
+                                <Button variant="contained" size="small" startIcon={<AddIcon sx={{ fontSize: 16 }} />} onClick={addBuiltItem} disabled={!builtSku}>Add</Button>
+                            </Stack>
+                            {builtSku && <Typography variant="caption" color="text.secondary">SKU: <b>{builtSku}</b></Typography>}
+                        </Stack>
 
                         {/* Product card */}
                         {product && (
