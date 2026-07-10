@@ -49,22 +49,34 @@ export async function POST(req= NextApiRequest){
         }
         if(data.reship){
             console.log("+++++")
+            // Guard: never let an already-DELIVERED order be reshipped from the floor — that's the
+            // accidental-rescan case (a delivered item scanned back in) that resets shipped items and
+            // drags them back into production. A genuine replacement should be a new order.
+            const rsOrder = item ? item.order : order;
+            const delivered = (rsOrder?.shippingInfo?.labels || []).some(l => (l.trackingInfo || []).some(t => /delivered/i.test(String(t))));
+            if (delivered && !data.confirmReship) {
+                return NextResponse.json({ error: true, msg: "This order was already delivered — it can't be reshipped from the floor. If a replacement is needed, create a new order." });
+            }
             if(item){
                 for(let i of item.order.items){
                     i.shipped = false
+                    i.status = "awaiting_shipment"   // keep item status in sync with the boolean (no ghost "Shipped")
                     await i.save()
                 }
                 item.order.shipped = false
                 item.order.preShipped = false
+                item.order.status = "awaiting_shipment"   // order is no longer shipped — revert so dashboards are accurate
                 await item.order.save()
                 item = await Item.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"})
             }else if(order){
                 for(let i of order.items){
                     i.shipped = false
+                    i.status = "awaiting_shipment"
                     await i.save()
                 }
                 order.shipped = false
                 order.preShipped = false
+                order.status = "awaiting_shipment"
                 await order.save()
                 order = await Order.findOne({poNumber: data.scan.trim()}).populate("items")
             }
