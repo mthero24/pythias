@@ -509,8 +509,40 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
     const [imageToDelete, setImageToDelete] = useState(null);
     const [deleteBlankModalOpen, setDeleteBlankModalOpen] = useState(false);
     const [menuPortalTarget, setMenuPortalTarget] = useState(null);
+    const [lockedBy, setLockedBy] = useState(null);   // set to a user's name when someone else is editing this blank
+    const heldRef = useRef(false);      // do we currently hold the edit lock?
+    const blockedRef = useRef(false);   // is another user editing (so we must not save)?
 
     useEffect(() => { setMenuPortalTarget(document.body); }, []);
+
+    // Edit lock — claim this blank when the editor opens, heartbeat while it's open, release on close.
+    // If someone else already holds it, show a blocking message rather than let this user edit and
+    // clobber their save.
+    useEffect(() => {
+        const id = bla?._id;
+        if (!id) return;
+        const key = `blank:${id}`;
+        let alive = true;
+        const claim = async () => {
+            try {
+                const r = await axios.post("/api/edit-lock", { key });
+                if (!alive) return;
+                const ok = !!r.data?.ok;
+                heldRef.current = ok; blockedRef.current = !ok;
+                setLockedBy(ok ? null : (r.data?.lockedBy || "another user"));
+            } catch { if (alive) { heldRef.current = true; blockedRef.current = false; setLockedBy(null); } }  // fail open — never block on a lock error
+        };
+        claim();
+        const hb = setInterval(() => { if (heldRef.current) axios.post("/api/edit-lock", { key }).catch(() => {}); }, 30000);
+        const onUnload = () => { try { navigator.sendBeacon?.("/api/edit-lock", new Blob([JSON.stringify({ key, release: true })], { type: "application/json" })); } catch { /* ignore */ } };
+        window.addEventListener("beforeunload", onUnload);
+        return () => {
+            alive = false;
+            clearInterval(hb);
+            window.removeEventListener("beforeunload", onUnload);
+            if (heldRef.current) axios.delete("/api/edit-lock", { data: { key } }).catch(() => {});
+        };
+    }, [bla?._id]);
 
     const handleImageSave = () => {};
 
@@ -535,6 +567,7 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
     const debounceRef = useRef(null);
 
     const update = async ({blank, action})=>{
+        if (blockedRef.current) return;   // another user holds the edit lock — don't overwrite their work
         let res = await axios.post("/api/admin/blanks", { blank, before: blank._id ? originalBlank.current : null, action });
         if(res.data.error){
             alert("Error saving blank: " + (res.data.message || "Unknown error"))
@@ -550,6 +583,18 @@ export function Create({ colors, blanks, bla, printPricing, locations, vendors, 
 
     return (
         <Box sx={{ backgroundColor: "#f5f7fa", minHeight: "100vh" }}>
+            <Modal open={!!lockedBy} onClose={() => {}} aria-labelledby="blank-locked-title">
+                <Box sx={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 440, maxWidth: "92%", bgcolor: "background.paper", borderRadius: 2, boxShadow: 24, p: 4, textAlign: "center" }}>
+                    <Typography id="blank-locked-title" variant="h6" fontWeight={700} sx={{ mb: 1 }}>This blank is being edited</Typography>
+                    <Typography sx={{ mb: 3, color: "text.secondary" }}>
+                        Page is already being edited by <b>{lockedBy}</b>. Try again when {lockedBy} is finished with the page.
+                    </Typography>
+                    <Box sx={{ display: "flex", gap: 1.5, justifyContent: "center" }}>
+                        <Button variant="contained" onClick={() => window.history.back()}>Back to blanks</Button>
+                        <Button variant="outlined" onClick={() => window.location.reload()}>Try again</Button>
+                    </Box>
+                </Box>
+            </Modal>
             <Container maxWidth="lg" sx={{ pt: 3, pb: 6 }}>
 
                 {/* ── Header ── */}
