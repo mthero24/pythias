@@ -88,6 +88,7 @@ export default async function BillingPage() {
                         <BillingActions
                             currentTier={org.tier}
                             hasStripeCustomer={!!org.stripeCustomerId}
+                            status={org.status}
                         />
                     </CardContent>
                 </Card>

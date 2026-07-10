@@ -28,11 +28,13 @@ const TIER_HIGHLIGHTS = {
     enterprise:   ["Unlimited everything", "Unlimited users", "Dedicated engineer", "30-day support"],
 };
 
-export default function BillingActions({ currentTier, hasStripeCustomer }) {
+export default function BillingActions({ currentTier, hasStripeCustomer, status }) {
     const [upgradeOpen, setUpgradeOpen] = useState(false);
     const [selectedTier, setSelectedTier] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [cancelOpen, setCancelOpen] = useState(false);
+    const isCancelled = status === "cancelled";
 
     const currentIdx = TIER_ORDER.indexOf(currentTier);
     const upgradeTiers = TIER_ORDER.slice(currentIdx + 1).filter(t => t !== "enterprise");
@@ -76,6 +78,20 @@ export default function BillingActions({ currentTier, hasStripeCustomer }) {
                 setError(data.error || "Something went wrong");
                 setLoading(false);
             }
+        } catch {
+            setError("Network error — please try again");
+            setLoading(false);
+        }
+    };
+
+    const handleCancel = async () => {
+        setLoading(true);
+        setError("");
+        try {
+            const res = await fetch("/api/billing/cancel", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+            const data = await res.json();
+            if (data.ok) { window.location.reload(); }
+            else { setError(data.error || "Could not cancel"); setLoading(false); }
         } catch {
             setError("Network error — please try again");
             setLoading(false);
@@ -128,9 +144,40 @@ export default function BillingActions({ currentTier, hasStripeCustomer }) {
                         Manage billing
                     </Button>
                 )}
+                {!isCancelled && (
+                    <Button
+                        variant="text"
+                        size="small"
+                        color="error"
+                        onClick={() => { setError(""); setCancelOpen(true); }}
+                        disabled={loading}
+                    >
+                        Cancel plan
+                    </Button>
+                )}
+                {isCancelled && <Chip label="Cancelled" size="small" variant="outlined" />}
             </Stack>
 
             {error && <Alert severity="error" sx={{ mt: 1 }}>{error}</Alert>}
+
+            {/* Cancel confirmation */}
+            <Dialog open={cancelOpen} onClose={() => !loading && setCancelOpen(false)}>
+                <DialogTitle>Cancel your plan?</DialogTitle>
+                <DialogContent>
+                    <Typography variant="body2">
+                        {hasStripeCustomer
+                            ? "Your subscription will be set to cancel at the end of the current billing period. You'll keep access until then, and it won't renew."
+                            : "You're on a free trial with no card on file, so you won't be charged. This closes your account."}
+                    </Typography>
+                    {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setCancelOpen(false)} disabled={loading}>Keep plan</Button>
+                    <Button onClick={handleCancel} color="error" variant="contained" disabled={loading}>
+                        {loading ? <CircularProgress size={20} /> : (hasStripeCustomer ? "Cancel subscription" : "Close account")}
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
             {/* Onboarding add-ons */}
             <Box sx={{ mt: 4 }}>
