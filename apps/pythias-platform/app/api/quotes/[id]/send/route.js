@@ -42,7 +42,7 @@ export async function POST(request, { params }) {
         quote.sentAt = new Date();
         await quote.save();
 
-        const base = (process.env.NEXTAUTH_URL || "").replace(/\/$/, "");
+        const base = (process.env.PUBLIC_APP_URL || process.env.NEXTAUTH_URL || "").replace(/\/$/, "");
         const url  = `${base}/quote/${quote.token}`;
         const due  = (quote.total || 0) - (quote.discountAmount || 0);
         await sendEmail({

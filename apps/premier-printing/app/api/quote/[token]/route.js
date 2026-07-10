@@ -107,7 +107,7 @@ export async function POST(request, { params }) {
         if (action === "checkout") {
             if (quote.status === "converted") return NextResponse.json({ error: "This quote is already paid." }, { status: 400 });
             if (amountCents < 50) return NextResponse.json({ error: "Quote total is too low." }, { status: 400 });
-            const base = (process.env.NEXTAUTH_URL || "").replace(/\/$/, "");
+            const base = (process.env.PUBLIC_APP_URL || process.env.NEXTAUTH_URL || "").replace(/\/$/, "");
             const session = await stripe.checkout.sessions.create({
                 mode: "payment",
                 line_items: [{ price_data: { currency: "usd", product_data: { name: `Quote ${quote.quoteId}` }, unit_amount: amountCents }, quantity: 1 }],

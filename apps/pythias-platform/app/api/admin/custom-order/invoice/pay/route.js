@@ -62,7 +62,7 @@ export async function POST(request) {
         if (!to) return NextResponse.json({ error: "No customer email on this order" }, { status: 400 });
 
         const invoiceToken = order.invoiceToken || crypto.randomBytes(16).toString("hex");
-        const base      = (process.env.NEXTAUTH_URL || "").replace(/\/$/, "");
+        const base      = (process.env.PUBLIC_APP_URL || process.env.NEXTAUTH_URL || "").replace(/\/$/, "");
         const brandName = org?.name || "Pythias";
 
         // Direct charge on the connected account ({ stripeAccount }); application_fee_amount → Pythias.
