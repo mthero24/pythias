@@ -86,9 +86,40 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
     const [copied, setCopied] = useState(false);
     const [sublimationOpen, setSublimationOpen] = useState(false);
     const [aiGenerating, setAiGenerating] = useState(false);
+    const [lockedBy, setLockedBy] = useState(null);   // set to a user's name when someone else is editing this design
+    const heldRef = useRef(false);      // do we currently hold the edit lock?
+    const blockedRef = useRef(false);   // is another user editing (so we must not save)?
     const { setShow } = useCSV();
 
     useEffect(() => { setShow(true); }, []);
+
+    // Edit lock — claim this design when the editor opens, heartbeat while open, release on close. If
+    // someone else already holds it, show a blocking message rather than let this user clobber their save.
+    useEffect(() => {
+        const id = design?._id;
+        if (!id) return;
+        const key = `design:${id}`;
+        let alive = true;
+        const claim = async () => {
+            try {
+                const r = await axios.post("/api/edit-lock", { key });
+                if (!alive) return;
+                const ok = !!r.data?.ok;
+                heldRef.current = ok; blockedRef.current = !ok;
+                setLockedBy(ok ? null : (r.data?.lockedBy || "another user"));
+            } catch { if (alive) { heldRef.current = true; blockedRef.current = false; setLockedBy(null); } }  // fail open
+        };
+        claim();
+        const hb = setInterval(() => { if (heldRef.current) axios.post("/api/edit-lock", { key }).catch(() => {}); }, 30000);
+        const onUnload = () => { try { navigator.sendBeacon?.("/api/edit-lock", new Blob([JSON.stringify({ key, release: true })], { type: "application/json" })); } catch { /* ignore */ } };
+        window.addEventListener("beforeunload", onUnload);
+        return () => {
+            alive = false;
+            clearInterval(hb);
+            window.removeEventListener("beforeunload", onUnload);
+            if (heldRef.current) axios.delete("/api/edit-lock", { data: { key } }).catch(() => {});
+        };
+    }, [design?._id]);
 
     useEffect(() => {
         if (!reload) setReload(!reload);
@@ -315,6 +346,7 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
 
     let updateDesign = async (des, oldSku) => {
         if (!canEdit) return;
+        if (blockedRef.current) return;   // another user holds the edit lock — don't overwrite their work
         let res;
         try {
             res = await axios.put("/api/admin/designs", { design: { ...des }, oldSku, before: originalDesign.current });
@@ -407,6 +439,16 @@ export function Main({ design, bls, brands, mPs, pI, licenses, colors, printLoca
 
     return (
         <Box sx={{ width: "100%", maxWidth: "100%", overflowX: "hidden" }}>
+            <Dialog open={!!lockedBy} onClose={() => {}} aria-labelledby="design-locked-title">
+                <DialogTitle id="design-locked-title">This design is being edited</DialogTitle>
+                <DialogContent>
+                    <Typography>Page is already being edited by <b>{lockedBy}</b>. Try again when {lockedBy} is finished with the page.</Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button variant="contained" onClick={() => window.history.back()}>Back to designs</Button>
+                    <Button onClick={() => window.location.reload()}>Try again</Button>
+                </DialogActions>
+            </Dialog>
             {/* Sticky header */}
             <Box sx={{
                 position: "sticky", top: 0, zIndex: 100,
