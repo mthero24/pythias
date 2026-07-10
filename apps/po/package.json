@@ -9,6 +9,16 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@pythias/backend": "*",
+    "@pythias/dtf": "*",
+    "@pythias/embroidery": "*",
+    "@pythias/integrations": "*",
+    "@pythias/inventory": "*",
+    "@pythias/labels": "*",
+    "@pythias/mongo": "*",
+    "@pythias/roq-folder": "*",
+    "@pythias/shipping": "*",
+    "@pythias/sublimation": "*",
     "next": "15.5.18",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
