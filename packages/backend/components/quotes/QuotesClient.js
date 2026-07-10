@@ -216,12 +216,19 @@ function QuoteEditor({ quote, byobRates = { byobDefaultRate: 0, byobRatesByType:
     // BYO: customer supplies the garment → fill the line with the print-only rate (by print type,
     // falling back to the default). The rep can still override the filled price.
     const byobRateFor = (l) => {
-        const pt = l._keep?.printType || l.printType;
+        // An explicit per-line print-type pick (l.printType, even "") wins over the design's type.
+        const pt = l.printType !== undefined ? l.printType : l._keep?.printType;
         const hit = (byobRates.byobRatesByType || []).find((r) => pt && r.printType?.toLowerCase() === String(pt).toLowerCase());
         return hit ? hit.rate : (byobRates.byobDefaultRate || 0);
     };
     const toggleByob = (id, on) => setQ((p) => ({ ...p, lines: p.lines.map((l) =>
         l.id === id ? { ...l, byob: on, ...(on ? { unitPrice: byobRateFor(l) } : {}) } : l) }));
+    // Pick a print type for a line — sets the type and, if the line is BYO, re-fills the print-only rate.
+    const setLinePrintType = (id, pt) => setQ((p) => ({ ...p, lines: p.lines.map((l) => {
+        if (l.id !== id) return l;
+        const next = { ...l, printType: pt };
+        return l.byob ? { ...next, unitPrice: byobRateFor(next) } : next;
+    }) }));
 
     const subtotal = q.lines.reduce((s, l) => s + (Number(l.unitPrice) || 0) * (Number(l.quantity) || 1) + (Number(l.setupFee) || 0), 0);
     const discount = Number(q.discountAmount) || 0;
@@ -235,7 +242,7 @@ function QuoteEditor({ quote, byobRates = { byobDefaultRate: 0, byobRatesByType:
         const payload = {
             customer: q.customer,
             // keep any design/personalization a studio line carried; merge the edited pricing fields
-            lines: q.lines.map((l) => ({ ...(l._keep || {}), title: l.title, sku: l.sku, quantity: l.quantity, unitPrice: l.unitPrice, setupFee: l.setupFee, byob: !!l.byob, notes: l.notes })),
+            lines: q.lines.map((l) => ({ ...(l._keep || {}), title: l.title, sku: l.sku, quantity: l.quantity, unitPrice: l.unitPrice, setupFee: l.setupFee, byob: !!l.byob, notes: l.notes, printType: l.printType !== undefined ? l.printType : l._keep?.printType })),
             discountAmount: Number(q.discountAmount) || 0,
             discountName: q.discountName,
             shippingCost: Number(q.shippingCost) || 0,
@@ -314,7 +321,10 @@ function QuoteEditor({ quote, byobRates = { byobDefaultRate: 0, byobRatesByType:
                     <Box>
                         {sectionLabel("Line Items")}
                         <Stack spacing={1}>
-                            {q.lines.map((l) => (
+                            {q.lines.map((l) => {
+                                const effPt = l.printType !== undefined ? l.printType : (l._keep?.printType ?? "");
+                                const ptMatch = (byobRates.byobRatesByType || []).find((r) => r.printType?.toLowerCase() === String(effPt).toLowerCase());
+                                return (
                                 <Box key={l.id} sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "2fr 70px 90px 90px 36px" }, gap: 1, alignItems: "center", p: 1, border: "1px solid #e2e8f0", borderRadius: 1 }}>
                                     <Box>
                                         <TextField {...fs} fullWidth label="Description" value={l.title} onChange={(e) => setLine(l.id, "title", e.target.value)} />
@@ -322,13 +332,24 @@ function QuoteEditor({ quote, byobRates = { byobDefaultRate: 0, byobRatesByType:
                                         <FormControlLabel sx={{ m: 0 }}
                                             control={<Checkbox size="small" sx={{ p: 0.5 }} checked={!!l.byob} onChange={(e) => toggleByob(l.id, e.target.checked)} />}
                                             label={<Typography variant="caption" color="text.secondary">Customer brings blank (BYO) — print-only price</Typography>} />
+                                        {l.byob && (
+                                            <TextField {...fs} select fullWidth label="Print type (BYO rate)" sx={{ mt: 0.75 }}
+                                                value={ptMatch ? ptMatch.printType : ""}
+                                                onChange={(e) => setLinePrintType(l.id, e.target.value)}>
+                                                <MenuItem value=""><em>Default — {money(byobRates.byobDefaultRate || 0)}</em></MenuItem>
+                                                {(byobRates.byobRatesByType || []).map((r) => (
+                                                    <MenuItem key={r.printType} value={r.printType}>{r.printType} — {money(r.rate)}</MenuItem>
+                                                ))}
+                                            </TextField>
+                                        )}
                                     </Box>
                                     <TextField {...fs} label="Qty" type="number" value={l.quantity} onChange={(e) => setLine(l.id, "quantity", parseInt(e.target.value) || 1)} inputProps={{ min: 1 }} />
                                     <TextField {...fs} label="Unit $" type="number" value={l.unitPrice} onChange={(e) => setLine(l.id, "unitPrice", parseFloat(e.target.value) || 0)} inputProps={{ min: 0, step: 0.01 }} />
                                     <TextField {...fs} label="Setup $" type="number" value={l.setupFee} onChange={(e) => setLine(l.id, "setupFee", parseFloat(e.target.value) || 0)} inputProps={{ min: 0, step: 0.01 }} />
                                     <IconButton size="small" color="error" onClick={() => removeLine(l.id)} disabled={q.lines.length <= 1}><DeleteOutlineIcon fontSize="small" /></IconButton>
                                 </Box>
-                            ))}
+                                );
+                            })}
                         </Stack>
                         <Button size="small" startIcon={<AddIcon />} onClick={addLine} sx={{ mt: 1 }}>Add line</Button>
                     </Box>
