@@ -1,4 +1,4 @@
-import { Box, Modal, Typography, Stepper, Step, StepLabel, StepButton, Snackbar, Alert, IconButton, useTheme, useMediaQuery } from "@mui/material";
+import { Box, Button, Modal, Typography, Stepper, Step, StepLabel, StepButton, Snackbar, Alert, IconButton, useTheme, useMediaQuery } from "@mui/material";
 
 import axios from "axios";
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -32,6 +32,38 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
     const [products, setProducts] = useState([]);
     const [toast, setToast] = useState({ open: false, message: "", severity: "success" });
     const targetRef = useRef(null);
+    const [lockedBy, setLockedBy] = useState(null);   // set when another user is editing this product
+    const heldRef = useRef(false);
+
+    // Edit lock — while the modal is open editing an EXISTING product, claim product:<id> so a second
+    // user can't open the same product and clobber the save. Released when the modal closes. Keyed on
+    // the product (not the design) so opening this from the design editor doesn't touch that lock.
+    useEffect(() => {
+        const id = open ? product?._id : null;
+        if (!id) { heldRef.current = false; setLockedBy(null); return; }
+        const key = `product:${id}`;
+        let alive = true;
+        const claim = async () => {
+            try {
+                const r = await axios.post("/api/edit-lock", { key });
+                if (!alive) return;
+                const ok = !!r.data?.ok;
+                heldRef.current = ok;
+                setLockedBy(ok ? null : (r.data?.lockedBy || "another user"));
+            } catch { if (alive) { heldRef.current = true; setLockedBy(null); } }  // fail open
+        };
+        claim();
+        const hb = setInterval(() => { if (heldRef.current) axios.post("/api/edit-lock", { key }).catch(() => {}); }, 30000);
+        const onUnload = () => { try { navigator.sendBeacon?.("/api/edit-lock", new Blob([JSON.stringify({ key, release: true })], { type: "application/json" })); } catch { /* ignore */ } };
+        window.addEventListener("beforeunload", onUnload);
+        return () => {
+            alive = false;
+            clearInterval(hb);
+            window.removeEventListener("beforeunload", onUnload);
+            if (heldRef.current) axios.delete("/api/edit-lock", { data: { key } }).catch(() => {});
+            heldRef.current = false;
+        };
+    }, [open, product?._id]);
     const theme = useTheme();
     const isSmall = useMediaQuery(theme.breakpoints.down('sm'));
     const showToast = useCallback((message, severity = "success") => {
@@ -124,6 +156,22 @@ export const CreateProductModal = ({ open, setOpen, product, setProduct, design,
             targetRef.current.scrollTop = 0;
         }
       };
+    // If someone else is already editing this product, block this user with a message instead of the editor.
+    if (open && lockedBy) {
+        const closeLocked = () => { setLockedBy(null); setOpen(false); };
+        return (
+            <Modal open={open} onClose={closeLocked}>
+                <Box sx={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 440, maxWidth: "92%", bgcolor: "background.paper", borderRadius: 2, boxShadow: 24, p: 4, textAlign: "center" }}>
+                    <Typography variant="h6" fontWeight={700} sx={{ mb: 1 }}>This product is being edited</Typography>
+                    <Typography sx={{ mb: 3, color: "text.secondary" }}>
+                        Page is already being edited by <b>{lockedBy}</b>. Try again when {lockedBy} is finished with the page.
+                    </Typography>
+                    <Button variant="contained" onClick={closeLocked}>Close</Button>
+                </Box>
+            </Modal>
+        );
+    }
+
     // Catalog (buy-not-build / imported) products use their own editor + preview — the blank/design
     // stages below don't apply. POD products are untouched.
     if (product?.isCatalogProduct) {
