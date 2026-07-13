@@ -12,7 +12,11 @@ const search = async ({q, page, skip, productsPerPage, filter}) => {
                     must: [
                         {text: {
                             query: q,
-                            path: ["designSku"],
+                            // Search the full SKU + blank/color/size, not just the design portion.
+                            // Records created without a linked design have no designSku, so a
+                            // designSku-only search made them unfindable (e.g. GDT_yam_S_26800M_F).
+                            // All five paths are indexed in the Atlas "ProductInventory" index.
+                            path: ["designSku", "sku", "blankCode", "colorName", "sizeName"],
                             matchCriteria: "any"
                         }}
                     ]
