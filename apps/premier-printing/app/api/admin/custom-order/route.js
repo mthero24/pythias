@@ -64,6 +64,7 @@ export async function POST(request) {
     const { userName, email } = userFromToken(token);
     const data = await request.json();
 
+    try {
     const subtotal       = (data.items || []).reduce((s, i) => s + (i.quantity || 0) * (i.unitPrice || 0), 0);
     const discountAmount = subtotal * (data.discountPct || 0);
     const tax            = (subtotal - discountAmount) * (data.taxRate || 0);
@@ -93,12 +94,15 @@ export async function POST(request) {
         shippingCost:  data.shippingCost || 0,
         taxRate:       data.taxRate      || 0,
         customerEmail: data.customerEmail || "",
+        // Order schema requires name/address1/city/country (rejects empty strings). Custom orders
+        // are often in-store pickup or invoiced-later with no address on hand, and the builder only
+        // requires a PO number — so fall back to a pickup marker / placeholder to avoid a 500.
         shippingAddress: {
-            name:     data.customer?.name     || "",
+            name:     data.customer?.name     || data.customerEmail || "Custom Order",
             phone:    data.customer?.phone    || "",
-            address1: data.customer?.address?.street || "",
+            address1: data.customer?.address?.street || (data.inStorePickup ? "In-Store Pickup" : "—"),
             address2: data.customer?.company  || "",
-            city:     data.customer?.address?.city   || "",
+            city:     data.customer?.address?.city   || (data.inStorePickup ? "In-Store Pickup" : "—"),
             state:    data.customer?.address?.state  || "",
             zip:      data.customer?.address?.zip    || "",
             country:  data.customer?.address?.country || "US",
@@ -156,4 +160,8 @@ export async function POST(request) {
     logActivity({ action: "custom_order_create", entity: "order", entityId: order._id, entityName: data.poNumber || "", userName, email, provider: "premierPrinting" });
     const populated = await Order.findById(order._id).populate("items").lean();
     return NextResponse.json({ order: populated });
+    } catch (err) {
+        console.error("[custom-order POST]", err?.message, err);
+        return NextResponse.json({ error: err?.message || "Failed to save order" }, { status: 400 });
+    }
 }
