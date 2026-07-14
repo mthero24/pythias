@@ -37,7 +37,9 @@ const csvFunctions = {
         }
         if (mp?.variantTitle && variant?.color) {
             const parts = [title];
-            if (variant.color?.name) parts.push(variant.color.name);
+            // Sanitize the color for the marketplace here too (Kohl's strips "/" etc. to a space and
+            // caps at 22 chars) so titles match the Color column instead of leaking raw color names.
+            if (variant.color?.name) parts.push(colorForMarketplace(variant.color.name, mp?.name));
             if (variant.size?.name) parts.push(variant.size.name);
             return parts.join(" - ");
         }
