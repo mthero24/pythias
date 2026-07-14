@@ -20,7 +20,9 @@ function dayLabel(d) {
 
 export async function GET(req) {
     const session = await getServerSession(authOptions);
-    if (!session?.user || !["admin", "owner"].includes(session.user.role)) {
+    // Dashboard permission (charts) is enough to view the Production tab — no admin role required.
+    const u = session?.user;
+    if (!u || !(u.permissions?.charts || ["admin", "owner"].includes(u.role))) {
         return NextResponse.json({ error: true, msg: "Unauthorized" }, { status: 401 });
     }
     try {
