@@ -22,7 +22,8 @@ export async function GET(req) {
         const excludedOrders = await Order.find({ date: dateFilter, status: { $in: ["Canceled", "Payment Failed"] } }).select("_id").lean();
         const excludedIds = excludedOrders.map(o => o._id);
 
-        const filter = { date: dateFilter, canceled: { $ne: true }, ...(excludedIds.length ? { order: { $nin: excludedIds } } : {}) };
+        // Exclude unpaid items (paid:false — e.g. unpaid custom orders); marketplace items are paid:true.
+        const filter = { date: dateFilter, canceled: { $ne: true }, paid: { $ne: false }, ...(excludedIds.length ? { order: { $nin: excludedIds } } : {}) };
         if (marketplace && marketplace !== "All") {
             const orderDocs = await Order.find({ date: dateFilter, marketplace, status: { $nin: ["Canceled", "Payment Failed"] } }).select("_id").lean();
             filter.order = { $in: orderDocs.map(o => o._id) };

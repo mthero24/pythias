@@ -16,6 +16,7 @@ export async function GET(req) {
         const items = await Items.find({
             shipped:     { $ne: true },
             canceled:    { $ne: true },
+            paid:        { $ne: false }, // exclude unpaid items (e.g. unpaid custom orders)
             shipByDate:  { $exists: true, $ne: null, $lte: tomorrow },
         })
             .select("pieceId steps shipByDate styleCode colorName sizeName order")
