@@ -1,4 +1,4 @@
-import { Bin, Items, RepullReasons, Blank, Inventory, InventoryOrders } from "@pythias/mongo";
+import { Bin, Items, RepullReasons, Blank, Inventory, InventoryOrders, Order } from "@pythias/mongo";
 import {NextApiRequest, NextResponse} from "next/server";
 import { getToken } from "next-auth/jwt";
 import { logActivity, logChange, userFromToken } from "@pythias/backend/server";
@@ -71,6 +71,20 @@ export async function POST(req=NextApiRequest){
             }
         }
         await item.save()
+        // Repulling a piece means it's going back through production, so the order is no longer fully
+        // shipped. If it was marked shipped (auto-shipped at the folder station, or otherwise), reset
+        // it to awaiting_shipment so it re-enters the ship workflow — otherwise the order reads
+        // "Shipped" while the piece sits unshipped in production (the shipped-but-unmarked desync).
+        const order = await Order.findOne({ _id: item.order });
+        if (order) {
+            const wasShipped = order.preShipped || order.shipped || /shipped/i.test(order.status || "");
+            if (wasShipped) {
+                order.status = "awaiting_shipment";
+                order.shipped = false;
+                order.preShipped = false;
+                await order.save();
+            }
+        }
         logActivity({ action: "item_repull", entity: "order", entityId: item.order, entityName: item.pieceId || "", userName, email });
         if (data.reason === "Pulling Error") {
             logChange({ entityType: "item", entityId: item._id, entityName: item.pieceId, action: "repull", userName, email, provider: "premierPrinting" });
