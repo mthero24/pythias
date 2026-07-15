@@ -1033,7 +1033,7 @@ export async function repullOrderItems(poNumber) {
         skuFixer:       skuConverterDoc?.converter ?? {},
     };
 
-    const order = await Order.findOne({ poNumber });
+    const order = await Order.findOne({ poNumber }).populate("items");
     if (!order) throw new Error(`Order not found in DB: ${poNumber}`);
 
     const { shipstationAuth: ssAuth } = await getShippingCreds();
@@ -1042,12 +1042,26 @@ export async function repullOrderItems(poNumber) {
     const o = ssOrders[0];
     console.log(`[repullOrderItems] ${poNumber}: SS order has ${o.items.length} line(s)`);
 
-    const items = await buildItems(o, order, converters);
-    order.items = items;
+    // Preserve already-shipped pieces — a repull must NEVER orphan a shipped item and mint a fresh
+    // unshipped duplicate (the 6717274564_1-A desync). Rebuild only the ShipStation lines not already
+    // covered by a shipped item (match by orderItemId, falling back to sku). A fully-shipped order is
+    // therefore left untouched; a partially-shipped one only rebuilds its unshipped lines.
+    const existing = order.items || [];
+    const isShipped = (it) => !!it.shipped || /shipped/i.test(it.status || "") || (it.steps || []).some(s => /shipped|preshipped/i.test(s.status || ""));
+    const preserved = existing.filter(isShipped);
+    const shippedLineIds = new Set(preserved.map(it => String(it.orderItemId || "")).filter(Boolean));
+    const shippedSkus    = new Set(preserved.map(it => String(it.sku || "")).filter(Boolean));
+    const linesToBuild = (o.items || []).filter(li =>
+        !(li.orderItemId && shippedLineIds.has(String(li.orderItemId))) &&
+        !(li.sku && shippedSkus.has(String(li.sku)))
+    );
+
+    const newItems = linesToBuild.length ? await buildItems({ ...o, items: linesToBuild }, order, converters) : [];
+    order.items = [...preserved.map(it => it._id), ...newItems.map(it => it._id)];
     await order.save();
-    await Promise.all(items.map(item => { item.order = order._id; return item.save(); }));
+    await Promise.all(newItems.map(item => { item.order = order._id; return item.save(); }));
     logActivity({ action: "order_items_repulled", entity: "order", entityId: order._id, entityName: poNumber, userName: "system", provider: "premierPrinting" });
 
-    console.log(`[repullOrderItems] ${poNumber}: created ${items.length} items`);
-    return { count: items.length, ssItemCount: o.items.length, ssItems: o.items.map(i => ({ sku: i.sku, upc: i.upc, qty: i.quantity })) };
+    console.log(`[repullOrderItems] ${poNumber}: preserved ${preserved.length} shipped, built ${newItems.length} new`);
+    return { count: order.items.length, preserved: preserved.length, built: newItems.length, ssItemCount: o.items.length, ssItems: o.items.map(i => ({ sku: i.sku, upc: i.upc, qty: i.quantity })) };
 }
