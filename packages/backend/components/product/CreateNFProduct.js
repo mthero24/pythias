@@ -214,7 +214,7 @@ export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, set
                 <Box sx={{display: "flex", flexDirection: "row", justifyContent: "flex-end", alignItems: "center", padding: "1%"}}>
                     <CloseIcon onClick={() => { setProduct({blanks: [], colors: [], productImages: [], variantsArray: []}); releaseHold(); setStage("Select Blank"); setLoading(false); setOpen(false) }} sx={{ cursor: "pointer", color: "#780606"}} />
                 </Box>
-                <Typography variant="h5" textAlign="center">Create New Product</Typography>
+                <Typography variant="h5" textAlign="center">{product?._id ? "Edit Product" : "Create New Product"}</Typography>
                 {/* Resellers (storefront) have no blanks — show only the buy-not-build creator. */}
                 {orgType !== "storefront" && (
                     <Box sx={{padding: "2%", marginBottom: "2%", display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center"}}>
@@ -1058,7 +1058,7 @@ export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, set
                                     setProduct({ blanks: [], colors: [], productImages: [], variantsArray: [] });
                                     setStage("Select Blank");
                                 }
-                            }}>{loading ? "Saving..." : "Create"}</Button>
+                            }}>{loading ? "Saving..." : (product?._id ? "Save Changes" : "Create")}</Button>
                         </Box>
                     </Box>
                 )}
