@@ -583,8 +583,8 @@ export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, set
                                         if(!prod.colors?.length) prod.colors = product.blanks[0].colors;
                                         if(!prod.sizes?.length) prod.sizes = product.blanks[0].sizes;
                                         if(!prod.variantsArray) prod.variantsArray = [];
-                                        prod.variantsArray = prod.variantsArray.filter(v => prod.colors.find(c => c._id.toString() === v.color._id.toString()) && prod.sizes.find(s => s.name === v.size.name));
-                                        prod.productImages = (prod.productImages || []).filter(im => !im.color || prod.colors.find(c => c._id.toString() === im.color._id.toString()));
+                                        prod.variantsArray = prod.variantsArray.filter(v => prod.colors.find(c => c?._id?.toString() === (v.color?._id ?? v.color)?.toString()) && prod.sizes.find(s => s?.name === (v.size?.name ?? v.size) || s?._id?.toString() === (v.size?._id ?? v.size)?.toString()));
+                                        prod.productImages = (prod.productImages || []).filter(im => !im.color || prod.colors.find(c => c?._id?.toString() === (im.color?._id ?? im.color)?.toString()));
                                         for(let color of prod.colors){
                                             for(let size of prod.sizes){
                                                 let sku = `${prod.sku}_${color.sku ?? color.name}_${size.sku ?? size.name}`;

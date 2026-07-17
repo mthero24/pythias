@@ -433,7 +433,7 @@ export const ProductCard = ({ p, setProduct, setCreateProduct, setNFProduct, mar
                                     // editor (CreateNFProduct), not the design editor. Catalog (buy/resell)
                                     // products stay in CreateProductModal, which has its own catalog editor.
                                     if (prod.isNFProduct && !prod.isCatalogProduct && setNFProduct) {
-                                        setStart?.("Information");
+                                        setStart?.("Select Colors and Sizes");
                                         setNFProduct(true);
                                     } else {
                                         setCreateProduct(true);

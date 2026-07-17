@@ -440,14 +440,20 @@ export const VariantDisplay = ({ blank, threadColor, color, variants, fullBlank,
                                         </Avatar>
                                     </ListItemAvatar>
                                 ))}
-                                <ListItemText primary={`${variant.sku}`} secondary={`Blank: ${variant.blank.name ? variant.blank.name : fullBlank ? fullBlank.name : "N/A"}, Color: ${variant.color.name ? variant.color.name : fullBlank ? fullBlank.colors.filter(c => c._id.toString() === variant.color.toString())[0]?.name : "N/A"}, Size: ${variant.size.name ? variant.size.name : fullBlank ? fullBlank.sizes.filter(s => s._id.toString() === variant.size.toString())[0]?.name : "N/A"}`} />
+                                <ListItemText primary={`${variant.sku}`} secondary={`Blank: ${variant.blank?.name || fullBlank?.name || "N/A"}, Color: ${variant.color?.name || fullBlank?.colors?.find(c => c?._id?.toString() === (variant.color?._id ?? variant.color)?.toString())?.name || "N/A"}, Size: ${variant.size?.name || fullBlank?.sizes?.find(s => s?._id?.toString() === (variant.size?._id ?? variant.size)?.toString())?.name || "N/A"}`} />
                                 {variant.upc && <ListItemText primary={`UPC: ${variant.upc}`} secondary={`GTIN: ${variant.gtin}`} />}
                                 {variant.productInventory && (
                                     <ListItemText sx={{ cursor: "pointer" }} onClick={() => {setInventoryOpen(true); setVariant(variant);}} primary={`Inventory: ${variant.productInventory ? variant.productInventory.quantity : "N/A"}`} secondary={`On Hold: ${variant.productInventory.inStock ? variant.productInventory.inStock.length : "0"} location: ${variant.productInventory.location ? variant.productInventory.location : "N/A"}`} />
                                 )}
                                 <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
                                     <Box sx={{ display: "flex", flexDirection: "column", marginRight: "10px" }}>
-                                        <Typography variant="body2">Price: ${variant.price ? variant.price.toFixed(2) : variant.size && variant.size.retailPrice ? variant.size.retailPrice.toFixed(2) : product.blanks.filter(b => b._id.toString() === variant.blank.toString())[0].sizes.filter(s => s._id.toString() === variant.size.toString())[0] ? product.blanks.filter(b => b._id.toString() === variant.blank.toString())[0].sizes.filter(s => s._id.toString() === variant.size.toString())[0].retailPrice.toFixed(2) : "N/A"}</Typography>
+                                        <Typography variant="body2">Price: ${(() => {
+                                            if (variant.price) return variant.price.toFixed(2);
+                                            if (variant.size?.retailPrice) return variant.size.retailPrice.toFixed(2);
+                                            const bb = product.blanks?.find(b => b?._id?.toString() === (variant.blank?._id ?? variant.blank)?.toString());
+                                            const ss = bb?.sizes?.find(s => s?._id?.toString() === (variant.size?._id ?? variant.size)?.toString());
+                                            return ss?.retailPrice != null ? ss.retailPrice.toFixed(2) : "N/A";
+                                        })()}</Typography>
                                         {variant.wholesalePrice > 0 && <Typography variant="body2" sx={{ color: "text.secondary" }}>Wholesale: ${variant.wholesalePrice.toFixed(2)}</Typography>}
                                     </Box>
                                     {preview &&<Button variant="outlined" color="primary" size="small" onClick={() => { setVariant({ ...variant }); setPriceUpdate(true); }}>Update</Button>}
