@@ -137,7 +137,7 @@ export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUse
                             <Typography variant="body2" color="text.secondary">Manage your product catalog</Typography>
                         </Box>
                     </Stack>
-                    <Button variant="contained" color="primary" startIcon={<AddIcon />} onClick={() => setNFProduct(true)}>Create Product</Button>
+                    <Button variant="contained" color="primary" startIcon={<AddIcon />} onClick={() => { setStart("Select Blank"); setSelectedProduct({ blanks: [], colors: [], productImages: [], variantsArray: [] }); setNFProduct(true); }}>Create Product</Button>
                 </Box>
                 <Box sx={{ marginBottom: 2, padding: 2, borderRadius: 2, background: "#fff", boxShadow: "0px 0px 10px rgba(0,0,0,.1)" }}>
                     <TextField

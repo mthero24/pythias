@@ -429,7 +429,15 @@ export const ProductCard = ({ p, setProduct, setCreateProduct, setNFProduct, mar
                                         if (p.defaultColor) prod.defaultColor = allColors.find(co => co._id?.toString() === resolveId(p.defaultColor)) ?? p.defaultColor;
                                     }
                                     setProduct(prod);
-                                    setCreateProduct(true);
+                                    // Blank (NF) products are created AND edited in the dedicated blank-product
+                                    // editor (CreateNFProduct), not the design editor. Catalog (buy/resell)
+                                    // products stay in CreateProductModal, which has its own catalog editor.
+                                    if (prod.isNFProduct && !prod.isCatalogProduct && setNFProduct) {
+                                        setStart?.("Information");
+                                        setNFProduct(true);
+                                    } else {
+                                        setCreateProduct(true);
+                                    }
                                 }}>Edit</Button>
                             </Stack>
                             <Stack direction="row" spacing={0.75}>
@@ -443,8 +451,14 @@ export const ProductCard = ({ p, setProduct, setCreateProduct, setNFProduct, mar
                                         if (p.defaultColor) prod.defaultColor = allColors.find(co => co._id?.toString() === resolveId(p.defaultColor)) ?? p.defaultColor;
                                     }
                                     setProduct(prod);
-                                    setCreateProduct(true);
-                                    setPreview(true);
+                                    // Blank (NF) products preview in their own editor too.
+                                    if (prod.isNFProduct && !prod.isCatalogProduct && setNFProduct) {
+                                        setStart?.("Preview");
+                                        setNFProduct(true);
+                                    } else {
+                                        setCreateProduct(true);
+                                        setPreview(true);
+                                    }
                                 }}>Preview</Button>
                                 <Tooltip title={videoGenerating ? "Generating new video — click to check progress" : productVideo ? "View / regenerate video" : "Generate product video"}>
                                     <Button
