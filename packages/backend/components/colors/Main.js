@@ -40,7 +40,7 @@ const FAMILY_HUE = {
     grey: "#6b7280", orange: "#f97316", pink: "#ec4899", purple: "#8b5cf6",
     red: "#ef4444", white: "#9ca3af", yellow: "#f59e0b",
 };
-const BLANK = { name: "", hexcode: "#ffffff", color_type: "light", colorFamily: "", sku: "" };
+const BLANK = { name: "", hexcode: "#ffffff", color_type: "light", colorFamily: "", sku: "", nrfColorCode: "" };
 
 function generateColorSku(name) {
     if (!name) return "";
@@ -358,6 +358,13 @@ function ColorDialog({ open, title, color, onClose, onSave }) {
                         onChange={(e) => { setSkuManual(true); set("sku", e.target.value.toLowerCase().replace(/\s+/g, "")); }}
                         inputProps={{ maxLength: 12, style: { fontFamily: "monospace" } }}
                         helperText="Auto-generated from name — edit to override"
+                    />
+                    <TextField
+                        fullWidth size="small" label="NRF Color Code"
+                        value={draft.nrfColorCode ?? ""}
+                        onChange={(e) => set("nrfColorCode", e.target.value)}
+                        inputProps={{ style: { fontFamily: "monospace" } }}
+                        helperText="National Retail Federation color code (for Target / Kohl's feeds)"
                     />
                     <TextField
                         fullWidth size="small" label="Hex Code"
