@@ -275,7 +275,12 @@ export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, set
                                     <Grid2 size={{ xs: 6, sm: 4, md: 3, lg: 2 }} key={blank._id}>
                                         <Card variant="outlined" sx={{ borderRadius: 2, borderColor: selected ? "primary.main" : "divider", borderWidth: selected ? 2 : 1, position: "relative", transition: "border-color 150ms, box-shadow 150ms", "&:hover": { boxShadow: 2 } }}>
                                             <CardActionArea onClick={() => {
-                                                let prod = {
+                                                // Preserve product identity when editing so saving UPDATES instead of
+                                                // creating a duplicate. Re-picking the same blank keeps the existing
+                                                // product/edits; picking a different blank rebuilds but carries _id.
+                                                const sameBlank = product?.blanks?.[0]?._id?.toString() === blank._id?.toString();
+                                                let prod = (product?._id && sameBlank) ? { ...product } : {
+                                                    ...(product?._id ? { _id: product._id, ids: product.ids } : {}),
                                                     title: blank.name,
                                                     blanks: [blank],
                                                     sku: blank.code,
