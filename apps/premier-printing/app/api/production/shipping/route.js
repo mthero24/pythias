@@ -55,7 +55,9 @@ export async function POST(req= NextApiRequest){
             const rsOrder = item ? item.order : order;
             const delivered = (rsOrder?.shippingInfo?.labels || []).some(l => (l.trackingInfo || []).some(t => /delivered/i.test(String(t))));
             if (delivered && !data.confirmReship) {
-                return NextResponse.json({ error: true, msg: "This order was already delivered — it can't be reshipped from the floor. If a replacement is needed, create a new order." });
+                // Not a hard block — the scanner asks the operator to confirm, then resends with
+                // confirmReship so a genuine reship can reset shipping and buy a new label.
+                return NextResponse.json({ error: true, needsConfirmReship: true, msg: "This order shows as already DELIVERED. Reship anyway? This will reset shipping and buy a new label." });
             }
             if(item){
                 for(let i of item.order.items){

@@ -43,11 +43,19 @@ export function Scan({ auto, setAuto, order, setOrder, showNotes, setShowNotes, 
         }
     }, [pieceId]);
 
-    const GetInfo = async () => {
+    const GetInfo = async (opts = {}) => {
         setLoading(true);
-        const res = await axios.post("/api/production/shipping", { scan, reship, reprint, station, preShip });
+        const res = await axios.post("/api/production/shipping", { scan, reship, reprint, station, preShip, confirmReship: opts.confirmReship });
         setLoading(false);
         if (res.data.error) {
+            // Delivered-order reship: confirm on the floor, then resend with confirmReship so the
+            // reship proceeds (resets shipping + buys a new label).
+            if (res.data.needsConfirmReship && !opts.confirmReship) {
+                if (window.confirm(res.data.msg)) { GetInfo({ confirmReship: true }); return; }
+                setScan("");
+                setMode(null);
+                return;
+            }
             alert(res.data.msg);
             setScan("");
             setMode(null);
