@@ -4,11 +4,18 @@ import {isSingleItem, isShipped, canceled} from "@/functions/itemFunctions"
 import {buyLabel} from "@pythias/shipping"
 import axios from "axios";
 import {updateOrder} from "@pythias/integrations";
+import { shipOrderTikTok } from "@/functions/tikTok";
 import { getToken } from "next-auth/jwt";
 import { logActivity, userFromToken } from "@pythias/backend/server";
 import { truncate } from "fs"
 import { getShippingCreds } from "@/lib/getShippingCreds";;
 const ups =["faire", "Zulily", "TSC"]
+// A directly-pulled TikTok order (marketplace "tik tok", uniquePo ending in "tik_tok") needs its
+// tracking pushed back via the TikTok API — ShipStation's updateOrder doesn't reach TikTok.
+function isDirectTikTokOrder(order) {
+    const mk = (order?.marketplace || "").toLowerCase().replace(/[^a-z]/g, "");
+    return mk === "tiktok" && (order?.uniquePo || "").endsWith("tik_tok");
+}
 export async function POST(req = NextApiRequest){
     const token = await getToken({ req });
     const { userName, email } = userFromToken(token);
@@ -73,6 +80,16 @@ export async function POST(req = NextApiRequest){
                 });
                 let re2s = updateOrder({auth: `${process.env.ssApiKey}:${process.env.ssApiSecret}`, orderId:item.order.orderId, carrierCode: "usps", trackingNumber: label.trackingNumber})
                 await item.order.save();
+                // Push tracking to TikTok for direct TikTok orders — the ShipStation updateOrder above
+                // does not reach TikTok, so auto-shipped TikTok orders were never getting tracking.
+                if (isDirectTikTokOrder(item.order)) {
+                    try {
+                        const ttRes = await shipOrderTikTok({ order: item.order, items: item.order.items ?? [], trackingNumber: label.trackingNumber, provider: "usps" });
+                        if (ttRes?.error) console.error("[roq-folder] TikTok tracking update failed:", ttRes.msg);
+                    } catch (e) {
+                        console.error("[roq-folder] TikTok tracking update error:", e.message);
+                    }
+                }
                 logActivity({ action: "item_shipped", entity: "order", entityId: item.order._id, entityName: item.order.poNumber || "", userName, email });
             }
         }
