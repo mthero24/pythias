@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Organization, PlatformUser } from "@pythias/mongo";
 import { getLimits } from "@/lib/tiers";
 import { sendWelcomeEmail } from "@/lib/email";
+import { sendAdminAlert } from "@pythias/backend/server";
 
 const FC_TIERS = new Set(['starter', 'professional', 'business', 'scale']);
 const CC_TIERS = new Set(['free', 'launch', 'growth', 'scale', 'enterprise']);
@@ -92,6 +93,23 @@ export async function POST(req) {
         // Welcome email — fire-and-forget; never block or fail the signup if email errors.
         sendWelcomeEmail({ to: email, firstName, slug: cleanSlug })
             .catch((e) => console.error("[orgs welcome email]", e?.message));
+
+        // Notify the Pythias team of the new signup so they can reach out right away.
+        // Emails PYTHIAS_ADMIN_EMAILS (add a carrier email-to-SMS gateway there to also get a text).
+        sendAdminAlert({
+            subject: `New signup: ${orgName} (${validTier}) — reach out`,
+            html: `
+                <h2 style="margin:0 0 8px">New signup — reach out within 24h</h2>
+                <p><strong>${orgName}</strong> just signed up (${resolvedType} &middot; ${validTier}${foundingFields.foundingTier ? " &middot; " + foundingFields.foundingTier : ""}).</p>
+                <ul style="line-height:1.6">
+                    <li><strong>Contact:</strong> ${firstName || ""} ${lastName || ""} &lt;<a href="mailto:${email}">${email}</a>&gt;</li>
+                    <li><strong>Plan:</strong> ${validTier}</li>
+                    <li><strong>Trial ends:</strong> ${trialEndsAt ? new Date(trialEndsAt).toLocaleDateString("en-US") : "—"}</li>
+                    <li><strong>Org:</strong> <a href="https://platform.pythiastechnologies.com/${cleanSlug}/admin">${cleanSlug}</a></li>
+                </ul>
+                <p style="color:#b45309;font-weight:600">New trial — email or call them within 24h to help them get set up.</p>
+            `,
+        }).catch((e) => console.error("[orgs signup alert]", e?.message));
 
         return NextResponse.json({ ok: true, slug: cleanSlug }, { status: 201 });
     } catch (err) {
