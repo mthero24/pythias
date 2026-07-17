@@ -95,6 +95,7 @@ const SchemaObj = new Schema(
       image: String,
       color: String,
       imageGroup: { type: String, default: "default" },
+      aiGenerated: { type: Boolean, default: false },
     }],
     multiImages: Object,
     //box.default['garment]

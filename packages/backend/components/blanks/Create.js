@@ -117,6 +117,13 @@ const ColorImageCard = ({ blank, color, allColors, setAllColors, setBlank, updat
         update({ blank: updated });
     };
 
+    // Flag an image as AI-generated — renderImages then bakes an "AI Generated" disclosure badge onto it.
+    const toggleAiGenerated = (imageUrl) => {
+        const updated = { ...blank, images: blank.images.map(i => i.image === imageUrl ? { ...i, aiGenerated: !i.aiGenerated } : i) };
+        setBlank(updated);
+        update({ blank: updated });
+    };
+
     const handleDragStart = (e, img) => {
         e.dataTransfer.setData("moveImageUrl", img.image);
         e.dataTransfer.effectAllowed = "move";
@@ -314,8 +321,18 @@ const ColorImageCard = ({ blank, color, allColors, setAllColors, setBlank, updat
                                     </Tooltip>
                                 )}
                             </Box>
-                            <Box sx={{ display: "flex", justifyContent: "center", gap: 0.5, mt: 0.25 }}>
+                            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.5, mt: 0.25 }}>
                                 {img.isModel && <Chip label="Model" size="small" color="info" sx={{ fontSize: "0.62rem", height: 16 }} />}
+                                <Tooltip title={img.aiGenerated ? "AI disclosure badge ON — click to remove" : "Mark image AI-generated (adds a disclosure badge)"}>
+                                    <Chip
+                                        label="AI"
+                                        size="small"
+                                        color={img.aiGenerated ? "secondary" : "default"}
+                                        variant={img.aiGenerated ? "filled" : "outlined"}
+                                        onClick={(e) => { e.stopPropagation(); toggleAiGenerated(img.image); }}
+                                        sx={{ fontSize: "0.62rem", height: 16, cursor: "pointer" }}
+                                    />
+                                </Tooltip>
                                 {img.name && <Typography variant="caption" sx={{ color: "text.secondary" }}>{img.name}</Typography>}
                             </Box>
                         </Grid2>

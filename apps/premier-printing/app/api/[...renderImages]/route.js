@@ -12,6 +12,32 @@ const readImage = async (url) => {
     return sharp(Buffer.from(response.data, "binary"));
 };
 
+// Composite an "AI Generated" disclosure badge (bottom-left) onto a rendered image. Sized relative
+// to the image width so it reads at any resolution. Never fails the image if the overlay errors.
+const applyAiBadge = async (buffer, width) => {
+    try {
+        const img  = sharp(buffer);
+        const meta = await img.metadata();
+        const w    = meta.width  || width || 400;
+        const h    = meta.height || w;
+        const bh   = Math.max(18, Math.round(w * 0.055));
+        const fs   = Math.round(bh * 0.55);
+        const text = "AI Generated";
+        const bw   = Math.round(fs * text.length * 0.62 + bh * 0.8);
+        const r    = Math.round(bh * 0.22);
+        const m    = Math.round(w * 0.02);
+        const svg  = Buffer.from(
+            `<svg width="${bw}" height="${bh}" xmlns="http://www.w3.org/2000/svg">` +
+            `<rect width="${bw}" height="${bh}" rx="${r}" ry="${r}" fill="black" fill-opacity="0.55"/>` +
+            `<text x="50%" y="50%" font-family="Arial, Helvetica, sans-serif" font-size="${fs}" fill="white" text-anchor="middle" dominant-baseline="central">${text}</text>` +
+            `</svg>`
+        );
+        return await img.composite([{ input: svg, top: Math.max(0, h - bh - m), left: m }]).jpeg({ quality: 100 }).toBuffer();
+    } catch {
+        return buffer;
+    }
+};
+
 const createImage = async (data) => {
     let multiplier = 1;
     if (data.width && data.box) {
@@ -163,7 +189,8 @@ export async function GET(req) {
     const result = await createImage({ box, styleImage: blankImage.image, designImage, width, srcSide });
     if (!result) return new NextResponse(null, { status: 500 });
 
-    const buffer = Buffer.from(result.replace(/^data:image\/\w+;base64,/, ""), "base64");
+    let buffer = Buffer.from(result.replace(/^data:image\/\w+;base64,/, ""), "base64");
+    if (blankImage.aiGenerated) buffer = await applyAiBadge(buffer, width);
     const cacheTag = blankImage.image?.match(/\/(\d+)\.\w+/)?.[1];
     return new NextResponse(buffer, {
         headers: {
