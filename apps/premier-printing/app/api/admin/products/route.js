@@ -70,18 +70,19 @@ const update = async({product})=>{
 }
 let updateArray = async({product})=>{
     for(let v of product.variantsArray){
-        let upc = await SkuToUpc.findOne({ upc: v.upc });
-        console.log("Found UPC", upc);
-        if(upc){
-            upc.blank= v.blank._id,
-            upc.color= v.color._id,
-            upc.size= v.size.name,
-            upc.temp= false,
-            upc.hold= false,
-            upc.sku= v.sku,
-            updateTempUpc(upc, product.brand, product.productDescription)
-            await upc.save();
-        }
+        if (!v.upc && !v.sku) continue;
+        // Prefer the record that already owns this SKU (edit re-save) so we don't reassign the SKU to a
+        // different record and hit the unique-sku index (E11000). assignUpc keeps the SKU permanent.
+        let upc = await findUpcForVariant(v.sku, v.upc);
+        if(!upc) continue;
+        updateTempUpc(upc, product.brand, product.productDescription);
+        await assignUpc(upc, {
+            blank: v.blank?._id ?? v.blank,
+            color: v.color?._id ?? v.color,
+            size: v.size?.name ?? v.size,
+            temp: false, hold: false,
+            sku: v.sku,
+        });
     }
 }
 export async function GET(req = NextApiRequest) {
