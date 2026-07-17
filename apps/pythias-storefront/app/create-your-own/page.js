@@ -62,7 +62,7 @@ export default async function CreateYourOwnPage({ searchParams }) {
                 const f = 400 / (raw.containerHeight || 400);
                 const box = { x: (raw.x || 0) * f, y: (raw.y || 0) * f, w: w * f, h: h * f, rotation: raw.rotation || 0 };
                 const exact = new RegExp(`^${def.side}$`, "i").test(locKey);
-                const cand = { side: def.side, label: def.label, image: im.image, location: locKey, box, area: box.w * box.h, exact };
+                const cand = { side: def.side, label: def.label, image: im.image, location: locKey, box, area: box.w * box.h, exact, aiGenerated: !!im.aiGenerated };
                 const cur = entry.sidesMap[def.side];
                 if (!cur || (cand.exact && !cur.exact) || (cand.exact === cur.exact && cand.area > cur.area)) entry.sidesMap[def.side] = cand;
             }
@@ -70,7 +70,7 @@ export default async function CreateYourOwnPage({ searchParams }) {
         }
         const colors = [...byColor.values()].map((e) => {
             const sides = SIDE_DEFS.map((d) => e.sidesMap[d.side]).filter(Boolean)
-                .map((c) => ({ side: c.side, label: c.label, image: c.image, location: c.location, box: c.box }));
+                .map((c) => ({ side: c.side, label: c.label, image: c.image, location: c.location, box: c.box, aiGenerated: c.aiGenerated }));
             return { color: e.color, hex: e.hex || null, image: sides[0]?.image || e.swatch, sides };
         }).filter((c) => c.sides.some((s) => s.side === "front") && c.sides.some((s) => s.side === "back"));   // require BOTH front + back
 

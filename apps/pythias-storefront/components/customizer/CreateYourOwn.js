@@ -730,7 +730,14 @@ export default function CreateYourOwn({ blanks = [], embed = false }) {
     // canvas + front/back switcher (shared element; re-init effect keys on isMobile)
     const canvasCard = (
         <div ref={wrapRef} style={{ ...card, padding: isMobile ? 8 : 16, display: "flex", flexDirection: "column", alignItems: "center", width: "100%", maxWidth: "100%", boxSizing: "border-box", overflow: "hidden" }}>
-            <canvas ref={canvasElRef} style={{ touchAction: "none", display: "block", maxWidth: "100%" }} />
+            <div style={{ position: "relative", display: "block", maxWidth: "100%" }}>
+                <canvas ref={canvasElRef} style={{ touchAction: "none", display: "block", maxWidth: "100%" }} />
+                {activeSide?.aiGenerated && (
+                    <div style={{ position: "absolute", bottom: 10, left: 10, background: "rgba(0,0,0,0.55)", color: "#fff", fontSize: 11, fontWeight: 600, letterSpacing: 0.2, padding: "3px 9px", borderRadius: 5, pointerEvents: "none", fontFamily: "Arial, Helvetica, sans-serif" }}>
+                        AI Generated
+                    </div>
+                )}
+            </div>
             <div style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12, flexWrap: "wrap", gap: 10 }}>
                 {sides.length > 1 ? (
                     <div style={{ display: "flex", gap: 10 }}>
