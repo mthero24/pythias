@@ -95,6 +95,7 @@ export function Main({ ord, blanks, source, base = "" }) {
     const [cancelling, setCancelling] = useState(false);
     const [cancelErr, setCancelErr] = useState("");
     const [repulling, setRepulling] = useState(false);
+    const [confirmRepullOpen, setConfirmRepullOpen] = useState(false);
     const [repullSnack, setRepullSnack] = useState({ open: false, msg: "", severity: "success" });
     // Storefront refunds (cancel-with-refund + standalone customer-service refund).
     const [cancelRefund, setCancelRefund] = useState(true);
@@ -226,6 +227,7 @@ export function Main({ ord, blanks, source, base = "" }) {
     };
 
     const repullOrder = async () => {
+        setConfirmRepullOpen(false);
         setRepulling(true);
         try {
             const res = await axios.post("/api/admin/orders/repull", { poNumber: order.poNumber });
@@ -261,6 +263,11 @@ export function Main({ ord, blanks, source, base = "" }) {
     const canMarkShipped = !["shipped", "delivered"].includes(order.status?.toLowerCase());
     const canCancel = !["cancelled", "shipped", "delivered"].includes(order.status?.toLowerCase()) && !order.canceled;
     const missingCount = order.items.filter(isItemMissing).length;
+    // Repulling replaces the order's items; a shipped piece must not be silently orphaned. The server
+    // now preserves shipped items, but warn first so a repull on a shipped order is a deliberate choice.
+    const shippedItemCount = order.items.filter(i =>
+        i.shipped || /shipped/i.test(i.status || "") || (i.steps || []).some(s => /shipped|preshipped/i.test(s.status || ""))
+    ).length;
 
     return (
         <Box sx={{ width: "100%", maxWidth: "100%", overflowX: "hidden" }}>
@@ -716,7 +723,7 @@ export function Main({ ord, blanks, source, base = "" }) {
                                             variant="outlined"
                                             color="warning"
                                             startIcon={repulling ? <CircularProgress size={14} color="inherit" /> : <ReplayIcon />}
-                                            onClick={repullOrder}
+                                            onClick={() => (shippedItemCount > 0 ? setConfirmRepullOpen(true) : repullOrder())}
                                             disabled={repulling}
                                         >
                                             {repulling ? "Pulling…" : "Repull from ShipStation"}
@@ -756,6 +763,24 @@ export function Main({ ord, blanks, source, base = "" }) {
             <ShippedModal open={shipped} setOpen={setShipped} order={order} setOrder={setOrder} />
             <NoteModal open={note} setOpen={setNote} order={order} setOrder={setOrder} />
             <Repull />
+
+            {/* Repull confirmation — this order has shipped items */}
+            <Dialog open={confirmRepullOpen} onClose={() => !repulling && setConfirmRepullOpen(false)} maxWidth="xs" fullWidth>
+                <DialogTitle>Repull an order with shipped items?</DialogTitle>
+                <DialogContent>
+                    <Typography variant="body2">
+                        This order has <strong>{shippedItemCount} shipped item{shippedItemCount === 1 ? "" : "s"}</strong>. Repulling
+                        rebuilds the order&apos;s items from ShipStation. Shipped pieces will be kept, and only unshipped lines
+                        are rebuilt — but this is usually unnecessary on an order that has already shipped.
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setConfirmRepullOpen(false)} disabled={repulling}>Cancel</Button>
+                    <Button onClick={repullOrder} color="warning" variant="contained" disabled={repulling}>
+                        {repulling ? <CircularProgress size={20} color="inherit" /> : "Repull anyway"}
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
             <Snackbar
                 open={repullSnack.open}
