@@ -123,6 +123,15 @@ const search = async ({Products, q, page, filters, productsPerPage, skip}) => {
             }
         })
     }
+    // Blank (NF) vs design product filter. true → only blank products; false → only non-blank
+    // (design) products (mustNot true also matches products with the field missing, i.e. older designs).
+    if (filters.isNFProduct === true) {
+        if (!query[0].$search.compound.must) query[0].$search.compound.must = [];
+        query[0].$search.compound.must.push({ equals: { path: "isNFProduct", value: true } });
+    } else if (filters.isNFProduct === false) {
+        if (!query[0].$search.compound.mustNot) query[0].$search.compound.mustNot = [];
+        query[0].$search.compound.mustNot.push({ equals: { path: "isNFProduct", value: true } });
+    }
     const products = await Products.aggregate(query);
     return products;
 }

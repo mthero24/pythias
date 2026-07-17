@@ -8,6 +8,7 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import AddIcon from '@mui/icons-material/Add';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import CreatableSelect from "react-select/creatable";
+import Select from "react-select";
 import { CreateProductModal } from "../design/CreateProductModal";
 import { MarketplaceModal } from "../reusable/MarketPlaceModal";
 import {useCSV} from "../reusable/CSVProvider";
@@ -215,6 +216,20 @@ export const ProductsMain = ({prods, co, pa, blanks, seasons, genders, sportsUse
                                         let fil = { ...filters };
                                         if (selected?.length) fil.category = { $in: selected.map(s => s.value) };
                                         else { fil = Object.fromEntries(Object.entries(fil).filter(([k]) => k !== 'category')); }
+                                        setFilters(fil);
+                                    }}
+                                />
+                            </Grid2>
+                            <Grid2 size={{ xs: 12, sm: 3 }}>
+                                <Select
+                                    placeholder="Product Type ..."
+                                    isClearable
+                                    options={[{ value: true, label: "Blank Products" }, { value: false, label: "Design Products" }]}
+                                    value={filters.isNFProduct === true ? { value: true, label: "Blank Products" } : filters.isNFProduct === false ? { value: false, label: "Design Products" } : null}
+                                    onChange={(selected) => {
+                                        let fil = { ...filters };
+                                        if (selected && typeof selected.value === "boolean") fil.isNFProduct = selected.value;
+                                        else { fil = Object.fromEntries(Object.entries(fil).filter(([k]) => k !== 'isNFProduct')); }
                                         setFilters(fil);
                                     }}
                                 />
