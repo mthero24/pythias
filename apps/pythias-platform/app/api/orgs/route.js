@@ -27,7 +27,7 @@ const SF_LIMITS = {
 
 export async function POST(req) {
     try {
-        const { orgName, slug, billingEmail, tier, orgType, firstName, lastName, email, password, founder } = await req.json();
+        const { orgName, slug, billingEmail, tier, orgType, firstName, lastName, phone, email, password, founder } = await req.json();
 
         if (!orgName || !slug || !billingEmail || !email || !password) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -70,6 +70,7 @@ export async function POST(req) {
             name: orgName,
             slug: cleanSlug,
             billingEmail,
+            phone: phone || "",
             tier: validTier,
             orgType: resolvedType,
             status: 'trial',
@@ -85,6 +86,7 @@ export async function POST(req) {
             password,
             firstName: firstName || "",
             lastName: lastName || "",
+            phoneNumber: phone || "",
             role: 'owner',
         });
 
@@ -103,6 +105,7 @@ export async function POST(req) {
                 <p><strong>${orgName}</strong> just signed up (${resolvedType} &middot; ${validTier}${foundingFields.foundingTier ? " &middot; " + foundingFields.foundingTier : ""}).</p>
                 <ul style="line-height:1.6">
                     <li><strong>Contact:</strong> ${firstName || ""} ${lastName || ""} &lt;<a href="mailto:${email}">${email}</a>&gt;</li>
+                    <li><strong>Phone:</strong> ${phone ? `<a href="tel:${phone}">${phone}</a>` : "—"}</li>
                     <li><strong>Plan:</strong> ${validTier}</li>
                     <li><strong>Trial ends:</strong> ${trialEndsAt ? new Date(trialEndsAt).toLocaleDateString("en-US") : "—"}</li>
                     <li><strong>Org:</strong> <a href="https://platform.pythiastechnologies.com/${cleanSlug}/admin">${cleanSlug}</a></li>

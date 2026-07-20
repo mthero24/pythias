@@ -71,7 +71,7 @@ function RegisterForm() {
 
     const [step, setStep]     = useState(1);
     const [form, setForm]     = useState({
-        orgName: "", tier: initialTier, firstName: "", email: "", password: "",
+        orgName: "", tier: initialTier, firstName: "", phone: "", email: "", password: "",
     });
     const [error, setError]   = useState("");
     const [loading, setLoading] = useState(false);
@@ -269,6 +269,7 @@ function RegisterForm() {
                                         <Typography variant="subtitle2" color="text.secondary">Create your account</Typography>
                                         <TextField label="Company name" value={form.orgName} onChange={set("orgName")} required fullWidth size="small" autoFocus />
                                         <TextField label="Your first name" value={form.firstName} onChange={set("firstName")} required fullWidth size="small" />
+                                        <TextField label="Phone number" type="tel" value={form.phone} onChange={set("phone")} required fullWidth size="small" placeholder="(555) 123-4567" />
                                         <TextField label="Email" type="email" value={form.email} onChange={set("email")} onBlur={firePartial} required fullWidth size="small" />
                                         <TextField label="Password" type={showPassword ? "text" : "password"} value={form.password} onChange={set("password")} required fullWidth size="small"
                                             InputProps={revealAdornment(showPassword, () => setShowPassword(s => !s))} />

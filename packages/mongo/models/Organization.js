@@ -27,6 +27,7 @@ const schema = new mongoose.Schema({
         default: 'trial',
     },
     billingEmail: { type: String },
+    phone: { type: String },
     stripeCustomerId: { type: String },
     stripeSubscriptionId: { type: String },
     // Comp account: free SaaS subscription (no Stripe sub / no monthly tier billing).
