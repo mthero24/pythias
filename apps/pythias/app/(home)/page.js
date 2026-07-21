@@ -1,18 +1,15 @@
 import dynamic from "next/dynamic";
-import HeroSection from "./HeroSection";
-import PainPointsSection from "./PainPointsSection";
-import QuoteToProductionSection from "./QuoteToProductionSection";
-import CloudsSection from "./CloudsSection";
-import SeoAuthoritySection from "./SeoAuthoritySection";
-import CommunitySection from "./CommunitySection";
-import OutcomesSection from "./OutcomesSection";
+// Garment-print-shop homepage narrative (beachhead: ecommerce garment printers).
+import GarmentStyles from "./GarmentStyles";
+import GarmentHeroSection from "./GarmentHeroSection";
+import GarmentProblemSection from "./GarmentProblemSection";
+import GarmentPipelineSection from "./GarmentPipelineSection";
+import GarmentProofSection from "./GarmentProofSection";
+import GarmentEconomicsSection from "./GarmentEconomicsSection";
+import GarmentPricingSection from "./GarmentPricingSection";
+// Retained conversion / social-proof machinery below the new narrative.
 import RoiCalculatorSection from "./RoiCalculatorSection";
-import HowItWorksSection from "./HowItWorksSection";
-import FeaturesSection from "./FeaturesSection";
-import FreeAnalysisSection from "./FreeAnalysisSection";
 import TestimonialsSection from "./TestimonialsSection";
-import LeadCaptureSection from "./LeadCaptureSection";
-import PodcastSection from "./PodcastSection";
 import FAQSection from "./FAQSection";
 import FinalCTASection from "./FinalCTASection";
 import HomePopup from "./HomePopup";
@@ -54,18 +51,18 @@ const faqSchema = {
 export const revalidate = 300; // refresh so Video Library / hero changes appear without a rebuild
 
 export const metadata = {
-  title: { absolute: "Pythias Fulfillment Cloud & Commerce Cloud | Print-on-Demand, Fulfillment & Marketplace Automation" },
+  title: { absolute: "Pythias — The Order-to-Ship Platform for Garment Print Shops" },
   description:
-    "Pythias is print-on-demand, fulfillment, inventory management, marketplace management, warehouse, and ecommerce operations software in one platform — automate production, orders, inventory, and shipping across 18+ marketplaces.",
+    "Pythias runs a garment print shop's whole floor: pull orders from every marketplace, print, fold, label, ship, and auto-sync tracking. Built on Premier Printing — a real DTG/DTF/embroidery shop shipping across Shopify, TikTok Shop, Walmart, Kohl's, and Target Plus.",
   keywords:
-    "print-on-demand software, fulfillment software, inventory management software, marketplace management software, warehouse software, ecommerce operations software, multichannel fulfillment, order management software",
+    "garment printing software, print shop management software, DTG production management, DTF workflow software, embroidery order management, screen printing shop software, multi-marketplace fulfillment for print shops, in-house print-on-demand software, Shopify print shop fulfillment",
   alternates: { canonical: "https://pythiastechnologies.com" },
   openGraph: {
-    title: "Pythias Fulfillment Cloud & Commerce Cloud — Print-on-Demand, Fulfillment & Marketplace Automation",
+    title: "Pythias — The Order-to-Ship Platform for Garment Print Shops",
     description:
-      "One platform for print-on-demand, fulfillment, inventory, marketplace management, and ecommerce operations — automate production, orders, and shipping across 18+ marketplaces.",
+      "Pull every order from every channel into one production floor — print, fold, label, ship, and auto-sync tracking. Built on a real garment shop that ships every day.",
     url: "https://pythiastechnologies.com",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Pythias Fulfillment Cloud & Commerce Cloud" }],
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Pythias — order-to-ship platform for garment print shops" }],
   },
 };
 
@@ -73,21 +70,18 @@ export default function Home() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+      <GarmentStyles />
       <HomePopup />
-      <HeroSection />
-      <PainPointsSection />
-      <QuoteToProductionSection />
-      <CloudsSection />
-      <OutcomesSection />
+      {/* New garment-shop narrative */}
+      <GarmentHeroSection />
+      <GarmentProblemSection />
+      <GarmentPipelineSection />
+      <GarmentProofSection />
+      <GarmentEconomicsSection />
+      <GarmentPricingSection />
+      {/* Retained conversion + social-proof machinery */}
       <RoiCalculatorSection />
-      <SeoAuthoritySection />
-      <CommunitySection />
-      <HowItWorksSection />
-      <FeaturesSection />
-      <FreeAnalysisSection />
       <TestimonialsSection />
-      <PodcastSection />
-      <LeadCaptureSection />
       <CalendarBookingSection />
       <FAQSection />
       <FinalCTASection />
