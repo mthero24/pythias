@@ -23,6 +23,7 @@ const selectMenuPortalProps = {
 
 const COLOR_TYPES   = [{ label: "Light", value: "light" }, { label: "Dark", value: "dark" }];
 const COLOR_FAMILIES = [
+    { label: "Beige",  value: "beige"  },
     { label: "Black",  value: "black"  },
     { label: "Blue",   value: "blue"   },
     { label: "Brown",  value: "brown"  },
@@ -36,10 +37,13 @@ const COLOR_FAMILIES = [
     { label: "Yellow", value: "yellow" },
 ];
 const FAMILY_HUE = {
-    black: "#374151", blue: "#3b82f6", brown: "#92400e", green: "#10b981",
+    beige: "#c9b891", black: "#374151", blue: "#3b82f6", brown: "#92400e", green: "#10b981",
     grey: "#6b7280", orange: "#f97316", pink: "#ec4899", purple: "#8b5cf6",
     red: "#ef4444", white: "#9ca3af", yellow: "#f59e0b",
 };
+// Stored colorFamily can vary in case/whitespace (e.g. "Grey" vs "grey"); normalize before
+// comparing so every color lands in its family regardless of how it was saved.
+const normFamily = (v) => (v ?? "").trim().toLowerCase();
 const BLANK = { name: "", hexcode: "#ffffff", color_type: "light", colorFamily: "", sku: "", nrfColorCode: "" };
 
 function generateColorSku(name) {
@@ -70,7 +74,7 @@ export function Main({ colors: init }) {
     const [creating, setCreating]   = useState(false);
 
     const activeFamilies = useMemo(() => {
-        const seen = new Set(colors.map(c => c.colorFamily).filter(Boolean));
+        const seen = new Set(colors.map(c => normFamily(c.colorFamily)).filter(Boolean));
         return COLOR_FAMILIES.filter(f => seen.has(f.value));
     }, [colors]);
 
@@ -78,7 +82,7 @@ export function Main({ colors: init }) {
         const q = search.trim().toLowerCase();
         return [...colors]
             .filter(c => {
-                if (familyFilter && c.colorFamily !== familyFilter) return false;
+                if (familyFilter && normFamily(c.colorFamily) !== familyFilter) return false;
                 if (q && !c.name?.toLowerCase().includes(q) && !c.colorFamily?.toLowerCase().includes(q)) return false;
                 return true;
             })
@@ -166,7 +170,7 @@ export function Main({ colors: init }) {
                     />
                     {activeFamilies.map(f => {
                         const hue   = FAMILY_HUE[f.value] ?? "#9ca3af";
-                        const count = colors.filter(c => c.colorFamily === f.value).length;
+                        const count = colors.filter(c => normFamily(c.colorFamily) === f.value).length;
                         const active = familyFilter === f.value;
                         return (
                             <Chip
@@ -199,7 +203,7 @@ export function Main({ colors: init }) {
                     <Grid2 container spacing={2}>
                         {filtered.map(c => {
                             const tc   = textColor(c);
-                            const fhue = FAMILY_HUE[c.colorFamily] ?? "#9ca3af";
+                            const fhue = FAMILY_HUE[normFamily(c.colorFamily)] ?? "#9ca3af";
                             return (
                                 <Grid2 key={c._id} size={{ xs: 6, sm: 4, md: 3, lg: 2 }}>
                                     <Card variant="outlined" sx={{
