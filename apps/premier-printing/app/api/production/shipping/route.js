@@ -69,7 +69,9 @@ export async function POST(req= NextApiRequest){
                 item.order.preShipped = false
                 item.order.status = "awaiting_shipment"   // order is no longer shipped — revert so dashboards are accurate
                 await item.order.save()
-                item = await Item.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"})
+                // Re-populate `blank` too — the single-item ship path below reads item.blank.sizes /
+                // singleShippingDimensions; without it the reship throws and never buys a new label.
+                item = await Item.findOne({pieceId: data.scan.trim()}).populate({path: "order", populate: "items"}).populate("blank")
             }else if(order){
                 for(let i of order.items){
                     i.shipped = false
@@ -80,7 +82,7 @@ export async function POST(req= NextApiRequest){
                 order.preShipped = false
                 order.status = "awaiting_shipment"
                 await order.save()
-                order = await Order.findOne({poNumber: data.scan.trim()}).populate("items")
+                order = await Order.findOne({poNumber: data.scan.trim()}).populate({path: "items", populate: "blank"})
             }
         }
         let res = {error: false, msg: "", item, order, bin, }
