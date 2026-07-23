@@ -153,6 +153,42 @@ export const CreateNFProduct = ({ open, product, setProduct, setOpen, stage, set
             fetchBrands();
         }
     },[open])
+    // Persist each marketplace's generated title whenever a template variable (brand, gender,
+    // season, theme, sport, title, blank) changes. Without this, selecting a brand only updates
+    // the *displayed* title (via `?? generated`) but never saves it — so the brand never reaches
+    // the Preview's marketplace section or the download spreadsheet. Mirrors the design flow's
+    // reResolveTitleGenerators. Only writes when the resolved value actually changed, so it can't
+    // clobber a manual edit (manual edits change titleGenerator, which isn't a dependency here).
+    useEffect(() => {
+        if (!open || !markets?.length) return;
+        let changed = false;
+        const mv = { ...(product.marketplaceValues || {}) };
+        for (const market of markets) {
+            const tg   = market.productDropDowns?.titleGenerator;
+            const mpId = market._id?.toString();
+            if (!tg?.prompt || !mpId) continue;
+            const resolved = tg.prompt
+                .replace("{design}",       product.title            || "")
+                .replace("{brand}",        product.brand            || "")
+                .replace("{season}",       product.season           || "")
+                .replace("{gender}",       product.gender           || "")
+                .replace("{theme}",        product.theme            || "")
+                .replace("{sportUsedFor}", product.sportUsedFor      || "")
+                .replace("{blank}",        product.blanks?.[0]?.name || "")
+                .replace(/(\s*-\s*){2,}/g, " - ")
+                .replace(/^\s*-\s*/, "")
+                .replace(/\s*-\s*$/, "")
+                .replace(/\s{2,}/g, " ")
+                .trim();
+            const existing = mv[mpId] || {};
+            if (existing.titleGenerator !== resolved) {
+                mv[mpId] = { ...existing, name: market.name, titleGenerator: resolved };
+                changed = true;
+            }
+        }
+        if (changed) setProduct({ ...product, marketplaceValues: mv });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open, markets, product.title, product.brand, product.season, product.gender, product.theme, product.sportUsedFor, product.blanks]);
     let style = {
         position: 'absolute',
         top: '50%',
