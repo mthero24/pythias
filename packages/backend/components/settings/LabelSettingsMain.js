@@ -11,6 +11,7 @@ import {
     LABEL_TEMPLATE_DEFAULT, PREMIER_DEFAULT_FIELDS,
     DEFAULT_FIELD_POSITIONS, FIELD_SIZES, SIZE_TO_PX,
     FIELD_ROTATIONS, ROTATION_TO_DEG, ROTATION_LABELS,
+    SHELF_LABEL_FIELDS, SHELF_LABEL_TEMPLATE_DEFAULT, SHELF_DEFAULT_FIELD_POSITIONS,
 } from "../../lib/labelConstants.js";
 
 const DPI = 203;
@@ -237,7 +238,7 @@ function DraggableBarcode({ pos, scale, dotW, dotH, selected, onSelect, onMove }
 }
 
 // ── Label preview canvas ──────────────────────────────────────────────────────
-function LabelCanvas({ template, selectedKey, onSelect, onMove, onResize, onRotate, fieldSamples = {} }) {
+function LabelCanvas({ template, selectedKey, onSelect, onMove, onResize, onRotate, fieldSamples = {}, showOrderHeader = true }) {
     const dotW = Math.round(template.width * DPI);
     const dotH = Math.round(template.height * DPI);
     const scaleX = MAX_PREVIEW_W / dotW;
@@ -261,15 +262,15 @@ function LabelCanvas({ template, selectedKey, onSelect, onMove, onResize, onRota
                     boxShadow: 3, flexShrink: 0, overflow: "hidden",
                 }}
             >
-                {/* Fixed: PO# */}
-                <Box sx={{ position: "absolute", left: 10 * scale, top: 15 * scale, display: "flex", alignItems: "center", gap: "2px", fontSize: 8, fontFamily: "monospace", color: "text.disabled" }}>
-                    <LockIcon sx={{ fontSize: 8 }} />PO#: 12345678
-                </Box>
-
-                {/* Fixed: Piece ID */}
-                <Box sx={{ position: "absolute", left: 10 * scale, top: 35 * scale, display: "flex", alignItems: "center", gap: "2px", fontSize: 8, fontFamily: "monospace", color: "text.disabled" }}>
-                    <LockIcon sx={{ fontSize: 8 }} />Piece: AB-001
-                </Box>
+                {/* Fixed: PO# + Piece ID — order labels only (hidden for shelf labels) */}
+                {showOrderHeader && <>
+                    <Box sx={{ position: "absolute", left: 10 * scale, top: 15 * scale, display: "flex", alignItems: "center", gap: "2px", fontSize: 8, fontFamily: "monospace", color: "text.disabled" }}>
+                        <LockIcon sx={{ fontSize: 8 }} />PO#: 12345678
+                    </Box>
+                    <Box sx={{ position: "absolute", left: 10 * scale, top: 35 * scale, display: "flex", alignItems: "center", gap: "2px", fontSize: 8, fontFamily: "monospace", color: "text.disabled" }}>
+                        <LockIcon sx={{ fontSize: 8 }} />Piece: AB-001
+                    </Box>
+                </>}
 
                 {/* Draggable: Barcode */}
                 {(() => {
@@ -340,6 +341,63 @@ export function LabelSettingsMain({ defaultTemplate } = {}) {
     const templateRef = useRef(template);
     templateRef.current = template;
 
+    // ── Shelf / bin location label (separate template) ─────────────────────────
+    const [shelfTemplate, setShelfTemplate] = useState(SHELF_LABEL_TEMPLATE_DEFAULT);
+    const [shelfSelected, setShelfSelected] = useState(null);
+    const [printingShelf, setPrintingShelf] = useState(false);
+    const shelfTemplateRef = useRef(shelfTemplate);
+    shelfTemplateRef.current = shelfTemplate;
+
+    const shelfFieldSamples = Object.fromEntries(SHELF_LABEL_FIELDS.map(f => [f.key, f.sample]));
+
+    function toggleShelfField(key) {
+        setShelfTemplate(t => {
+            const fields = t.fields ?? [];
+            return { ...t, fields: fields.includes(key) ? fields.filter(k => k !== key) : [...fields, key] };
+        });
+    }
+    const shelfPosUpdate = (key, patch) => setShelfTemplate(t => ({
+        ...t,
+        fieldPositions: {
+            ...SHELF_DEFAULT_FIELD_POSITIONS,
+            ...(t.fieldPositions ?? {}),
+            [key]: { ...(t.fieldPositions?.[key] ?? SHELF_DEFAULT_FIELD_POSITIONS[key] ?? {}), ...patch },
+        },
+    }));
+    const handleShelfMove   = useCallback((key, x, y)      => shelfPosUpdate(key, { x, y }),      []);
+    const handleShelfResize = useCallback((key, size)      => shelfPosUpdate(key, { size }),       []);
+    const handleShelfRotate = useCallback((key, rotation)  => shelfPosUpdate(key, { rotation }),   []);
+
+    async function saveShelf() {
+        setSaving(true);
+        setMsg(null);
+        const res = await fetch("/api/admin/settings/integrations", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ shelfLabelTemplate: shelfTemplateRef.current }),
+        });
+        const d = await res.json();
+        setMsg(d.error ? { type: "error", text: d.error } : { type: "success", text: "Shelf label saved" });
+        setSaving(false);
+    }
+
+    async function printAllShelf() {
+        if (!window.confirm("Print a shelf barcode label for every inventory bin? This can be a large batch.")) return;
+        setPrintingShelf(true);
+        setMsg(null);
+        try {
+            const res = await fetch("/api/production/shelf-labels", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ all: true }),
+            });
+            const d = await res.json();
+            setMsg(d.error ? { type: "error", text: d.msg || "Print failed" } : { type: "success", text: `Sent ${d.count} shelf labels to the printer` });
+        } catch (e) {
+            setMsg({ type: "error", text: e.message });
+        } finally { setPrintingShelf(false); }
+    }
+
     useEffect(() => {
         fetch("/api/admin/settings/integrations")
             .then(r => r.json())
@@ -352,6 +410,17 @@ export function LabelSettingsMain({ defaultTemplate } = {}) {
                         fieldPositions: {
                             ...(baseDefault.fieldPositions ?? DEFAULT_FIELD_POSITIONS),
                             ...(saved.fieldPositions ?? {}),
+                        },
+                    });
+                }
+                if (d.creds?.shelfLabelTemplate && Object.keys(d.creds.shelfLabelTemplate).length) {
+                    const savedShelf = d.creds.shelfLabelTemplate;
+                    setShelfTemplate({
+                        ...SHELF_LABEL_TEMPLATE_DEFAULT,
+                        ...savedShelf,
+                        fieldPositions: {
+                            ...SHELF_DEFAULT_FIELD_POSITIONS,
+                            ...(savedShelf.fieldPositions ?? {}),
                         },
                     });
                 }
@@ -506,7 +575,82 @@ export function LabelSettingsMain({ defaultTemplate } = {}) {
                 <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 3, borderBottom: 1, borderColor: "divider" }}>
                     <Tab label="Label Design" value="design" />
                     <Tab label="Special Cases" value="special" />
+                    <Tab label="Shelf Labels" value="shelf" />
                 </Tabs>
+
+                {/* ══ SHELF LABELS TAB ═══════════════════════════════════════════ */}
+                {tab === "shelf" && (
+                    <Stack direction={{ xs: "column", md: "row" }} spacing={3} alignItems="flex-start">
+                        <Stack spacing={2} sx={{ width: { xs: "100%", md: 260 }, flexShrink: 0 }}>
+                            <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                                <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.5 }}>Shelf / Bin Label</Typography>
+                                <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1.5 }}>
+                                    The barcode encodes each bin&apos;s inventory <b>barcode&nbsp;#</b>. Affix these to your shelves to scan while picking.
+                                </Typography>
+                                <FormControl size="small" fullWidth>
+                                    <InputLabel>Size</InputLabel>
+                                    <Select
+                                        label="Size"
+                                        value={`${shelfTemplate.width}x${shelfTemplate.height}`}
+                                        onChange={e => {
+                                            const [w, h] = e.target.value.split("x").map(Number);
+                                            setShelfTemplate(t => ({ ...t, width: w, height: h }));
+                                        }}
+                                    >
+                                        {[{ w: 2, h: 1 }, { w: 2, h: 1.5 }, { w: 2, h: 2 }, { w: 3, h: 1 }, { w: 3, h: 2 }, { w: 4, h: 2 }].map(s => (
+                                            <MenuItem key={`${s.w}x${s.h}`} value={`${s.w}x${s.h}`}>{s.w}×{s.h}&quot;</MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            </Paper>
+
+                            <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                                <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 0.5 }}>Fields</Typography>
+                                <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
+                                    Toggle fields · Left-drag to reposition · Right-click to resize/rotate
+                                </Typography>
+                                <Stack spacing={0}>
+                                    {SHELF_LABEL_FIELDS.map(f => (
+                                        <FormControlLabel
+                                            key={f.key}
+                                            control={
+                                                <Switch
+                                                    size="small"
+                                                    checked={(shelfTemplate.fields ?? []).includes(f.key)}
+                                                    onChange={() => toggleShelfField(f.key)}
+                                                />
+                                            }
+                                            label={<Typography variant="body2">{f.label}</Typography>}
+                                            sx={{ m: 0 }}
+                                        />
+                                    ))}
+                                </Stack>
+                            </Paper>
+
+                            {canSave && (
+                                <Stack spacing={1}>
+                                    <Button variant="contained" size="large" disabled={saving} onClick={saveShelf} fullWidth>
+                                        {saving ? "Saving…" : "Save"}
+                                    </Button>
+                                    <Button variant="outlined" size="large" disabled={printingShelf} onClick={printAllShelf} fullWidth>
+                                        {printingShelf ? "Printing…" : "Print All Shelf Labels"}
+                                    </Button>
+                                </Stack>
+                            )}
+                        </Stack>
+
+                        <LabelCanvas
+                            template={shelfTemplate}
+                            fieldSamples={shelfFieldSamples}
+                            showOrderHeader={false}
+                            selectedKey={shelfSelected}
+                            onSelect={setShelfSelected}
+                            onMove={handleShelfMove}
+                            onResize={handleShelfResize}
+                            onRotate={handleShelfRotate}
+                        />
+                    </Stack>
+                )}
 
                 {/* ══ SPECIAL CASES TAB ══════════════════════════════════════════ */}
                 {tab === "special" && (

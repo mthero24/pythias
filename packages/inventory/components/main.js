@@ -11,6 +11,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import SearchIcon from "@mui/icons-material/Search";
 import DeleteIcon from "@mui/icons-material/Delete";
+import PrintIcon from "@mui/icons-material/Print";
 import WarehouseIcon from "@mui/icons-material/Warehouse";
 import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
@@ -49,6 +50,14 @@ export function Main({ bla, it, defaultLocation, binType, cou, pa, q, totalValue
             setFullStyles(res.data.combined);
             setItems(res.data.items);
         } else alert("Error saving inventory");
+    };
+
+    // Reprint the shelf/bin barcode label for a single inventory record.
+    const printShelfLabel = async (i) => {
+        try {
+            const res = await axios.post("/api/production/shelf-labels", { ids: [i._id] });
+            if (res?.data?.error) alert(res.data.msg || "Print failed");
+        } catch (e) { alert("Print failed: " + (e?.message || "")); }
     };
 
     const updateInventory = async ({ inventory, param, value }) => {
@@ -255,7 +264,13 @@ export function Main({ bla, it, defaultLocation, binType, cou, pa, q, totalValue
                                                                 <TextField size="small" fullWidth value={i.bin ?? ""} placeholder="—"
                                                                     onChange={(e) => updateInventory({ inventory: i, param: "bin", value: e.target.value })} />
                                                             </Grid2>
-                                                            <Grid2 size={1} sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                                            <Grid2 size={1} sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 0.75 }}>
+                                                                <Tooltip title="Print shelf label">
+                                                                    <PrintIcon
+                                                                        sx={{ cursor: "pointer", color: "primary.main", fontSize: 20 }}
+                                                                        onClick={() => printShelfLabel(i)}
+                                                                    />
+                                                                </Tooltip>
                                                                 <DeleteIcon
                                                                     sx={{ cursor: "pointer", color: "error.main", fontSize: 20 }}
                                                                     onClick={() => { setInventoryToDelete(i); setDeleteModalOpen(true); }}
