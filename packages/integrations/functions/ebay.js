@@ -451,7 +451,26 @@ export async function publishOfferEbay(connection, offerId) {
         `${base(connection)}/sell/inventory/v1/offer/${encodeURIComponent(offerId)}/publish`,
         {},
         { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
-    ).catch(e => { throw new Error(e.response?.data?.errors?.[0]?.message ?? e.message); });
+    ).catch(e => {
+        const errs = e.response?.data?.errors ?? [];
+        // eBay's Inventory/Offer API requires business policies (shipping/payment/return) on every
+        // published fixed-price offer. If the seller account has none — or isn't opted into Business
+        // Policies — publish fails with a cryptic "add a valid shipping service option" message
+        // (errorId 25007) or "not eligible for Business Policy" (20403). Surface a clear, actionable one.
+        const policyIssue = errs.some(x =>
+            [25007, 25709, 25710, 25711, 20403].includes(x.errorId) ||
+            /business polic|fulfillment polic|payment polic|return polic|shipping service/i.test(x.longMessage ?? x.message ?? "")
+        );
+        if (policyIssue) {
+            throw new Error(
+                "eBay can't publish this listing because your account has no shipping, payment, or return " +
+                "business policies to attach. In eBay → Seller Hub → Account → Business Policies, create a " +
+                "Shipping policy (with at least one shipping service), a Payment policy, and a Return policy, " +
+                "then click Publish again."
+            );
+        }
+        throw new Error(errs[0]?.longMessage ?? errs[0]?.message ?? e.message);
+    });
     return { ok: true, listingId: res.data?.listingId };
 }
 
