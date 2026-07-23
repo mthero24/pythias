@@ -733,7 +733,7 @@ export default function CreateYourOwn({ blanks = [], embed = false }) {
             <div style={{ position: "relative", display: "block", maxWidth: "100%" }}>
                 <canvas ref={canvasElRef} style={{ touchAction: "none", display: "block", maxWidth: "100%" }} />
                 {activeSide?.aiGenerated && (
-                    <div style={{ position: "absolute", bottom: 10, left: 10, background: "rgba(0,0,0,0.55)", color: "#fff", fontSize: 11, fontWeight: 600, letterSpacing: 0.2, padding: "3px 9px", borderRadius: 5, pointerEvents: "none", fontFamily: "Arial, Helvetica, sans-serif" }}>
+                    <div style={{ position: "absolute", bottom: 10, left: 10, background: "transparent", color: "rgba(58,58,58,0.7)", fontSize: 11, fontWeight: 600, letterSpacing: 0.2, pointerEvents: "none", fontFamily: "Arial, Helvetica, sans-serif" }}>
                         AI Generated
                     </div>
                 )}

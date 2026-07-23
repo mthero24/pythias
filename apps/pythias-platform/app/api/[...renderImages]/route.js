@@ -32,8 +32,8 @@ const applyAiBadge = async (buffer, width) => {
         const m    = Math.round(w * 0.02);
         const svg  = Buffer.from(
             `<svg width="${bw}" height="${bh}" xmlns="http://www.w3.org/2000/svg">` +
-            `<rect width="${bw}" height="${bh}" rx="${r}" ry="${r}" fill="black" fill-opacity="0.55"/>` +
-            `<text x="50%" y="50%" font-family="Arial, Helvetica, sans-serif" font-size="${fs}" fill="white" text-anchor="middle" dominant-baseline="central">${text}</text>` +
+            // Dark-grey letter watermark — no filled box behind the text.
+            `<text x="50%" y="50%" font-family="Arial, Helvetica, sans-serif" font-size="${fs}" fill="#3a3a3a" fill-opacity="0.7" text-anchor="middle" dominant-baseline="central">${text}</text>` +
             `</svg>`
         );
         return await img.composite([{ input: svg, top: Math.max(0, h - bh - m), left: m }]).jpeg({ quality: 100 }).toBuffer();
