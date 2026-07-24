@@ -21,7 +21,7 @@ export async function GET() {
     try {
         const stripe = stripeClient();
         const [balance, acct, payouts] = await Promise.all([
-            stripe.balance.retrieve({ stripeAccount: acctId }),
+            stripe.balance.retrieve({}, { stripeAccount: acctId }),
             stripe.accounts.retrieve(acctId),
             stripe.payouts.list({ limit: 12 }, { stripeAccount: acctId }),
         ]);

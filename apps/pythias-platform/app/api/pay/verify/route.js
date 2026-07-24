@@ -24,7 +24,7 @@ export async function POST(request) {
         if (order.paid) return NextResponse.json({ paid: true, brandName, poNumber });
 
         const stripe  = new Stripe(process.env.STOREFRONT_STRIPE_SECRET);
-        const session = await stripe.checkout.sessions.retrieve(sessionId, { stripeAccount: acctId });
+        const session = await stripe.checkout.sessions.retrieve(sessionId, {}, { stripeAccount: acctId });
 
         if (String(session?.metadata?.orderId) !== String(order._id))
             return NextResponse.json({ error: "Session mismatch" }, { status: 400 });

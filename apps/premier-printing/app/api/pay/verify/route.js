@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { Order, Item, Inventory, Organization } from "@pythias/mongo";
-import { updateInventory, recomputeStockStatus } from "@/functions/pullOrders";
+import { Order, Organization } from "@pythias/mongo";
+import { completeInvoiceOrder } from "@/functions/completeInvoiceOrder";
 import Stripe from "stripe";
 
 // POST /api/pay/verify { t, sessionId } — PUBLIC. Confirms the Stripe Checkout session is paid on
@@ -24,28 +24,17 @@ export async function POST(request) {
         if (order.paid) return NextResponse.json({ paid: true, brandName, poNumber });
 
         const stripe  = new Stripe(process.env.STOREFRONT_STRIPE_SECRET);
-        const session = await stripe.checkout.sessions.retrieve(sessionId, { stripeAccount: acctId });
+        // stripeAccount is a request OPTION → must be the 3rd arg. As the 2nd (params) arg this
+        // SDK rejects it ("unknown parameter: stripeAccount"), so verify threw and paid invoices
+        // were never marked paid (payment taken, order left custom_pending).
+        const session = await stripe.checkout.sessions.retrieve(sessionId, {}, { stripeAccount: acctId });
 
         if (String(session?.metadata?.orderId) !== String(order._id))
             return NextResponse.json({ error: "Session mismatch" }, { status: 400 });
         if (session.payment_status !== "paid")
             return NextResponse.json({ paid: false, brandName, poNumber });
 
-        // Mark paid + awaiting_shipment (mirror of custom-order/[id] PATCH paid path).
-        order.paid   = true;
-        order.status = "awaiting_shipment";
-        await order.save();
-        await Item.updateMany({ order: order._id }, { $set: { paid: true, status: "awaiting_shipment" } });
-
-        // Slot each item into an inventory record so the recompute can place it correctly.
-        const items = await Item.find({ order: order._id });
-        for (const item of items) {
-            if (item.inventory?.inventory) continue;
-            const inv = await Inventory.findOne({ color_name: item.colorName, size_name: item.sizeName, style_code: item.styleCode });
-            if (inv) { item.inventory = { inventoryType: "inventory", inventory: inv._id }; await item.save(); }
-        }
-        updateInventory().then(() => recomputeStockStatus()).catch(err => console.error("[pay verify recompute]", err));
-
+        await completeInvoiceOrder(order);
         return NextResponse.json({ paid: true, brandName, poNumber });
     } catch (err) {
         console.error("[pay verify]", err);

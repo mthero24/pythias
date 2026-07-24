@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { Quote } from "@pythias/mongo";
+import { Quote, Order } from "@pythias/mongo";
 import { convertQuoteToOrder } from "@/functions/quoteOrder";
+import { completeInvoiceOrder } from "@/functions/completeInvoiceOrder";
 
 export const runtime = "nodejs";
 
@@ -37,16 +38,28 @@ export async function POST(req) {
     try {
         if (event.type === "checkout.session.completed") {
             const session = event.data.object;
-            const token = session?.metadata?.token;
-            if (token && session.payment_status === "paid") {
-                const quote = await Quote.findOne({ token });
-                if (quote && quote.status !== "converted") {
-                    const order = await convertQuoteToOrder(quote);
-                    quote.status = "converted";
-                    quote.approvedAt = new Date();
-                    quote.orderId = order._id;
-                    await quote.save();
-                    console.log(`[quote webhook] created order ${order.poNumber} for quote ${quote.quoteId}`);
+            const md = session?.metadata || {};
+            if (session.payment_status === "paid") {
+                if (md.token) {
+                    // Quote checkout → create the production order.
+                    const quote = await Quote.findOne({ token: md.token });
+                    if (quote && quote.status !== "converted") {
+                        const order = await convertQuoteToOrder(quote);
+                        quote.status = "converted";
+                        quote.approvedAt = new Date();
+                        quote.orderId = order._id;
+                        await quote.save();
+                        console.log(`[quote webhook] created order ${order.poNumber} for quote ${quote.quoteId}`);
+                    }
+                } else if (md.invoiceToken || md.orderId) {
+                    // Custom-order invoice checkout → mark the existing order paid.
+                    const order = md.invoiceToken
+                        ? await Order.findOne({ invoiceToken: md.invoiceToken })
+                        : await Order.findById(md.orderId);
+                    if (order && !order.paid) {
+                        await completeInvoiceOrder(order);
+                        console.log(`[quote webhook] marked invoice order ${order.poNumber} paid`);
+                    }
                 }
             }
         }
