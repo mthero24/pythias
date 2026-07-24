@@ -23,8 +23,10 @@ async function convertQuoteToOrder(quote) {
         taxRate:       quote.taxRate || 0,
         customerEmail: quote.customer?.email || "",
         inStorePickup: !!quote.inStorePickup,
+        // shippingType is required on the Order schema — quotes don't always carry one, so fall back.
+        shippingType:  quote.inStorePickup ? "In-Store Pickup" : (quote.shippingType || "Standard"),
         shippingAddress: {
-            name:     addr.name     || quote.customer?.name    || "",
+            name:     addr.name     || quote.customer?.name    || quote.customer?.email || "Customer",
             phone:    addr.phone    || quote.customer?.phone   || "",
             address1: addr.address1 || (quote.inStorePickup ? "In-store pickup" : "—"),
             address2: addr.address2 || quote.customer?.company || "",
