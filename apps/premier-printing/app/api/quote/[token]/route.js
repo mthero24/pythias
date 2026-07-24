@@ -125,7 +125,10 @@ export async function POST(request, { params }) {
 
         if (action === "verify") {
             if (quote.status === "converted") return NextResponse.json({ paid: true, brandName, poNumber: quote.quoteId });
-            const session = await stripe.checkout.sessions.retrieve(sessionId, { stripeAccount: acctId });
+            // stripeAccount is a request OPTION → must be the 3rd arg. Passing it as the 2nd
+            // (params) arg makes Stripe reject it ("unknown parameter: stripeAccount"), which
+            // threw on every verify — so no quote ever converted to an order despite being paid.
+            const session = await stripe.checkout.sessions.retrieve(sessionId, {}, { stripeAccount: acctId });
             if (String(session?.metadata?.token) !== String(quote.token))
                 return NextResponse.json({ error: "Session mismatch" }, { status: 400 });
             if (session.payment_status !== "paid")
