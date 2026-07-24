@@ -401,7 +401,9 @@ export function Main({ ord, blanks, source, base = "" }) {
                                         // item's styleCode is the seller's code, but the local blank has a different code —
                                         // using it lets renderImages find the garment + composite the design (passed by URL).
                                         const renderCode = blankObj?.code || i.styleCode;
-                                        const blankImage = i.isBlank && i.blank && i.color
+                                        // Show the plain garment image for blank items AND custom items that have no
+                                        // design (custom items WITH a design still composite via renderImages below).
+                                        const blankImage = (i.isBlank || i.custom) && i.blank && i.color && imageKeys.length === 0
                                             ? blankObj?.images?.filter(im => im.color === i.color)[0]?.image?.replace("images1.pythiastechnologies.com", "images2.pythiastechnologies.com/origin")
                                             : null;
 
